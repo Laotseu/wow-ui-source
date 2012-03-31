@@ -3,7 +3,7 @@ CHARACTER_SELECT_INITIAL_FACING = nil;
 
 CHARACTER_ROTATION_CONSTANT = 0.6;
 
-MAX_CHARACTERS_DISPLAYED = 10;
+MAX_CHARACTERS_DISPLAYED = 11;
 MAX_CHARACTERS_PER_REALM = 200; -- controled by the server now, so lets set it up high
 
 CHARACTER_LIST_OFFSET = 0;
@@ -18,11 +18,14 @@ AUTO_DRAG_TIME = 0.5;				-- in seconds
 
 local translationTable = { };	-- for character reordering: key = button index, value = character ID
 
+BLIZZCON_IS_A_GO = false;
+
 CHARACTER_SELECT_LOGOS = {
 	TRIAL = "Interface\\Glues\\Common\\Glues-WoW-StarterLogo",
 	[1] = "Interface\\Glues\\Common\\Glues-WoW-ClassicLogo",
 	[2] = "Interface\\Glues\\Common\\Glues-WoW-WotLKLogo",
 	[3] = "Interface\\Glues\\Common\\Glues-WoW-CCLogo",
+	[4] = "Interface\\Glues\\Common\\Glues-WoW-MPLogo",
 	--When adding entries to here, make sure to update the zhTW and zhCN localization files.
 };
 
@@ -60,7 +63,7 @@ function CharacterSelect_OnLoad(self)
 
 	CHARACTER_LIST_OFFSET = 0;
 	if (not IsGMClient()) then
-		MAX_CHARACTERS_PER_REALM = 10;
+		MAX_CHARACTERS_PER_REALM = 11;
 	end
 end
 
@@ -184,6 +187,10 @@ function CharacterSelect_OnShow()
 	GlueDropDownMenu_SetSelectedValue(AddonCharacterDropDown, ALL);
 
 	AccountUpgradePanel_Update(CharSelectAccountUpgradeButton.isExpanded);
+
+	if( IsBlizzCon() ) then
+		CharacterSelectUI:Hide();
+	end
 end
 
 function CharacterSelect_OnHide(self)
@@ -302,6 +309,13 @@ function CharacterSelect_OnEvent(self, event, ...)
 		end
 		UpdateCharacterList();
 		CharSelectCharacterName:SetText(GetCharacterInfo(GetCharIDFromIndex(self.selectedIndex)));
+		if (IsBlizzCon()) then
+			if (BLIZZCON_IS_A_GO) then
+				EnterWorld();
+			else
+				SetGlueScreen("charcreate");
+			end
+		end
 	elseif ( event == "UPDATE_SELECTED_CHARACTER" ) then
 		local charID = ...;
 		if ( charID == 0 ) then
@@ -464,7 +478,7 @@ function UpdateCharacterList()
 	local connected = IsConnectedToServer();
 	for i=index, MAX_CHARACTERS_DISPLAYED, 1 do
 		local button = _G["CharSelectCharacterButton"..index];
-		if ( (CharacterSelect.createIndex == 0) and (numChars < MAX_CHARACTERS_PER_REALM) ) then
+		if ( (CharacterSelect.createIndex == 0) and (numChars < MAX_CHARACTERS_DISPLAYED) ) then
 			CharacterSelect.createIndex = index;
 			if ( connected ) then
 				--If can create characters position and show the create button
@@ -865,7 +879,7 @@ function AccountUpgradePanel_Update(isExpanded)
 		CharacterSelectLogo:Hide();
 	end
 
-	--We don't want to show the upgrade panel is Asian countries for now.
+	--We don't want to show the upgrade panel in Asian countries for now.
 	if ( NEVER_SHOW_UPGRADE ) then
 		CharSelectAccountUpgradePanel:Hide();
 		CharSelectAccountUpgradeButton:Hide();
@@ -878,7 +892,9 @@ function AccountUpgradePanel_Update(isExpanded)
 		CharSelectAccountUpgradePanel:Hide();
 		CharSelectAccountUpgradeButton:Hide();
 		CharSelectAccountUpgradeMiniPanel:Hide();
+		GameRoomBillingFrame:SetPoint("TOP", CharacterSelectLogo, "BOTTOM", 0, -50);
 	else
+		GameRoomBillingFrame:SetPoint("TOP", CharSelectAccountUpgradePanel, "BOTTOM", 0, -10);
 		local featureTable = ACCOUNT_UPGRADE_FEATURES[tag];
 		CharSelectAccountUpgradeButton:Show();
 		StarterEditionPopUp:Show();
