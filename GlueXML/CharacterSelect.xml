@@ -31,7 +31,7 @@
 			<AbsDimension x="256" y="70"/>
 		</Size>
 		<HitRectInsets>
-			<AbsInset left="0" right="0" top="0" bottom="15"/>
+			<AbsInset left="-10" right="30" top="0" bottom="15"/>
 		</HitRectInsets>
 		<Layers>
 			<Layer level="ARTWORK">
@@ -781,6 +781,52 @@
 							</Layer>
 						</Layers>
 						<Frames>
+							<Slider name="$parentScrollBar" frameStrata="DIALOG" parentKey="scrollBar" inherits="GlueScrollBarTemplate" hidden="true">
+								<Anchors>
+									<Anchor point="TOPRIGHT">
+										<Offset>
+											<AbsDimension x="-6" y="-20"/>
+										</Offset>
+									</Anchor>
+									<Anchor point="BOTTOMRIGHT">
+										<Offset>
+											<AbsDimension x="-6" y="24"/>
+										</Offset>
+									</Anchor>
+								</Anchors>
+								<Layers>
+									<Layer level="BACKGROUND">
+										<Texture>
+											<Anchors>
+												<Anchor point="TOPLEFT" x="-2" y="0"/>
+												<Anchor point="BOTTOMRIGHT" x="-1" y="0"/>
+											</Anchors>
+											<Color r="0" g="0" b="0"/>
+										</Texture>
+									</Layer>
+									<Layer level="BORDER">
+										<Texture file="Interface\Glues\CharacterCreate\Frame-Sides">
+											<Size x="16" y="0"/>
+											<Anchors>
+												<Anchor point="TOPLEFT" x="-11" y="15"/>
+												<Anchor point="BOTTOMLEFT" x="-11" y="-15"/>
+											</Anchors>
+											<TexCoords left="0.5" right="1" top="0" bottom="1"/>
+										</Texture>
+									</Layer>
+								</Layers>
+								<Scripts>
+									<OnLoad>
+										self:SetValueStep(1);
+										CharacterSelectCharacterFrameScrollBarScrollUpButton:SetPoint("BOTTOM", self, "TOP", 0, -3);
+										CharacterSelectCharacterFrameScrollBarScrollDownButton:SetPoint("TOP", self, "BOTTOM", 0, 3);
+									</OnLoad>
+									<OnValueChanged>
+										GlueScrollFrame_OnVerticalScroll(self:GetParent(), value);
+										CharacterSelect_ScrollList(self, value);
+									</OnValueChanged>
+								</Scripts>
+							</Slider>
 							<Button name="CharSelectChangeRealmButton" inherits="GlueButtonSmallTemplate" text="CHANGE_REALM">
 								<Size>
 									<AbsDimension x="135" y="33"/>
@@ -972,41 +1018,12 @@
 								<AbsValue val="16"/>
 							</EdgeSize>
 						</Backdrop>
+						<Scripts>
+							<OnMouseWheel>
+								self.scrollBar:SetValue(self.scrollBar:GetValue() - delta);
+							</OnMouseWheel>
+						</Scripts>
 					</Frame>
-					<Button name="ScrollDownButton" hidden="true">
-						<Size x="50" y="50"/>
-						<Anchors>
-							<Anchor point="TOPRIGHT" relativeTo="CharacterSelectCharacterFrame" relativePoint="BOTTOMRIGHT">
-								<Offset x="5" y="10"/>
-							</Anchor>
-						</Anchors>
-						<Scripts>
-							<OnClick>
-								CharacterSelectScrollDown_OnClick()
-							</OnClick>
-						</Scripts>
-						<NormalTexture file="Interface\ChatFrame\UI-ChatIcon-ScrollDown-Up"/>
-						<PushedTexture file="Interface\ChatFrame\UI-ChatIcon-ScrollDown-Down"/>
-						<DisabledTexture file="Interface\ChatFrame\UI-ChatIcon-ScrollDown-Disabled"/>
-						<HighlightTexture file="Interface\Buttons\UI-Common-MouseHilight" alphaMode="ADD"/>
-					</Button>
-					<Button name="ScrollDownUp" hidden="true">
-						<Size x="50" y="50"/>
-						<Anchors>
-							<Anchor point="TOPLEFT" relativeTo="CharacterSelectCharacterFrame" relativePoint="BOTTOMLEFT">
-								<Offset x="2" y="10"/>
-							</Anchor>
-						</Anchors>
-						<Scripts>
-							<OnClick>
-								CharacterSelectScrollUp_OnClick()
-							</OnClick>
-						</Scripts>
-						<NormalTexture file="Interface\ChatFrame\UI-ChatIcon-ScrollUp-Up"/>
-						<PushedTexture file="Interface\ChatFrame\UI-ChatIcon-ScrollUp-Down"/>
-						<DisabledTexture file="Interface\ChatFrame\UI-ChatIcon-ScrollUp-Disabled"/>
-						<HighlightTexture file="Interface\Buttons\UI-Common-MouseHilight" alphaMode="ADD"/>
-					</Button>
 					<Button name="CreateCharacterButtonSpecial" inherits="GlueButtonSmallTemplate" hidden="true" text="CREATE_NEW_CHARACTER">
 						<Size>
 							<AbsDimension x="200" y="45"/>

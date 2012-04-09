@@ -582,8 +582,7 @@ function UnitPopup_HideButtons ()
 			end
 		elseif ( value == "INVITE" ) then
 			if ( dropdownMenu.unit ) then
-				local _, server = UnitName(dropdownMenu.unit);
-				if ( canCoop == 0  or UnitIsUnit("player", dropdownMenu.unit) or (server and server ~= "") ) then
+				if ( canCoop == 0  or UnitIsUnit("player", dropdownMenu.unit) ) then
 					UnitPopupShown[UIDROPDOWNMENU_MENU_LEVEL][index] = 0;
 				end
 			elseif ( (dropdownMenu == PVPTeamManagementFrameTeamDropDown) and not PVPTeamManagementFrameTeamDropDown.online ) then
@@ -1208,7 +1207,7 @@ function UnitPopup_OnUpdate (elapsed)
 							enable = 0;
 						end
 					elseif ( value == "INVITE" ) then
-						if ( (inParty == 1 and (isLeader == 0 and isAssistant == 0)) or currentDropDown.server ) then
+						if ( inParty == 1 and (isLeader == 0 and isAssistant == 0) ) then
 							enable = 0;
 						end
 					elseif ( value == "UNINVITE" ) then
@@ -1401,7 +1400,11 @@ function UnitPopup_OnClick (self)
 		else
 			UIErrorsFrame:AddMessage(ERR_REPORT_SUBMISSION_FAILED , 1.0, 0.1, 0.1, 1.0);
 			local info = ChatTypeInfo["SYSTEM"];
-			dropdownFrame.chatFrame:AddMessage(ERR_REPORT_SUBMISSION_FAILED, info.r, info.g, info.b);
+			if ( dropdownFrame.chatFrame ) then
+				dropdownFrame.chatFrame:AddMessage(ERR_REPORT_SUBMISSION_FAILED, info.r, info.g, info.b);
+			else
+				DEFAULT_CHAT_FRAME:AddMessage(ERR_REPORT_SUBMISSION_FAILED, info.r, info.g, info.b);
+			end
 		end
 	elseif ( button == "REPORT_CHEATING" ) then
 		if ( GMQuickTicketSystemEnabled() and not GMQuickTicketSystemThrottled() ) then
@@ -1409,7 +1412,11 @@ function UnitPopup_OnClick (self)
 		else
 			UIErrorsFrame:AddMessage(ERR_REPORT_SUBMISSION_FAILED , 1.0, 0.1, 0.1, 1.0);
 			local info = ChatTypeInfo["SYSTEM"];
-			dropdownFrame.chatFrame:AddMessage(ERR_REPORT_SUBMISSION_FAILED, info.r, info.g, info.b);
+			if ( dropdownFrame.chatFrame ) then
+				dropdownFrame.chatFrame:AddMessage(ERR_REPORT_SUBMISSION_FAILED, info.r, info.g, info.b);
+			else
+				DEFAULT_CHAT_FRAME:AddMessage(ERR_REPORT_SUBMISSION_FAILED, info.r, info.g, info.b);
+			end
 		end
 	elseif ( button == "POP_OUT_CHAT" ) then
 		FCF_OpenTemporaryWindow(dropdownFrame.chatType, dropdownFrame.chatTarget, dropdownFrame.chatFrame, true);

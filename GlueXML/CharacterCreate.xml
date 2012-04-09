@@ -241,7 +241,6 @@
 		<Scripts>
 			<OnLoad>
 				self:SetBackdropBorderColor(1.0, 1.0, 1.0);
-				self:SetBackdropColor(0.09, 0.09, 0.19 );
 			</OnLoad>
 		</Scripts>
 	</Frame>
@@ -287,6 +286,12 @@
 					_G[self:GetName().."Shadow"]:SetSize(76, 76);
 				end
 			</OnMouseUp>
+			<OnEnable>
+				self.nameFrame.text:SetFontObject("GlueFontNormalSmall");
+			</OnEnable>
+			<OnDisable>
+				self.nameFrame.text:SetFontObject("GlueFontDisableSmall");
+			</OnDisable>
 		</Scripts>
 		<HighlightTexture file="Interface\Glues\CharacterCreate\UI-CharacterCreatePatchwerk" alphaMode="ADD">
 			<Size x="64" y="64"/>
@@ -385,6 +390,12 @@
 					_G[self:GetName().."Shadow"]:SetSize(68, 68);
 				end
 			</OnMouseUp>
+			<OnEnable>
+				self.nameFrame.text:SetFontObject("GlueFontNormalSmall");
+			</OnEnable>
+			<OnDisable>
+				self.nameFrame.text:SetFontObject("GlueFontDisableSmall");
+			</OnDisable>
 		</Scripts>
 		<HighlightTexture name="Highlight-Square" file="Interface\Glues\CharacterCreate\UI-CharacterCreatePatchwerk" alphaMode="ADD">
 			<Size x="56" y="56"/>
@@ -967,15 +978,6 @@
 							<Anchor point="TOPLEFT" x="3" y="-3"/>
 						</Anchors>
 						<Layers>
-							<Layer level="BACKGROUND" textureSubLevel="-2">
-								<Texture name="$parentBanners" file="Interface\Glues\CharacterCreate\UI-CharacterCreatePatchwerk">
-									<Size x="186" y="566"/>
-									<Anchors>
-										<Anchor point="TOP" x="0" y="-96"/>
-									</Anchors>
-									<TexCoords left="0.00195313" right="0.41210938" top="0.00097656" bottom="0.60156250"/>
-								</Texture>
-							</Layer>
 							<Layer level="BACKGROUND" textureSubLevel="-1">
 								<Texture file="Interface\Glues\CharacterCreate\UI-CharacterCreatePatchwerk">
 									<Size x="143" y="48"/>
@@ -993,18 +995,6 @@
 								</Texture>
 							</Layer>
 							<Layer level="ARTWORK">
-								<FontString name="CharCreateAllianceLabel" inherits="FactionName_Shadow_Large" text="ALLIANCE">
-									<Anchors>
-										<Anchor point="TOP" x="-41" y="-110"/>
-									</Anchors>
-									<Color r="1.0" g="0.82" b="0.0"/>
-								</FontString>
-								<FontString name="CharCreateHordeLabel" inherits="FactionName_Shadow_Large" text="HORDE">
-									<Anchors>
-										<Anchor point="TOP" x="45" y="-110"/>
-									</Anchors>
-									<Color r="1.0" g="0.82" b="0.0"/>
-								</FontString>
 								<FontString name="CharCreateGenderLabel" inherits="FactionName_Shadow_Huge" text="GENDER">
 									<Anchors>
 										<Anchor point="TOP" x="0" y="-21"/>
@@ -1065,76 +1055,111 @@
 									</OnEnter>
 								</Scripts>
 							</CheckButton>
-							<CheckButton name="CharCreateRaceButton1" inherits="CharCreateRaceButtonTemplate" id="1">
-								<Anchors>
-									<Anchor point="TOP" relativePoint="TOP" x="-43" y="-136"/>
-								</Anchors>
-							</CheckButton>
-							<CheckButton name="CharCreateRaceButton2" inherits="CharCreateRaceButtonTemplate" id="2">
-								<Anchors>
-									<Anchor point="TOPLEFT" relativeTo="CharCreateRaceButton1" relativePoint="BOTTOMLEFT" x="0" y="-20"/>
-								</Anchors>
-							</CheckButton>
-							<CheckButton name="CharCreateRaceButton3" inherits="CharCreateRaceButtonTemplate" id="3">
-								<Anchors>
-									<Anchor point="TOPLEFT" relativeTo="CharCreateRaceButton2" relativePoint="BOTTOMLEFT" x="0" y="-20"/>
-								</Anchors>
-							</CheckButton>
-							<CheckButton name="CharCreateRaceButton4" inherits="CharCreateRaceButtonTemplate" id="4">
-								<Anchors>
-									<Anchor point="TOPLEFT" relativeTo="CharCreateRaceButton3" relativePoint="BOTTOMLEFT" x="0" y="-20"/>
-								</Anchors>
-							</CheckButton>
-							<CheckButton name="CharCreateRaceButton5" inherits="CharCreateRaceButtonTemplate" id="5">
-								<Anchors>
-									<Anchor point="TOPLEFT" relativeTo="CharCreateRaceButton4" relativePoint="BOTTOMLEFT" x="0" y="-20"/>
-								</Anchors>
-							</CheckButton>
-							<CheckButton name="CharCreateRaceButton6" inherits="CharCreateRaceButtonTemplate" id="6">
-								<Anchors>
-									<Anchor point="TOPLEFT" relativeTo="CharCreateRaceButton5" relativePoint="BOTTOMLEFT" x="0" y="-20"/>
-								</Anchors>
-							</CheckButton>
-							<CheckButton name="CharCreateRaceButton7" inherits="CharCreateRaceButtonTemplate" id="7">
-								<Anchors>
-									<Anchor point="TOP" relativePoint="TOP" x="43" y="-136"/>
-								</Anchors>
-							</CheckButton>
-							<CheckButton name="CharCreateRaceButton8" inherits="CharCreateRaceButtonTemplate" id="8">
-								<Anchors>
-									<Anchor point="TOPLEFT" relativeTo="CharCreateRaceButton7" relativePoint="BOTTOMLEFT" x="0" y="-20"/>
-								</Anchors>
-							</CheckButton>
-							<CheckButton name="CharCreateRaceButton9" inherits="CharCreateRaceButtonTemplate" id="9">
-								<Anchors>
-									<Anchor point="TOPLEFT" relativeTo="CharCreateRaceButton8" relativePoint="BOTTOMLEFT" x="0" y="-20"/>
-								</Anchors>
-							</CheckButton>
-							<CheckButton name="CharCreateRaceButton10" inherits="CharCreateRaceButtonTemplate" id="10">
-								<Anchors>
-									<Anchor point="TOPLEFT" relativeTo="CharCreateRaceButton9" relativePoint="BOTTOMLEFT" x="0" y="-20"/>
-								</Anchors>
-							</CheckButton>
-							<CheckButton name="CharCreateRaceButton12" inherits="CharCreateRaceButtonTemplate" id="12">
-								<Anchors>
-									<Anchor point="TOPLEFT" relativeTo="CharCreateRaceButton10" relativePoint="BOTTOMLEFT" x="0" y="-20"/>
-								</Anchors>
-							</CheckButton>
-							<CheckButton name="CharCreateRaceButton11" inherits="CharCreateRaceButtonTemplate" id="11">
-								<Anchors>
-									<Anchor point="TOPLEFT" relativeTo="CharCreateRaceButton12" relativePoint="BOTTOMLEFT" x="0" y="-20"/>
-								</Anchors>
-							</CheckButton>
-							<CheckButton name="CharCreateRaceButton13" inherits="CharCreateRaceButtonTemplate" id="13">
-								<Anchors>
-									<Anchor point="BOTTOM" x="-2" y="-524"/>
-								</Anchors>
-							</CheckButton>
-							<CheckButton name="CharCreateRaceButton14" inherits="CharCreateRaceButtonTemplate" id="14">
-								<Anchors>
-									<Anchor point="TOPLEFT" relativeTo="CharCreateRaceButton12" relativePoint="BOTTOMLEFT" x="0" y="-20"/>
-								</Anchors>
-							</CheckButton>
+							<Frame name="CharCreateRaceButtonsFrame" setAllPoints="true">
+								<Layers>
+									<Layer level="BACKGROUND" textureSubLevel="-2">
+										<Texture name="$parentBanners" file="Interface\Glues\CharacterCreate\UI-CharacterCreatePatchwerk">
+											<Size x="186" y="566"/>
+											<Anchors>
+												<Anchor point="TOP" x="0" y="-96"/>
+											</Anchors>
+											<TexCoords left="0.00195313" right="0.41210938" top="0.00097656" bottom="0.60156250"/>
+										</Texture>
+									</Layer>
+									<Layer level="ARTWORK">
+										<FontString name="CharCreateAllianceLabel" inherits="FactionName_Shadow_Large" text="ALLIANCE">
+											<Anchors>
+												<Anchor point="TOP" x="-41" y="-110"/>
+											</Anchors>
+											<Color r="1.0" g="0.82" b="0.0"/>
+										</FontString>
+										<FontString name="CharCreateHordeLabel" inherits="FactionName_Shadow_Large" text="HORDE">
+											<Anchors>
+												<Anchor point="TOP" x="45" y="-110"/>
+											</Anchors>
+											<Color r="1.0" g="0.82" b="0.0"/>
+										</FontString>
+										<FontString name="CharCreateGenderLabel" inherits="FactionName_Shadow_Huge" text="GENDER">
+											<Anchors>
+												<Anchor point="TOP" x="0" y="-21"/>
+											</Anchors>
+											<Color r="1.0" g="0.82" b="0.0"/>
+										</FontString>
+									</Layer>
+								</Layers>
+								<Frames>
+									<CheckButton name="CharCreateRaceButton1" inherits="CharCreateRaceButtonTemplate" id="1">
+										<Anchors>
+											<Anchor point="TOP" relativePoint="TOP" x="-43" y="-136"/>
+										</Anchors>
+									</CheckButton>
+									<CheckButton name="CharCreateRaceButton2" inherits="CharCreateRaceButtonTemplate" id="2">
+										<Anchors>
+											<Anchor point="TOPLEFT" relativeTo="CharCreateRaceButton1" relativePoint="BOTTOMLEFT" x="0" y="-20"/>
+										</Anchors>
+									</CheckButton>
+									<CheckButton name="CharCreateRaceButton3" inherits="CharCreateRaceButtonTemplate" id="3">
+										<Anchors>
+											<Anchor point="TOPLEFT" relativeTo="CharCreateRaceButton2" relativePoint="BOTTOMLEFT" x="0" y="-20"/>
+										</Anchors>
+									</CheckButton>
+									<CheckButton name="CharCreateRaceButton4" inherits="CharCreateRaceButtonTemplate" id="4">
+										<Anchors>
+											<Anchor point="TOPLEFT" relativeTo="CharCreateRaceButton3" relativePoint="BOTTOMLEFT" x="0" y="-20"/>
+										</Anchors>
+									</CheckButton>
+									<CheckButton name="CharCreateRaceButton5" inherits="CharCreateRaceButtonTemplate" id="5">
+										<Anchors>
+											<Anchor point="TOPLEFT" relativeTo="CharCreateRaceButton4" relativePoint="BOTTOMLEFT" x="0" y="-20"/>
+										</Anchors>
+									</CheckButton>
+									<CheckButton name="CharCreateRaceButton6" inherits="CharCreateRaceButtonTemplate" id="6">
+										<Anchors>
+											<Anchor point="TOPLEFT" relativeTo="CharCreateRaceButton5" relativePoint="BOTTOMLEFT" x="0" y="-20"/>
+										</Anchors>
+									</CheckButton>
+									<CheckButton name="CharCreateRaceButton7" inherits="CharCreateRaceButtonTemplate" id="7">
+										<Anchors>
+											<Anchor point="TOP" relativePoint="TOP" x="43" y="-136"/>
+										</Anchors>
+									</CheckButton>
+									<CheckButton name="CharCreateRaceButton8" inherits="CharCreateRaceButtonTemplate" id="8">
+										<Anchors>
+											<Anchor point="TOPLEFT" relativeTo="CharCreateRaceButton7" relativePoint="BOTTOMLEFT" x="0" y="-20"/>
+										</Anchors>
+									</CheckButton>
+									<CheckButton name="CharCreateRaceButton9" inherits="CharCreateRaceButtonTemplate" id="9">
+										<Anchors>
+											<Anchor point="TOPLEFT" relativeTo="CharCreateRaceButton8" relativePoint="BOTTOMLEFT" x="0" y="-20"/>
+										</Anchors>
+									</CheckButton>
+									<CheckButton name="CharCreateRaceButton10" inherits="CharCreateRaceButtonTemplate" id="10">
+										<Anchors>
+											<Anchor point="TOPLEFT" relativeTo="CharCreateRaceButton9" relativePoint="BOTTOMLEFT" x="0" y="-20"/>
+										</Anchors>
+									</CheckButton>
+									<CheckButton name="CharCreateRaceButton12" inherits="CharCreateRaceButtonTemplate" id="12">
+										<Anchors>
+											<Anchor point="TOPLEFT" relativeTo="CharCreateRaceButton10" relativePoint="BOTTOMLEFT" x="0" y="-20"/>
+										</Anchors>
+									</CheckButton>
+									<CheckButton name="CharCreateRaceButton11" inherits="CharCreateRaceButtonTemplate" id="11">
+										<Anchors>
+											<Anchor point="TOPLEFT" relativeTo="CharCreateRaceButton12" relativePoint="BOTTOMLEFT" x="0" y="-20"/>
+										</Anchors>
+									</CheckButton>
+									<CheckButton name="CharCreateRaceButton13" inherits="CharCreateRaceButtonTemplate" id="13">
+										<Anchors>
+											<Anchor point="BOTTOM" x="-2" y="-524"/>
+										</Anchors>
+									</CheckButton>
+									<CheckButton name="CharCreateRaceButton14" inherits="CharCreateRaceButtonTemplate" id="14">
+										<Anchors>
+											<Anchor point="TOPLEFT" relativeTo="CharCreateRaceButton12" relativePoint="BOTTOMLEFT" x="0" y="-20"/>
+										</Anchors>
+									</CheckButton>
+								</Frames>
+							</Frame>
 						</Frames>
 					</Frame>
 					<Frame name="CharCreateClassFrame" inherits="CharCreatePanelTemplate">
@@ -1275,6 +1300,22 @@
 									</Anchors>
 								</Texture>
 							</Layer>
+							<Layer level="BACKGROUND" textureSubLevel="1">
+								<Texture file="Interface\Glues\CharacterCreate\UI-CharacterCreatePatchwerk">
+									<Size x="143" y="48"/>
+									<Anchors>
+										<Anchor point="TOPLEFT" x="23" y="-50"/>
+									</Anchors>
+									<TexCoords left="0.42382813" right="0.703125" top="0.68847656" bottom="0.73535156"/>	
+								</Texture>
+								<Texture file="Interface\Glues\CharacterCreate\UI-CharacterCreatePatchwerk">
+									<Size x="143" y="48"/>
+									<Anchors>
+										<Anchor point="TOPRIGHT" x="-23" y="-50"/>
+									</Anchors>
+									<TexCoords left="0.61914063" right="0.89843750" top="0.68847656" bottom="0.73535156"/>	
+								</Texture>
+							</Layer>							
 							<Layer level="ARTWORK">
 								<FontString name="CharCreateCustomizationLabel" inherits="FactionName_Shadow_Huge" text="CUSTOMIZE_OPTIONS">
 									<Anchors>
@@ -1425,7 +1466,89 @@
 									</Anchors>
 									<TexCoords left="0.00781250" right="0.47656250" top="0.62890625" bottom="0.86328125"/>	
 								</CheckedTexture>
-							</CheckButton>							
+							</CheckButton>
+							<Frame name="ModelAdjustmentFrame" hidden="true">
+								<Size x="250" y="308"/>	
+								<Anchors>
+									<Anchor point="BOTTOM" x="0" y="-600"/>
+								</Anchors>
+								<Backdrop bgFile="Interface\Tooltips\UI-Tooltip-Background" edgeFile="Interface\Tooltips\UI-Tooltip-Border" tile="true">
+									<EdgeSize>
+										<AbsValue val="16"/>
+									</EdgeSize>
+									<TileSize>
+										<AbsValue val="16"/>
+									</TileSize>
+									<BackgroundInsets>
+										<AbsInset left="3" right="3" top="3" bottom="3"/>
+									</BackgroundInsets>
+								</Backdrop>
+								<Frames>
+									<Slider name="$parentTargetX" inherits="OptionsSliderTemplate">
+										<Size x="210" y="17"/>
+										<Anchors>
+											<Anchor point="TOP" x="0" y="-24"/>
+										</Anchors>
+										<Scripts>
+											<OnValueChanged function="ModelAdjustmentFrame_ChangeTargetX"/>
+										</Scripts>	
+									</Slider>
+									<Slider name="$parentTargetY" inherits="OptionsSliderTemplate">
+										<Size x="210" y="17"/>
+										<Anchors>
+											<Anchor point="TOP" relativeTo="$parentTargetX" relativePoint="BOTTOM" x="0" y="-24"/>
+										</Anchors>
+										<Scripts>
+											<OnValueChanged function="ModelAdjustmentFrame_ChangeTargetY"/>
+										</Scripts>	
+									</Slider>
+									<Slider name="$parentTargetZ" inherits="OptionsSliderTemplate">
+										<Size x="210" y="17"/>
+										<Anchors>
+											<Anchor point="TOP" relativeTo="$parentTargetY" relativePoint="BOTTOM" x="0" y="-24"/>
+										</Anchors>
+										<Scripts>
+											<OnValueChanged function="ModelAdjustmentFrame_ChangeTargetZ"/>
+										</Scripts>	
+									</Slider>									
+									<Slider name="$parentCameraZ" inherits="OptionsSliderTemplate">
+										<Size x="210" y="17"/>
+										<Anchors>
+											<Anchor point="TOP" relativeTo="$parentTargetZ" relativePoint="BOTTOM" x="0" y="-24"/>
+										</Anchors>
+										<Scripts>
+											<OnValueChanged function="ModelAdjustmentFrame_ChangeCameraZ"/>
+										</Scripts>	
+									</Slider>									
+									<Slider name="$parentDistance" inherits="OptionsSliderTemplate">
+										<Size x="210" y="17"/>
+										<Anchors>
+											<Anchor point="TOP" relativeTo="$parentCameraZ" relativePoint="BOTTOM" x="0" y="-24"/>
+										</Anchors>
+										<Scripts>
+											<OnValueChanged function="ModelAdjustmentFrame_ChangeDistance"/>
+										</Scripts>	
+									</Slider>	
+									<Button name="$parentResetButton" inherits="GlueButtonSmallTemplate" text="Reset">
+										<Size x="180" y="34"/>
+										<Anchors>
+											<Anchor point="BOTTOM" x="0" y="8"/>
+										</Anchors>
+										<Scripts>
+											<OnClick function="ModelAdjustmentFrame_Reset"/>
+										</Scripts>
+									</Button>	
+									<Button name="$parentCopyButton" inherits="GlueButtonSmallTemplate" text="Copy to Clipboard">
+										<Size x="180" y="34"/>
+										<Anchors>
+											<Anchor point="BOTTOM" relativeTo="$parentResetButton" relativePoint="TOP" x="0" y="8"/>
+										</Anchors>
+										<Scripts>
+											<OnClick function="ModelAdjustmentFrame_CopyToClipboard"/>
+										</Scripts>
+									</Button>								
+								</Frames>
+							</Frame>
 						</Frames>
 					</Frame>
 					<Frame name="CharCreatePreviewFrame" hidden="true" enableMouse="true">
@@ -1498,7 +1621,7 @@
 							</Layer>
 						</Layers>
 						<Frames>
-								<!-- left column -->
+							<!-- left column -->
 							<Frame name="CharCreatePreviewFrame1" inherits="CharCreatePreviewFrameTemplate" id="1">
 								<Anchors>
 									<Anchor point="TOPLEFT" x="18" y="-44"/>

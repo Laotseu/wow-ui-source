@@ -378,7 +378,7 @@ function UpdateCharacterSelection(self)
 	end
 end
 
-function UpdateCharacterList()
+function UpdateCharacterList(skipSelect)
 	local numChars = GetNumCharacters();
 	local index = 1;
 	local coords;
@@ -499,11 +499,16 @@ function UpdateCharacterList()
 	end
 
 	if ( numChars > MAX_CHARACTERS_DISPLAYED ) then
-		ScrollDownButton:Show();
-		ScrollDownUp:Show();
+		CharacterSelectCharacterFrame:SetWidth(280);
+		CharacterSelectCharacterFrame.scrollBar:Show();
+		CharacterSelectCharacterFrame.scrollBar:SetMinMaxValues(0, numChars - MAX_CHARACTERS_DISPLAYED);
+		CharacterSelectCharacterFrame.scrollBar.blockUpdates = true;
+		CharacterSelectCharacterFrame.scrollBar:SetValue(CHARACTER_LIST_OFFSET);
+		CharacterSelectCharacterFrame.scrollBar.blockUpdates = nil;
 	else
-		ScrollDownButton:Hide();
-		ScrollDownUp:Hide();
+		CharacterSelectCharacterFrame.scrollBar.blockUpdates = true;	-- keep mousewheel from doing anything
+		CharacterSelectCharacterFrame:SetWidth(260);
+		CharacterSelectCharacterFrame.scrollBar:Hide();
 	end
 	
 	if (( numChars >= MAX_CHARACTERS_DISPLAYED ) and (numChars < MAX_CHARACTERS_PER_REALM)) then 
@@ -516,7 +521,9 @@ function UpdateCharacterList()
 		CharacterSelect.selectedIndex = 1;
 	end
 	
-	CharacterSelect_SelectCharacter(CharacterSelect.selectedIndex, 1);
+	if ( not skipSelect ) then
+		CharacterSelect_SelectCharacter(CharacterSelect.selectedIndex, 1);
+	end
 end
 
 function CharacterSelectButton_OnClick(self)
@@ -941,4 +948,12 @@ end
 
 function AccountUpgradePanel_ToggleExpandState()
 	AccountUpgradePanel_Update(not CharSelectAccountUpgradeButton.isExpanded);
+end
+
+function CharacterSelect_ScrollList(self, value)
+	if ( not self.blockUpdates ) then
+		CHARACTER_LIST_OFFSET = value;
+		UpdateCharacterList(true);	-- skip selecting
+		UpdateCharacterSelection(CharacterSelect);	-- for button selection
+	end
 end

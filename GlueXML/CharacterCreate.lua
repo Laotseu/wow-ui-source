@@ -251,6 +251,7 @@ function CharacterCreateFrame_OnUpdate()
 		local diff = (x - CHARACTER_CREATE_ROTATION_START_X) * CHARACTER_ROTATION_CONSTANT;
 		CHARACTER_CREATE_ROTATION_START_X = GetCursorPosition();
 		SetCharacterCreateFacing(GetCharacterCreateFacing() + diff);
+		CharCreate_RotatePreviews();
 	end
 end
 
@@ -367,6 +368,8 @@ function SetCharacterRace(id)
 	CharCreatePreviewFrame.factionBg:SetGradient("VERTICAL", 0, 0, 0, backdropColor[7], backdropColor[8], backdropColor[9]);
 	CharCreateCustomizationFrameBanner:SetVertexColor(backdropColor[10], backdropColor[11], backdropColor[12]);
 	CharacterCreateNameEdit:SetBackdropColor(backdropColor[4], backdropColor[5], backdropColor[6]);
+	CharCreateRaceInfoFrame:SetBackdropColor(backdropColor[4], backdropColor[5], backdropColor[6]);
+	CharCreateClassInfoFrame:SetBackdropColor(backdropColor[4], backdropColor[5], backdropColor[6]);
 	
 	-- race info
 	local frame = CharCreateRaceInfoFrame;
@@ -647,12 +650,14 @@ end
 function CharacterCreateRotateRight_OnUpdate(self)
 	if ( self:GetButtonState() == "PUSHED" ) then
 		SetCharacterCreateFacing(GetCharacterCreateFacing() + CHARACTER_FACING_INCREMENT);
+		CharCreate_RotatePreviews();
 	end
 end
 
 function CharacterCreateRotateLeft_OnUpdate(self)
 	if ( self:GetButtonState() == "PUSHED" ) then
 		SetCharacterCreateFacing(GetCharacterCreateFacing() - CHARACTER_FACING_INCREMENT);
+		CharCreate_RotatePreviews();
 	end
 end
 
@@ -711,14 +716,17 @@ end
 
 function CharacterChangeFixup()
 	if ( PAID_SERVICE_TYPE ) then
+		-- no class changing as a paid service
+		CharCreateClassFrame:SetAlpha(0.5);
 		for i=1, MAX_CLASSES_PER_RACE, 1 do
 			if (CharacterCreate.selectedClass ~= i) then
-				local button = _G["CharacterCreateClassButton"..i];
+				local button = _G["CharCreateClassButton"..i];
 				button:Disable();
-				SetButtonDesaturated(button, true)
+				SetButtonDesaturated(button, true);
 			end
 		end
 
+		local numAllowedRaces = 0;
 		for i=1, MAX_RACES, 1 do
 			local allow = false;
 			if ( PAID_SERVICE_TYPE == PAID_FACTION_CHANGE ) then
@@ -737,11 +745,21 @@ function CharacterChangeFixup()
 				end
 			end
 			if (not allow) then
-				local button = _G["CharacterCreateRaceButton"..i];
+				local button = _G["CharCreateRaceButton"..i];
 				button:Disable();
-				SetButtonDesaturated(button, true)
+				SetButtonDesaturated(button, true);
+			else
+				numAllowedRaces = numAllowedRaces + 1;
 			end
 		end
+		if ( numAllowedRaces > 1 ) then
+			CharCreateRaceButtonsFrame:SetAlpha(1);
+		else
+			CharCreateRaceButtonsFrame:SetAlpha(0.5);
+		end
+	else
+		CharCreateRaceButtonsFrame:SetAlpha(1);
+		CharCreateClassFrame:SetAlpha(1);
 	end
 end
 
@@ -773,7 +791,7 @@ function CharCreateSelectFeatureVariation(button)
 	local style = previewFrame:GetID();
 	-- uncheck previous selection
 	local lastStyle = GetSelectedFeatureVariation(CharacterCreateFrame.customizationType);
-	if ( lastStyle <= NUM_PREVIEW_FRAMES ) then
+	if ( lastStyle > 0 and lastStyle <= NUM_PREVIEW_FRAMES ) then
 		_G["CharCreatePreviewFrame"..lastStyle].button:SetChecked(0);
 	end
 	previewFrame.button:SetChecked(1);
@@ -801,13 +819,177 @@ end
 
 function CharCreate_SetPreviewModels()
 	SetPreviewFramesModel();
-	-- HACK: Worgen fix for camera position
+	local cameraID = 0;
+	-- HACK: Worgen fix for portrait camera position
 	local race = GetSelectedRace();
 	local gender = GetSelectedSex();
 	if ( race == WORGEN_RACE_ID and gender == SEX_MALE and not IsViewingAlteredForm() ) then
-		for i = 1, NUM_PREVIEW_FRAMES do
-			local previewFrame = _G["CharCreatePreviewFrame"..i];
-			previewFrame.model:SetCamera(1);
+		cameraID = 1;
+	end
+
+	for i = 1, NUM_PREVIEW_FRAMES do
+		local previewFrame = _G["CharCreatePreviewFrame"..i];
+		previewFrame.model:SetCustomCamera(cameraID);
+	end
+	CharCreate_RotatePreviews();
+	ModelAdjustmentFrame_SetUp();
+end
+
+function CharCreate_RotatePreviews()
+	local facing = ((GetCharacterCreateFacing())/ -180) * math.pi;
+	for i = 1, NUM_PREVIEW_FRAMES do
+		local model = _G["CharCreatePreviewFrame"..i].model;
+		if ( model:HasCustomCamera() ) then
+			model:SetCameraFacing(facing);
 		end
 	end
+end
+
+-- test stuff
+
+function ModelAdjustmentFrame_SetUp()
+	local model = CharCreatePreviewFrame1.model;
+	if ( model:HasCustomCamera() ) then
+		ModelAdjustmentFrame.setUp = nil;
+		local x, y, z = model:GetCameraTarget();
+		-- x
+		x = floor(x * 1000 + 0.5);
+		ModelAdjustmentFrameTargetXText:SetText("Target X: "..x);
+		ModelAdjustmentFrameTargetX:SetMinMaxValues(x - 500, x + 500);
+		ModelAdjustmentFrameTargetX:SetValue(x);
+		-- y
+		y = floor(y * 1000 + 0.5);
+		ModelAdjustmentFrameTargetYText:SetText("Target Y: "..y);
+		ModelAdjustmentFrameTargetY:SetMinMaxValues(y - 500, y + 500);
+		ModelAdjustmentFrameTargetY:SetValue(y);		
+		-- z
+		local nz = floor(z * 1000 + 0.5);
+		ModelAdjustmentFrameTargetZText:SetText("Target Z: "..nz);
+		ModelAdjustmentFrameTargetZ:SetMinMaxValues(nz - 500, nz + 500);
+		ModelAdjustmentFrameTargetZ:SetValue(nz);		
+		-- camera z
+		local cx, cy, cz = model:GetCameraPosition();
+		cz = floor(cz * 1000 + 0.5);
+		ModelAdjustmentFrameCameraZText:SetText("Camera Z: "..cz);
+		ModelAdjustmentFrameCameraZ:SetMinMaxValues(cz - 500, cz + 500);
+		ModelAdjustmentFrameCameraZ:SetValue(cz);
+		-- distance
+		ModelAdjustmentFrame_UpdateDistance(model);
+		
+		ModelAdjustmentFrame.setUp = true;		
+	end
+end
+
+function ModelAdjustmentFrame_ChangeTargetX(self, value)
+	if ( ModelAdjustmentFrame.setUp ) then
+		local model = CharCreatePreviewFrame1.model;
+		local x, y, z = model:GetCameraTarget();
+		value = floor(value + 0.5);
+		ModelAdjustmentFrameTargetXText:SetText("Target X: "..value);
+		value = value / 1000;
+
+		for i = 1, NUM_PREVIEW_FRAMES do
+			local model = _G["CharCreatePreviewFrame"..i].model;
+			model:SetCameraTarget(value, y, z);
+		end		
+		ModelAdjustmentFrame_UpdateDistance(model);
+	end
+end
+
+function ModelAdjustmentFrame_ChangeTargetY(self, value)
+	if ( ModelAdjustmentFrame.setUp ) then
+		local model = CharCreatePreviewFrame1.model;
+		local x, y, z = model:GetCameraTarget();
+		value = floor(value + 0.5);
+		ModelAdjustmentFrameTargetYText:SetText("Target Y: "..value);
+		value = value / 1000;
+		
+		for i = 1, NUM_PREVIEW_FRAMES do
+			local model = _G["CharCreatePreviewFrame"..i].model;
+			model:SetCameraTarget(x, value, z);
+		end		
+		ModelAdjustmentFrame_UpdateDistance(model);
+	end
+end
+
+function ModelAdjustmentFrame_ChangeTargetZ(self, value)
+	if ( ModelAdjustmentFrame.setUp ) then
+		local model = CharCreatePreviewFrame1.model;
+		local x, y, z = model:GetCameraTarget();
+		value = floor(value + 0.5);
+		ModelAdjustmentFrameTargetZText:SetText("Target Z: "..value);
+		value = value / 1000;
+		
+		for i = 1, NUM_PREVIEW_FRAMES do
+			local model = _G["CharCreatePreviewFrame"..i].model;
+			model:SetCameraTarget(x, y, value);
+		end		
+	end
+end
+
+function ModelAdjustmentFrame_ChangeCameraZ(self, value)
+	if ( ModelAdjustmentFrame.setUp ) then
+		local model = CharCreatePreviewFrame1.model;
+		value = floor(value + 0.5);
+		ModelAdjustmentFrameCameraZText:SetText("Camera Z: "..value);		
+		value = value / 1000;
+		local cx, cy, cz = model:GetCameraPosition();
+		
+		for i = 1, NUM_PREVIEW_FRAMES do
+			local model = _G["CharCreatePreviewFrame"..i].model;
+			model:SetCameraPosition(cx, cy, value);
+		end			
+	end
+end
+
+function ModelAdjustmentFrame_ChangeDistance(self, value)
+	if ( ModelAdjustmentFrame.setUp ) then
+		local model = CharCreatePreviewFrame1.model;
+		value = floor(value + 0.5);
+		ModelAdjustmentFrameDistanceText:SetText("Distance: "..value);
+		value = value / 1000;
+		
+		for i = 1, NUM_PREVIEW_FRAMES do
+			local model = _G["CharCreatePreviewFrame"..i].model;
+			model:SetCameraDistance(value);
+		end			
+		
+	end
+end
+
+function ModelAdjustmentFrame_UpdateDistance(model)
+	local distance = model:GetCameraDistance();
+	distance = floor(distance * 1000 + 0.5);
+	ModelAdjustmentFrameDistanceText:SetText("Distance: "..distance);
+	ModelAdjustmentFrameDistance:SetMinMaxValues(300, 2300);
+	ModelAdjustmentFrameDistance:SetValue(distance);
+end
+
+function ModelAdjustmentFrame_CopyToClipboard()
+	local model = CharCreatePreviewFrame1.model;
+	local x, y, z = model:GetCameraTarget();
+	local cx, cy, cz = model:GetCameraPosition();
+	local cd = model:GetCameraDistance();
+	
+	local race = GetNameForRace();
+	local gender = GetSelectedSex();
+	local formatString = "[%s][%d] = { tx = %5.3f, ty = %5.3f, tz = %5.3f, cz = %5.3f, distance = %5.3f }"	
+	CopyToClipboard(string.format(formatString, race, gender, x, y, z, cz, cd));
+end
+
+function ModelAdjustmentFrame_Reset()
+	local cameraID = 0;
+	-- HACK: Worgen fix for portrait camera position
+	local race = GetSelectedRace();
+	local gender = GetSelectedSex();
+	if ( race == WORGEN_RACE_ID and gender == SEX_MALE and not IsViewingAlteredForm() ) then
+		cameraID = 1;
+	end
+
+	for i = 1, NUM_PREVIEW_FRAMES do
+		local previewFrame = _G["CharCreatePreviewFrame"..i];
+		previewFrame.model:SetCustomCamera(cameraID);
+	end
+	CharCreate_RotatePreviews();
+	ModelAdjustmentFrame_SetUp();
 end
