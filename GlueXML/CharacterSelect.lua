@@ -191,6 +191,9 @@ function CharacterSelect_OnShow()
 	if( IsBlizzCon() ) then
 		CharacterSelectUI:Hide();
 	end
+	
+	-- character templates
+	CharacterTemplatesFrame_Update();
 end
 
 function CharacterSelect_OnHide(self)
@@ -585,6 +588,7 @@ function CharacterSelect_SelectCharacter(index, noCreate)
 	if ( index == CharacterSelect.createIndex ) then
 		if ( not noCreate ) then
 			PlaySound("gsCharacterSelectionCreateNew");
+			ClearCharacterTemplate();
 			SetGlueScreen("charcreate");
 		end
 	else
@@ -956,4 +960,37 @@ function CharacterSelect_ScrollList(self, value)
 		UpdateCharacterList(true);	-- skip selecting
 		UpdateCharacterSelection(CharacterSelect);	-- for button selection
 	end
+end
+
+function CharacterTemplatesFrame_Update()
+	local self = CharacterTemplatesFrame;
+	local numTemplates = GetNumCharacterTemplates();
+	if ( numTemplates > 0 ) then
+		if ( not self:IsShown() ) then
+			-- set it up
+			self:Show();
+			GlueDropDownMenu_SetWidth(self.dropDown, 160);
+			GlueDropDownMenu_Initialize(self.dropDown, CharacterTemplatesFrameDropDown_Initialize);
+			GlueDropDownMenu_SetSelectedID(self.dropDown, 1);
+		end
+	else
+		self:Hide();
+	end
+end
+
+function CharacterTemplatesFrameDropDown_Initialize()
+	local info = GlueDropDownMenu_CreateInfo();
+	for i = 1, GetNumCharacterTemplates() do
+		local name, description = GetCharacterTemplateInfo(i);
+		info.text = name;
+		info.checked = nil;
+		info.func = CharacterTemplatesFrameDropDown_OnClick;
+		info.tooltipTitle = name;
+		info.tooltipText = description;
+		GlueDropDownMenu_AddButton(info);
+	end
+end
+
+function CharacterTemplatesFrameDropDown_OnClick(button)
+	GlueDropDownMenu_SetSelectedID(CharacterTemplatesFrameDropDown, button:GetID());
 end

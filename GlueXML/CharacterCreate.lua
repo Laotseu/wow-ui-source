@@ -74,7 +74,40 @@ CLASS_ICON_TCOORDS = {
 	["DEATHKNIGHT"]	= {0.25, 0.49609375, 0.5, 0.75},
 	["MONK"]	= {0.49609375, 0.7421875, 0.5, 0.75},
 };
-SPACEMARINE_DISABLED = "Not available"
+MODEL_CAMERA_CONFIG = {
+	[2] = { 
+		["Draenei"] = { tx = 0.191, ty = -0.015, tz = 2.302, cz = 2.160, distance = 1.116, light =  0.80 },
+		["NightElf"] = { tx = 0.095, ty = -0.008, tz = 2.240, cz = 2.045, distance = 0.830, light =  0.85 },
+		["Scourge"] = { tx = 0.094, ty = -0.172, tz = 1.675, cz = 1.478, distance = 0.691, light =  0.80 },
+		["Orc"] = { tx = 0.346, ty = -0.001, tz = 1.878, cz = 1.793, distance = 1.074, light =  0.80 },
+		["Gnome"] = { tx = 0.051, ty = 0.015, tz = 0.845, cz = 0.821, distance = 0.821, light =  0.85 },
+		["Dwarf"] = { tx = 0.037, ty = 0.009, tz = 1.298, cz = 1.265, distance = 0.839, light =  0.85 },
+		["Tauren"] = { tx = 0.516, ty = -0.003, tz = 1.654, cz = 1.647, distance = 1.266, light =  0.80 },
+		["Troll"] = { tx = 0.402, ty = 0.016, tz = 2.076, cz = 1.980, distance = 0.943, light =  0.75 },
+		["Worgen"] = { tx = 0.473, ty = 0.012, tz = 1.972, cz = 1.570, distance = 1.423, light =  0.80 },
+		["WorgenAlt"] = { tx = 0.055, ty = 0.006, tz = 1.863, cz = 1.749, distance = 0.714, light =  0.75 },
+		["BloodElf"] = { tx = 0.009, ty = -0.120, tz = 1.914, cz = 1.712, distance = 0.727, light =  0.80 },
+		["Human"] = { tx = 0.055, ty = 0.006, tz = 1.863, cz = 1.749, distance = 0.714, light =  0.75 },
+		["Pandaren"] = { tx = 0.046, ty = -0.020, tz = 2.125, cz = 2.201, distance = 1.240, light =  0.90 },
+		["Goblin"] = { tx = 0.127, ty = -0.022, tz = 1.104, cz = 1.009, distance = 0.830, light =  0.80 },
+	},
+	[3] = {
+		["Draenei"] = { tx = 0.155, ty = 0.009, tz = 2.177, cz = 1.971, distance = 0.734, light =  0.75 },
+		["NightElf"] = { tx = 0.121, ty = 0.034, tz = 2.068, cz = 2.055, distance = 0.652, light =  0.85 },
+		["Scourge"] = { tx = 0.198, ty = 0.001, tz = 1.669, cz = 1.509, distance = 0.563, light =  0.75 },
+		["Orc"] = { tx = -0.069, ty = -0.007, tz = 1.863, cz = 1.718, distance = 0.585, light =  0.75 },
+		["Gnome"] = { tx = 0.031, ty = 0.009, tz = 0.787, cz = 0.693, distance = 0.726, light =  0.85 },
+		["Dwarf"] = { tx = -0.060, ty = -0.010, tz = 1.326, cz = 1.343, distance = 0.720, light =  0.80 },
+		["Tauren"] = { tx = 0.337, ty = -0.008, tz = 1.918, cz = 1.855, distance = 0.891, light =  0.75 },
+		["Troll"] = { tx = 0.031, ty = -0.082, tz = 2.226, cz = 2.248, distance = 0.674, light =  0.75 },
+		["Worgen"] = { tx = 0.067, ty = -0.044, tz = 2.227, cz = 2.013, distance = 1.178, light =  0.80 },
+		["WorgenAlt"] = { tx = -0.044, ty = -0.015, tz = 1.755, cz = 1.689, distance = 0.612, light =  0.75 },
+		["BloodElf"] = { tx = -0.072, ty = 0.009, tz = 1.789, cz = 1.792, distance = 0.717, light =  0.80 },
+		["Human"] = { tx = -0.044, ty = -0.015, tz = 1.755, cz = 1.689, distance = 0.612, light =  0.75 },
+		["Pandaren"] = { tx = 0.122, ty = -0.002, tz = 1.999, cz = 1.925, distance = 1.065, light =  0.90 },
+		["Goblin"] = { tx = -0.076, ty = 0.006, tz = 1.191, cz = 1.137, distance = 0.970, light =  0.80 },
+	}
+};
 
 function CharacterCreate_OnLoad(self)
 	self:RegisterEvent("RANDOM_CHARACTER_NAME_RESULT");
@@ -293,7 +326,12 @@ function CharacterCreateEnumerateRaces(...)
 			button:Disable();
 			SetButtonDesaturated(button, 1);
 			button.name = name;
-			button.tooltip = name.."|n".._G[strupper(select(i+1, ...).."_".."DISABLED")];
+			local disabledReason = _G[strupper(select(i+1, ...).."_".."DISABLED")];
+			if ( disabledReason ) then
+				button.tooltip = name.."|n"..disabledReason;
+			else
+				button.tooltip = nil;
+			end
 		end
 		index = index + 1;
 	end
@@ -318,7 +356,7 @@ function CharacterCreateEnumerateClasses(...)
 		button = _G["CharCreateClassButton"..index];
 		button:Show();
 		button.nameFrame.text:SetText(select(i, ...));
-		if ( (select(i+2, ...) == 1) and (IsRaceClassValid(CharacterCreate.selectedRace, index)) ) then
+		if ( select(i+2, ...) == true and (IsRaceClassValid(CharacterCreate.selectedRace, index)) ) then
 			button:Enable();
 			SetButtonDesaturated(button);
 			button.tooltip = nil;
@@ -485,7 +523,13 @@ function CharacterCreate_Finish()
 	if ( PAID_SERVICE_TYPE ) then
 		GlueDialog_Show("CONFIRM_PAID_SERVICE");
 	else
-		CreateCharacter(CharacterCreateNameEdit:GetText());
+		-- if using templates, pandaren must pick a faction
+		local _, faction = GetFactionForRace(CharacterCreate.selectedRace);
+		if ( IsUsingCharacterTemplate() and ( faction ~= "Alliance" and faction ~= "Horde" ) ) then
+			CharacterTemplateConfirmDialog:Show();
+		else
+			CreateCharacter(CharacterCreateNameEdit:GetText());
+		end
 	end
 end
 
@@ -538,6 +582,7 @@ function CharacterCreate_Forward()
 		CharCreateMoreInfoButton:Hide();
 		CharCreateCustomizationFrame:Show();
 		CharCreatePreviewFrame:Show();
+		CharacterTemplateConfirmDialog:Hide();
 		-- reselect the same customization, or select the 1st one, to apply styles
 		CharCreateSelectCustomizationType(CharacterCreateFrame.customizationType or 1);
 		CharCreateOkayButton:SetText(FINISH);
@@ -827,12 +872,24 @@ function CharCreate_SetPreviewModels()
 		cameraID = 1;
 	end
 
+	-- get data for target/camera/light
+	local _, raceFileName = GetNameForRace();
+	if ( IsViewingAlteredForm() ) then
+		raceFileName = raceFileName.."Alt";
+	end
+	local config = MODEL_CAMERA_CONFIG[gender][raceFileName];
+	local scale = CharCreatePreviewFrame1Model:GetWorldScale();		-- all models should be using same scale
+	-- load models and configure
 	for i = 1, NUM_PREVIEW_FRAMES do
-		local previewFrame = _G["CharCreatePreviewFrame"..i];
-		previewFrame.model:SetCustomCamera(cameraID);
+		local model = _G["CharCreatePreviewFrame"..i].model;
+		model:SetCustomCamera(cameraID);
+		model:SetCameraTarget(config.tx * scale, config.ty * scale, config.tz * scale);
+		model:SetCameraDistance(config.distance * scale);
+		local cx, cy, cz = model:GetCameraPosition();
+		model:SetCameraPosition(cx, cy, config.cz * scale);
+		model:SetLight(1, 0, 0, 0, 0, config.light, 1.0, 1.0, 1.0);
 	end
 	CharCreate_RotatePreviews();
-	ModelAdjustmentFrame_SetUp();
 end
 
 function CharCreate_RotatePreviews()
@@ -843,153 +900,4 @@ function CharCreate_RotatePreviews()
 			model:SetCameraFacing(facing);
 		end
 	end
-end
-
--- test stuff
-
-function ModelAdjustmentFrame_SetUp()
-	local model = CharCreatePreviewFrame1.model;
-	if ( model:HasCustomCamera() ) then
-		ModelAdjustmentFrame.setUp = nil;
-		local x, y, z = model:GetCameraTarget();
-		-- x
-		x = floor(x * 1000 + 0.5);
-		ModelAdjustmentFrameTargetXText:SetText("Target X: "..x);
-		ModelAdjustmentFrameTargetX:SetMinMaxValues(x - 500, x + 500);
-		ModelAdjustmentFrameTargetX:SetValue(x);
-		-- y
-		y = floor(y * 1000 + 0.5);
-		ModelAdjustmentFrameTargetYText:SetText("Target Y: "..y);
-		ModelAdjustmentFrameTargetY:SetMinMaxValues(y - 500, y + 500);
-		ModelAdjustmentFrameTargetY:SetValue(y);		
-		-- z
-		local nz = floor(z * 1000 + 0.5);
-		ModelAdjustmentFrameTargetZText:SetText("Target Z: "..nz);
-		ModelAdjustmentFrameTargetZ:SetMinMaxValues(nz - 500, nz + 500);
-		ModelAdjustmentFrameTargetZ:SetValue(nz);		
-		-- camera z
-		local cx, cy, cz = model:GetCameraPosition();
-		cz = floor(cz * 1000 + 0.5);
-		ModelAdjustmentFrameCameraZText:SetText("Camera Z: "..cz);
-		ModelAdjustmentFrameCameraZ:SetMinMaxValues(cz - 500, cz + 500);
-		ModelAdjustmentFrameCameraZ:SetValue(cz);
-		-- distance
-		ModelAdjustmentFrame_UpdateDistance(model);
-		
-		ModelAdjustmentFrame.setUp = true;		
-	end
-end
-
-function ModelAdjustmentFrame_ChangeTargetX(self, value)
-	if ( ModelAdjustmentFrame.setUp ) then
-		local model = CharCreatePreviewFrame1.model;
-		local x, y, z = model:GetCameraTarget();
-		value = floor(value + 0.5);
-		ModelAdjustmentFrameTargetXText:SetText("Target X: "..value);
-		value = value / 1000;
-
-		for i = 1, NUM_PREVIEW_FRAMES do
-			local model = _G["CharCreatePreviewFrame"..i].model;
-			model:SetCameraTarget(value, y, z);
-		end		
-		ModelAdjustmentFrame_UpdateDistance(model);
-	end
-end
-
-function ModelAdjustmentFrame_ChangeTargetY(self, value)
-	if ( ModelAdjustmentFrame.setUp ) then
-		local model = CharCreatePreviewFrame1.model;
-		local x, y, z = model:GetCameraTarget();
-		value = floor(value + 0.5);
-		ModelAdjustmentFrameTargetYText:SetText("Target Y: "..value);
-		value = value / 1000;
-		
-		for i = 1, NUM_PREVIEW_FRAMES do
-			local model = _G["CharCreatePreviewFrame"..i].model;
-			model:SetCameraTarget(x, value, z);
-		end		
-		ModelAdjustmentFrame_UpdateDistance(model);
-	end
-end
-
-function ModelAdjustmentFrame_ChangeTargetZ(self, value)
-	if ( ModelAdjustmentFrame.setUp ) then
-		local model = CharCreatePreviewFrame1.model;
-		local x, y, z = model:GetCameraTarget();
-		value = floor(value + 0.5);
-		ModelAdjustmentFrameTargetZText:SetText("Target Z: "..value);
-		value = value / 1000;
-		
-		for i = 1, NUM_PREVIEW_FRAMES do
-			local model = _G["CharCreatePreviewFrame"..i].model;
-			model:SetCameraTarget(x, y, value);
-		end		
-	end
-end
-
-function ModelAdjustmentFrame_ChangeCameraZ(self, value)
-	if ( ModelAdjustmentFrame.setUp ) then
-		local model = CharCreatePreviewFrame1.model;
-		value = floor(value + 0.5);
-		ModelAdjustmentFrameCameraZText:SetText("Camera Z: "..value);		
-		value = value / 1000;
-		local cx, cy, cz = model:GetCameraPosition();
-		
-		for i = 1, NUM_PREVIEW_FRAMES do
-			local model = _G["CharCreatePreviewFrame"..i].model;
-			model:SetCameraPosition(cx, cy, value);
-		end			
-	end
-end
-
-function ModelAdjustmentFrame_ChangeDistance(self, value)
-	if ( ModelAdjustmentFrame.setUp ) then
-		local model = CharCreatePreviewFrame1.model;
-		value = floor(value + 0.5);
-		ModelAdjustmentFrameDistanceText:SetText("Distance: "..value);
-		value = value / 1000;
-		
-		for i = 1, NUM_PREVIEW_FRAMES do
-			local model = _G["CharCreatePreviewFrame"..i].model;
-			model:SetCameraDistance(value);
-		end			
-		
-	end
-end
-
-function ModelAdjustmentFrame_UpdateDistance(model)
-	local distance = model:GetCameraDistance();
-	distance = floor(distance * 1000 + 0.5);
-	ModelAdjustmentFrameDistanceText:SetText("Distance: "..distance);
-	ModelAdjustmentFrameDistance:SetMinMaxValues(300, 2300);
-	ModelAdjustmentFrameDistance:SetValue(distance);
-end
-
-function ModelAdjustmentFrame_CopyToClipboard()
-	local model = CharCreatePreviewFrame1.model;
-	local x, y, z = model:GetCameraTarget();
-	local cx, cy, cz = model:GetCameraPosition();
-	local cd = model:GetCameraDistance();
-	
-	local race = GetNameForRace();
-	local gender = GetSelectedSex();
-	local formatString = "[%s][%d] = { tx = %5.3f, ty = %5.3f, tz = %5.3f, cz = %5.3f, distance = %5.3f }"	
-	CopyToClipboard(string.format(formatString, race, gender, x, y, z, cz, cd));
-end
-
-function ModelAdjustmentFrame_Reset()
-	local cameraID = 0;
-	-- HACK: Worgen fix for portrait camera position
-	local race = GetSelectedRace();
-	local gender = GetSelectedSex();
-	if ( race == WORGEN_RACE_ID and gender == SEX_MALE and not IsViewingAlteredForm() ) then
-		cameraID = 1;
-	end
-
-	for i = 1, NUM_PREVIEW_FRAMES do
-		local previewFrame = _G["CharCreatePreviewFrame"..i];
-		previewFrame.model:SetCustomCamera(cameraID);
-	end
-	CharCreate_RotatePreviews();
-	ModelAdjustmentFrame_SetUp();
 end

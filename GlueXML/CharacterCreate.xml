@@ -738,7 +738,7 @@
 		</PushedTexture>
 	</CheckButton>
 	<Frame name="CharCreatePreviewFrameTemplate" virtual="true">
-		<Size x="100" y="95"/>
+		<Size x="110" y="104"/>
 		<Layers>
 			<Layer level="BACKGROUND">
 				<Texture>
@@ -752,7 +752,7 @@
 		</Layers>
 		<Frames>
 			<Model name="$parentModel" parentKey="model">
-				<Size x="80" y="75"/>
+				<Size x="88" y="82"/>
 				<Anchors>
 					<Anchor point="CENTER"/>
 				</Anchors>
@@ -1467,95 +1467,13 @@
 									<TexCoords left="0.00781250" right="0.47656250" top="0.62890625" bottom="0.86328125"/>	
 								</CheckedTexture>
 							</CheckButton>
-							<Frame name="ModelAdjustmentFrame" hidden="true">
-								<Size x="250" y="308"/>	
-								<Anchors>
-									<Anchor point="BOTTOM" x="0" y="-600"/>
-								</Anchors>
-								<Backdrop bgFile="Interface\Tooltips\UI-Tooltip-Background" edgeFile="Interface\Tooltips\UI-Tooltip-Border" tile="true">
-									<EdgeSize>
-										<AbsValue val="16"/>
-									</EdgeSize>
-									<TileSize>
-										<AbsValue val="16"/>
-									</TileSize>
-									<BackgroundInsets>
-										<AbsInset left="3" right="3" top="3" bottom="3"/>
-									</BackgroundInsets>
-								</Backdrop>
-								<Frames>
-									<Slider name="$parentTargetX" inherits="OptionsSliderTemplate">
-										<Size x="210" y="17"/>
-										<Anchors>
-											<Anchor point="TOP" x="0" y="-24"/>
-										</Anchors>
-										<Scripts>
-											<OnValueChanged function="ModelAdjustmentFrame_ChangeTargetX"/>
-										</Scripts>	
-									</Slider>
-									<Slider name="$parentTargetY" inherits="OptionsSliderTemplate">
-										<Size x="210" y="17"/>
-										<Anchors>
-											<Anchor point="TOP" relativeTo="$parentTargetX" relativePoint="BOTTOM" x="0" y="-24"/>
-										</Anchors>
-										<Scripts>
-											<OnValueChanged function="ModelAdjustmentFrame_ChangeTargetY"/>
-										</Scripts>	
-									</Slider>
-									<Slider name="$parentTargetZ" inherits="OptionsSliderTemplate">
-										<Size x="210" y="17"/>
-										<Anchors>
-											<Anchor point="TOP" relativeTo="$parentTargetY" relativePoint="BOTTOM" x="0" y="-24"/>
-										</Anchors>
-										<Scripts>
-											<OnValueChanged function="ModelAdjustmentFrame_ChangeTargetZ"/>
-										</Scripts>	
-									</Slider>									
-									<Slider name="$parentCameraZ" inherits="OptionsSliderTemplate">
-										<Size x="210" y="17"/>
-										<Anchors>
-											<Anchor point="TOP" relativeTo="$parentTargetZ" relativePoint="BOTTOM" x="0" y="-24"/>
-										</Anchors>
-										<Scripts>
-											<OnValueChanged function="ModelAdjustmentFrame_ChangeCameraZ"/>
-										</Scripts>	
-									</Slider>									
-									<Slider name="$parentDistance" inherits="OptionsSliderTemplate">
-										<Size x="210" y="17"/>
-										<Anchors>
-											<Anchor point="TOP" relativeTo="$parentCameraZ" relativePoint="BOTTOM" x="0" y="-24"/>
-										</Anchors>
-										<Scripts>
-											<OnValueChanged function="ModelAdjustmentFrame_ChangeDistance"/>
-										</Scripts>	
-									</Slider>	
-									<Button name="$parentResetButton" inherits="GlueButtonSmallTemplate" text="Reset">
-										<Size x="180" y="34"/>
-										<Anchors>
-											<Anchor point="BOTTOM" x="0" y="8"/>
-										</Anchors>
-										<Scripts>
-											<OnClick function="ModelAdjustmentFrame_Reset"/>
-										</Scripts>
-									</Button>	
-									<Button name="$parentCopyButton" inherits="GlueButtonSmallTemplate" text="Copy to Clipboard">
-										<Size x="180" y="34"/>
-										<Anchors>
-											<Anchor point="BOTTOM" relativeTo="$parentResetButton" relativePoint="TOP" x="0" y="8"/>
-										</Anchors>
-										<Scripts>
-											<OnClick function="ModelAdjustmentFrame_CopyToClipboard"/>
-										</Scripts>
-									</Button>								
-								</Frames>
-							</Frame>
 						</Frames>
 					</Frame>
 					<Frame name="CharCreatePreviewFrame" hidden="true" enableMouse="true">
 						<Size x="243" y="0"/>
 						<Anchors>
-							<Anchor point="TOPRIGHT" x="17" y="-18"/>
-							<Anchor point="BOTTOMRIGHT" x="17" y="19"/>
+							<Anchor point="TOPRIGHT" x="17" y="-7"/>
+							<Anchor point="BOTTOMRIGHT" x="17" y="8"/>
 						</Anchors>
 						<Layers>
 							<Layer level="BACKGROUND">
@@ -1624,73 +1542,73 @@
 							<!-- left column -->
 							<Frame name="CharCreatePreviewFrame1" inherits="CharCreatePreviewFrameTemplate" id="1">
 								<Anchors>
-									<Anchor point="TOPLEFT" x="18" y="-44"/>
+									<Anchor point="TOPLEFT" x="12" y="-44"/>
 								</Anchors>
 							</Frame>
 							<Frame name="CharCreatePreviewFrame3" inherits="CharCreatePreviewFrameTemplate" id="3">
 								<Anchors>
-									<Anchor point="TOP" relativeTo="CharCreatePreviewFrame1" relativePoint="BOTTOM" x="0" y="0"/>
+									<Anchor point="TOP" relativeTo="CharCreatePreviewFrame1" relativePoint="BOTTOM" x="0" y="6"/>
 								</Anchors>
 							</Frame>
 							<Frame name="CharCreatePreviewFrame5" inherits="CharCreatePreviewFrameTemplate" id="5">
 								<Anchors>
-									<Anchor point="TOP" relativeTo="CharCreatePreviewFrame3" relativePoint="BOTTOM" x="0" y="0"/>
+									<Anchor point="TOP" relativeTo="CharCreatePreviewFrame3" relativePoint="BOTTOM" x="0" y="6"/>
 								</Anchors>
 							</Frame>
 							<Frame name="CharCreatePreviewFrame7" inherits="CharCreatePreviewFrameTemplate" id="7">
 								<Anchors>
-									<Anchor point="TOP" relativeTo="CharCreatePreviewFrame5" relativePoint="BOTTOM" x="0" y="0"/>
+									<Anchor point="TOP" relativeTo="CharCreatePreviewFrame5" relativePoint="BOTTOM" x="0" y="6"/>
 								</Anchors>
 							</Frame>
 							<Frame name="CharCreatePreviewFrame9" inherits="CharCreatePreviewFrameTemplate" id="9">
 								<Anchors>
-									<Anchor point="TOP" relativeTo="CharCreatePreviewFrame7" relativePoint="BOTTOM" x="0" y="0"/>
+									<Anchor point="TOP" relativeTo="CharCreatePreviewFrame7" relativePoint="BOTTOM" x="0" y="6"/>
 								</Anchors>
 							</Frame>
 							<Frame name="CharCreatePreviewFrame11" inherits="CharCreatePreviewFrameTemplate" id="11">
 								<Anchors>
-									<Anchor point="TOP" relativeTo="CharCreatePreviewFrame9" relativePoint="BOTTOM" x="0" y="0"/>
+									<Anchor point="TOP" relativeTo="CharCreatePreviewFrame9" relativePoint="BOTTOM" x="0" y="6"/>
 								</Anchors>
 							</Frame>
 							<Frame name="CharCreatePreviewFrame13" inherits="CharCreatePreviewFrameTemplate" id="13">
 								<Anchors>
-									<Anchor point="TOP" relativeTo="CharCreatePreviewFrame11" relativePoint="BOTTOM" x="0" y="0"/>
+									<Anchor point="TOP" relativeTo="CharCreatePreviewFrame11" relativePoint="BOTTOM" x="0" y="6"/>
 								</Anchors>
 							</Frame>
 							<!-- right column -->
 							<Frame name="CharCreatePreviewFrame2" inherits="CharCreatePreviewFrameTemplate" id="2">
 								<Anchors>
-									<Anchor point="LEFT" relativeTo="CharCreatePreviewFrame1" relativePoint="RIGHT" x="0" y="0"/>
+									<Anchor point="LEFT" relativeTo="CharCreatePreviewFrame1" relativePoint="RIGHT" x="-6" y="0"/>
 								</Anchors>
 							</Frame>
 							<Frame name="CharCreatePreviewFrame4" inherits="CharCreatePreviewFrameTemplate" id="4">
 								<Anchors>
-									<Anchor point="LEFT" relativeTo="CharCreatePreviewFrame3" relativePoint="RIGHT" x="0" y="0"/>
+									<Anchor point="LEFT" relativeTo="CharCreatePreviewFrame3" relativePoint="RIGHT" x="-6" y="0"/>
 								</Anchors>
 							</Frame>
 							<Frame name="CharCreatePreviewFrame6" inherits="CharCreatePreviewFrameTemplate" id="6">
 								<Anchors>
-									<Anchor point="LEFT" relativeTo="CharCreatePreviewFrame5" relativePoint="RIGHT" x="0" y="0"/>
+									<Anchor point="LEFT" relativeTo="CharCreatePreviewFrame5" relativePoint="RIGHT" x="-6" y="0"/>
 								</Anchors>
 							</Frame>
 							<Frame name="CharCreatePreviewFrame8" inherits="CharCreatePreviewFrameTemplate" id="8">
 								<Anchors>
-									<Anchor point="LEFT" relativeTo="CharCreatePreviewFrame7" relativePoint="RIGHT" x="0" y="0"/>
+									<Anchor point="LEFT" relativeTo="CharCreatePreviewFrame7" relativePoint="RIGHT" x="-6" y="0"/>
 								</Anchors>
 							</Frame>
 							<Frame name="CharCreatePreviewFrame10" inherits="CharCreatePreviewFrameTemplate" id="10">
 								<Anchors>
-									<Anchor point="LEFT" relativeTo="CharCreatePreviewFrame9" relativePoint="RIGHT" x="0" y="0"/>
+									<Anchor point="LEFT" relativeTo="CharCreatePreviewFrame9" relativePoint="RIGHT" x="-6" y="0"/>
 								</Anchors>
 							</Frame>
 							<Frame name="CharCreatePreviewFrame12" inherits="CharCreatePreviewFrameTemplate" id="12">
 								<Anchors>
-									<Anchor point="LEFT" relativeTo="CharCreatePreviewFrame11" relativePoint="RIGHT" x="0" y="0"/>
+									<Anchor point="LEFT" relativeTo="CharCreatePreviewFrame11" relativePoint="RIGHT" x="-6" y="0"/>
 								</Anchors>
 							</Frame>
 							<Frame name="CharCreatePreviewFrame14" inherits="CharCreatePreviewFrameTemplate" id="14">
 								<Anchors>
-									<Anchor point="LEFT" relativeTo="CharCreatePreviewFrame13" relativePoint="RIGHT" x="0" y="0"/>
+									<Anchor point="LEFT" relativeTo="CharCreatePreviewFrame13" relativePoint="RIGHT" x="-6" y="0"/>
 								</Anchors>
 							</Frame>
 						</Frames>
@@ -1733,4 +1651,99 @@
 			</OnUpdateModel>
 		</Scripts>
 	</ModelFFX>
+	
+	<Frame name="CharacterTemplateConfirmDialog" toplevel="true" parent="GlueParent" setAllPoints="true" enableMouse="true" enableKeyboard="true" frameStrata="DIALOG" hidden="true">
+		<Frames>
+			<Frame name="$parentContents">
+				<Size x="512" y="120"/>
+				<Anchors>
+					<Anchor point="CENTER" x="0" y="0"/>
+				</Anchors>
+				<Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background" edgeFile="Interface\DialogFrame\UI-DialogBox-Border" tile="true">
+					<BackgroundInsets>
+						<AbsInset left="11" right="12" top="12" bottom="11"/>
+					</BackgroundInsets>
+					<TileSize>
+						<AbsValue val="32"/>
+					</TileSize>
+					<EdgeSize>
+						<AbsValue val="32"/>
+					</EdgeSize>
+				</Backdrop>
+				<Layers>
+					<Layer level="ARTWORK">
+						<Texture file="Interface\DialogFrame\UI-Dialog-Icon-AlertNew">
+							<Size x="48" y="48"/>
+							<Anchors>
+								<Anchor point="LEFT" x="24" y="16"/>
+							</Anchors>
+						</Texture>
+						<FontString inherits="GlueFontNormalLarge" text="TEMPLATE_CHARACTER_CHOOSE_FACTION">
+							<Size>
+								<AbsDimension x="400" y="0"/>
+							</Size>
+							<Anchors>
+								<Anchor point="TOP" x="0" y="-26"/>
+							</Anchors>
+						</FontString>
+					</Layer>
+				</Layers>
+				<Frames>
+					<Button name="$parentButton2" inherits="GlueDialogButtonTemplate" text="HORDE">
+						<Size x="150" y="40"/>
+						<Anchors>
+							<Anchor point="BOTTOM" x="0" y="12"/>
+						</Anchors>
+						<Scripts>
+							<OnClick>
+								CharacterTemplateConfirmDialog:Hide();
+								CreateCharacter(CharacterCreateNameEdit:GetText(), 0);
+							</OnClick>
+							<OnUpdate>
+								CharacterSelect_DeathKnightSwap(self);
+							</OnUpdate>
+						</Scripts>
+					</Button>
+					<Button name="$parentButton1" inherits="GlueDialogButtonTemplate" text="ALLIANCE">
+						<Size x="150" y="40"/>
+						<Anchors>
+							<Anchor point="RIGHT" relativeTo="$parentButton2" relativePoint="LEFT" x="-6" y="0"/>
+						</Anchors>
+						<Scripts>
+							<OnClick>
+								CharacterTemplateConfirmDialog:Hide();
+								CreateCharacter(CharacterCreateNameEdit:GetText(), 1);
+							</OnClick> 
+							<OnUpdate>
+								CharacterSelect_DeathKnightSwap(self);
+							</OnUpdate>
+						</Scripts>
+					</Button>
+					<Button name="$parentButton3" inherits="GlueDialogButtonTemplate" text="CANCEL">
+						<Size x="150" y="40"/>
+						<Anchors>
+							<Anchor point="LEFT" relativeTo="$parentButton2" relativePoint="RIGHT" x="6" y="0"/>
+						</Anchors>
+						<Scripts>
+							<OnClick>
+								CharacterTemplateConfirmDialog:Hide();
+								PlaySound("gsTitleOptionExit");
+							</OnClick>
+							<OnUpdate>
+								CharacterSelect_DeathKnightSwap(self);
+							</OnUpdate>
+						</Scripts>
+					</Button>
+				</Frames>
+			</Frame>
+		</Frames>
+		<Scripts>
+			<OnChar>
+				-- block keys
+			</OnChar>
+			<OnKeyDown>
+				-- block keys
+			</OnKeyDown>
+		</Scripts>
+	</Frame>
 </Ui>
