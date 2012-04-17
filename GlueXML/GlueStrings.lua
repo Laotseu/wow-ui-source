@@ -998,6 +998,7 @@ VIEW_ALL_REALMS = "View Realm List";
 VIRTUAL_KEYPAD_OKAY = "Okay";
 VISITABLE_URL1 = "http://enUS.nydus.battle.net/WOW/enUS/client/in_game_mail_link_1?r=US&l=%s&sr=%u&c=%x%x";
 VISITABLE_URL2 = "http://enUS.nydus.battle.net/WOW/enUS/client/trial_restriction_error_1?region=US&accountName=%s";
+VISITABLE_URL3 = "http://enus.nydus.battle.net/wow/enUS/client/item-restoration";
 VISITABLE_URL_GENERIC = "http://enUS.nydus.battle.net/WOW/enUS/client/in_game_mail_link_%d";
 VOLUME = "Volume";
 VRN_CPUMEM_2GB = "Requires 2GB or more of CPU memory";
