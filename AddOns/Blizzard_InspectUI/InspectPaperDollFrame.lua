@@ -15,7 +15,7 @@ function InspectPaperDollFrame_OnEvent(self, event, unit)
 			end
 			return;
 		end
-		if (event == "INSPECT_READY" and InspectFrame.unit and (UnitGUID(InspectFrame.unit) == unit)) then
+		if (event == "INSPECT_READY") then
 			InspectPaperDollFrame_SetLevel();
 			InspectPaperDollFrame_UpdateButtons();
 		end
@@ -28,7 +28,7 @@ function InspectPaperDollFrame_SetLevel()
 	end
 
 	local unit, level = InspectFrame.unit, UnitLevel(InspectFrame.unit);
-	local primaryTalentTree = GetSpecialization(true);
+	local primaryTalentTree = GetPrimaryTalentTree(true);
 	
 	local classDisplayName, class = UnitClass(InspectFrame.unit); 
 	local classColor = RAID_CLASS_COLORS[class];
@@ -36,7 +36,7 @@ function InspectPaperDollFrame_SetLevel()
 	local specName, _;
 	
 	if (primaryTalentTree) then
-		_, specName = GetSpecializationInfo(primaryTalentTree, true);
+		_, specName = GetTalentTabInfo(primaryTalentTree, true);
 	end
 	
 	if ( level == -1 ) then

@@ -285,7 +285,7 @@ function CompactUnitFrameProfiles_GetAutoActivationState()
 		end
 		profileType, enemyType = instanceType, "PvE";
 	elseif ( instanceType == "arena" ) then
-		local groupSize = GetNumGroupMembers(LE_PARTY_CATEGORY_HOME);
+		local groupSize = max(GetRealNumPartyMembers() + 1, GetRealNumRaidMembers());
 		--TODO - Get the actual arena size, not just the # in party.
 		if ( groupSize <= 2 ) then
 			numPlayers, profileType, enemyType = 2, instanceType, "PvP";
@@ -301,8 +301,9 @@ function CompactUnitFrameProfiles_GetAutoActivationState()
 			numPlayers, profileType, enemyType = countMap[maxPlayers], instanceType, "PvP";
 		end
 	else
-		if ( IsInRaid() ) then
-			numPlayers, profileType, enemyType = countMap[GetNumGroupMembers()], "world", "PvE";
+		local numRaidMembers = GetNumRaidMembers();
+		if ( numRaidMembers > 0 ) then
+			numPlayers, profileType, enemyType = countMap[GetNumRaidMembers()], "world", "PvE";
 		else
 			numPlayers, profileType, enemyType = 5, "world", "PvE";
 		end
@@ -316,7 +317,7 @@ function CompactUnitFrameProfiles_GetAutoActivationState()
 end
 
 function CompactUnitFrameProfiles_CheckAutoActivation()
-	if ( not IsInGroup() ) then
+	if ( GetNumRaidMembers() == 0 and GetNumPartyMembers() == 0 ) then
 		CompactUnitFrameProfiles_SetLastActivationType(nil, nil, nil, nil);
 		return;
 	end
@@ -331,7 +332,7 @@ function CompactUnitFrameProfiles_CheckAutoActivation()
 		AnimTimerFrameUpdateActiveRaidProfileGroup:Stop();
 	end
 		
-	local spec = GetActiveSpecGroup();
+	local spec = GetActiveTalentGroup();
 	local lastActivationType, lastNumPlayers, lastSpec, lastEnemyType = CompactUnitFrameProfiles_GetLastActivationType();
 	
 	if ( activationType == "world" ) then	--We don't adjust due to just the number of players in the raid.

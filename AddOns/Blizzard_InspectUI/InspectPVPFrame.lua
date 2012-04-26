@@ -21,15 +21,10 @@ end
 
 function InspectPVPFrame_SetFaction()
 	local factionGroup = UnitFactionGroup("target");
-	if ( factionGroup and factionGroup ~= "Neutral" ) then
-		if ( factionGroup == "Alliance" ) then
-			InspectPVPFrameFaction:SetTexCoord(0.69433594, 0.74804688, 0.60351563, 0.72851563);
-		else
-			InspectPVPFrameFaction:SetTexCoord(0.63867188, 0.69238281, 0.60351563, 0.73242188);
-		end
-		InspectPVPFrameFaction:Show();
+	if ( factionGroup == "Alliance" ) then
+		InspectPVPFrameFaction:SetTexCoord(0.69433594, 0.74804688, 0.60351563, 0.72851563);
 	else
-		InspectPVPFrameFaction:Hide();
+		InspectPVPFrameFaction:SetTexCoord(0.63867188, 0.69238281, 0.60351563, 0.73242188);
 	end
 end
 

@@ -1,7 +1,6 @@
 CURRENT_ACTIONBAR_PAGE = 1;
 NUM_ACTIONBAR_PAGES = 6;
 NUM_ACTIONBAR_BUTTONS = 12;
-NUM_OVERRIDE_BUTTONS = 6;
 ATTACK_BUTTON_FLASH_TIME = 0.4;
 
 BOTTOMLEFT_ACTIONBAR_PAGE = 6;
@@ -15,15 +14,13 @@ VIEWABLE_ACTION_BAR_PAGES = {1, 1, 1, 1, 1, 1};
 
 function ActionButtonDown(id)
 	local button;
-	if ( OverrideActionBar and OverrideActionBar:IsShown() ) then
-		if ( id > NUM_OVERRIDE_BUTTONS ) then
-			return;
-		end
-		button = _G["OverrideActionBarButton"..id];
+	if ( VehicleMenuBar:IsShown() and id <= VEHICLE_MAX_ACTIONBUTTONS ) then
+		button = _G["VehicleMenuBarActionButton"..id];
+	elseif ( BonusActionBarFrame:IsShown() ) then
+		button = _G["BonusActionButton"..id];
 	else
 		button = _G["ActionButton"..id];
 	end
-
 	if ( button:GetButtonState() == "NORMAL" ) then
 		button:SetButtonState("PUSHED");
 	end
@@ -35,15 +32,13 @@ end
 
 function ActionButtonUp(id)
 	local button;
-	if ( OverrideActionBar and OverrideActionBar:IsShown() ) then
-		if ( id > NUM_OVERRIDE_BUTTONS ) then
-			return;
-		end
-		button = _G["OverrideActionBarButton"..id];
+	if ( VehicleMenuBar:IsShown() and id <= VEHICLE_MAX_ACTIONBUTTONS ) then
+		button = _G["VehicleMenuBarActionButton"..id];
+	elseif ( BonusActionBarFrame:IsShown() ) then
+		button = _G["BonusActionButton"..id];
 	else
 		button = _G["ActionButton"..id];
 	end
-	
 	if ( button:GetButtonState() == "PUSHED" ) then
 		button:SetButtonState("NORMAL");
 		if (not GetCVarBool("ActionButtonUseKeyDown")) then
@@ -93,6 +88,7 @@ function ActionBarButtonEventsFrame_OnLoad(self)
 	self:RegisterEvent("PLAYER_ENTERING_WORLD");
 	self:RegisterEvent("ACTIONBAR_SHOWGRID");
 	self:RegisterEvent("ACTIONBAR_HIDEGRID");
+	self:RegisterEvent("ACTIONBAR_PAGE_CHANGED");
 	self:RegisterEvent("ACTIONBAR_SLOT_CHANGED");
 	self:RegisterEvent("UPDATE_BINDINGS");
 	self:RegisterEvent("UPDATE_SHAPESHIFT_FORM");
@@ -120,7 +116,6 @@ function ActionBarActionEventsFrame_OnLoad(self)
 	--self:RegisterEvent("ACTIONBAR_UPDATE_STATE");			not updating state from lua anymore, see SetActionUIButton
 	self:RegisterEvent("ACTIONBAR_UPDATE_USABLE");
 	--self:RegisterEvent("ACTIONBAR_UPDATE_COOLDOWN");		not updating cooldown from lua anymore, see SetActionUIButton
-	self:RegisterEvent("SPELL_UPDATE_CHARGES");
 	self:RegisterEvent("UPDATE_INVENTORY_ALERTS");
 	self:RegisterEvent("PLAYER_TARGET_CHANGED");
 	self:RegisterEvent("TRADE_SKILL_SHOW");
@@ -206,10 +201,16 @@ function ActionButton_CalculateAction (self, button)
 		local page = SecureButton_GetModifiedAttribute(self, "actionpage", button);
 		if ( not page ) then
 			page = GetActionBarPage();
-			if ( self.isExtra ) then
-				page = GetExtraBarIndex();
+			if ( self.isBonus and (page == 1 or self.alwaysBonus) ) then
+				local offset = GetBonusBarOffset();
+				if ( offset == 0 and BonusActionBarFrame and BonusActionBarFrame.lastBonusBar ) then
+					offset = BonusActionBarFrame.lastBonusBar;
+				end
+				page = NUM_ACTIONBAR_PAGES + offset;
+			elseif ( self.isExtra ) then
+				page = NUM_ACTIONBAR_PAGES + GetExtraBarOffset();
 			elseif ( self.buttonType == "MULTICASTACTIONBUTTON" ) then
-				page = GetMultiCastBarIndex();
+				page = NUM_ACTIONBAR_PAGES + GetMultiCastBarOffset();
 			end
 		end
 		return (self:GetID() + ((page - 1) * NUM_ACTIONBAR_BUTTONS));
@@ -388,12 +389,7 @@ function ActionButton_UpdateCount (self)
 			text:SetText(count);
 		end
 	else
-		local charges, maxCharges, chargeStart, chargeDuration = GetActionCharges(action);
-		if (maxCharges > 0) then
-			text:SetText(charges);
-		else
-			text:SetText("");
-		end
+		text:SetText("");
 	end
 end
 
@@ -488,6 +484,14 @@ function ActionButton_OnEvent (self, event, ...)
 		ActionButton_Update(self);
 		return;
 	end
+	if ( event == "ACTIONBAR_PAGE_CHANGED" or event == "UPDATE_BONUS_ACTIONBAR" or event == "UPDATE_EXTRA_ACTIONBAR" ) then
+		ActionButton_UpdateAction(self);
+		local actionType, id, subType = GetActionInfo(self.action);
+		if ( actionType == "spell" and id == 0 ) then
+			ActionButton_HideOverlayGlow(self);
+		end
+		return;
+	end
 	if ( event == "ACTIONBAR_SHOWGRID" ) then
 		ActionButton_ShowGrid(self);
 		return;
@@ -558,8 +562,6 @@ function ActionButton_OnEvent (self, event, ...)
 				ActionButton_HideOverlayGlow(self);
 			end
 		end
-	elseif ( event == "SPELL_UPDATE_CHARGES" ) then
-		ActionButton_UpdateCount(self);
 	end
 end
 

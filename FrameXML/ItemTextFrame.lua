@@ -4,7 +4,7 @@ function ItemTextFrame_OnLoad(self)
 	self:RegisterEvent("ITEM_TEXT_READY");
 	self:RegisterEvent("ITEM_TEXT_CLOSED");
 	ItemTextScrollFrame.scrollBarHideable = 1;
-	ButtonFrameTemplate_HideButtonBar(self);
+	ItemTextScrollFrameScrollBar:Hide();
 end
 
 function ItemTextFrame_OnEvent(self, event, ...)

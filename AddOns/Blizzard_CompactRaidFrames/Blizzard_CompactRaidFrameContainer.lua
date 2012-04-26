@@ -24,7 +24,8 @@ function CompactRaidFrameContainer_OnLoad(self)
 	end
 	CompactRaidFrameContainer_UpdateDisplayedUnits(self);
 	
-	self:RegisterEvent("GROUP_ROSTER_UPDATE");
+	self:RegisterEvent("RAID_ROSTER_UPDATE");
+	self:RegisterEvent("PARTY_MEMBERS_CHANGED");
 	self:RegisterEvent("UNIT_PET");
 	
 	local unitFrameReleaseFunc = function(frame)
@@ -52,7 +53,7 @@ function CompactRaidFrameContainer_OnLoad(self)
 end
 
 function CompactRaidFrameContainer_OnEvent(self, event, ...)
-	if ( event == "GROUP_ROSTER_UPDATE" ) then
+	if ( event == "RAID_ROSTER_UPDATE" or event == "PARTY_MEMBERS_CHANGED" ) then
 		CompactRaidFrameContainer_UpdateDisplayedUnits(self);
 		CompactRaidFrameContainer_TryUpdate(self);
 	elseif ( event == "UNIT_PET" ) then
@@ -146,7 +147,7 @@ function CompactRaidFrameContainer_ReadyToUpdate(self)
 end
 
 function CompactRaidFrameContainer_UpdateDisplayedUnits(self)
-	if ( IsInRaid() ) then
+	if ( GetNumRaidMembers() > 0 ) then
 		self.units = self.raidUnits;
 	else
 		self.units = self.partyUnits;
@@ -203,7 +204,7 @@ do
 	local usedGroups = {}; --Enclosure to make sure usedGroups isn't used anywhere else.
 	function CompactRaidFrameContainer_AddGroups(self)
 	
-		if ( IsInRaid() ) then
+		if ( GetNumRaidMembers() > 0 ) then
 			RaidUtil_GetUsedGroups(usedGroups);
 			
 			for groupNum, isUsed in ipairs(usedGroups) do
@@ -259,7 +260,7 @@ function CompactRaidFrameContainer_AddPlayers(self)
 end
 
 function CompactRaidFrameContainer_AddPets(self)
-	if ( IsInRaid() ) then
+	if ( GetNumRaidMembers() > 0 ) then
 		for i=1, MAX_RAID_MEMBERS do
 			local unit = "raidpet"..i;
 			if ( UnitExists(unit) ) then
@@ -271,7 +272,7 @@ function CompactRaidFrameContainer_AddPets(self)
 		if ( UnitExists("pet") ) then
 			CompactRaidFrameContainer_AddUnitFrame(self, "pet", "pet");
 		end
-		for i=1, GetNumSubgroupMembers() do
+		for i=1, GetNumPartyMembers() do
 			local unit = "partypet"..i;
 			if ( UnitExists(unit) ) then
 				CompactRaidFrameContainer_AddUnitFrame(self, unit, "pet");
@@ -342,7 +343,7 @@ function CompactRaidFrameContainer_GetUnitFrame(self, unit, frameType)
 		frame = CreateFrame("Button", "CompactRaidFrame"..unitFramesCreated, self, "CompactUnitFrameTemplate");
 		frame.applyFunc = applyFunc;
 		CompactUnitFrame_SetUpFrame(frame, info.setUpFunc);
-		CompactUnitFrame_SetUpdateAllEvent(frame, "GROUP_ROSTER_UPDATE");
+		CompactUnitFrame_SetUpdateAllEvent(frame, "RAID_ROSTER_UPDATE");
 		frame.unusedFunc = self.unitFrameUnusedFunc;
 		tinsert(self.frameUpdateList[info.updateList], frame);
 		CompactRaidFrameReservation_RegisterReservation(self.frameReservations[frameType], frame, mapping);
@@ -361,11 +362,9 @@ function RaidUtil_GetUsedGroups(tab)	--Fills out the table with which groups hav
 	for i=1, MAX_RAID_GROUPS do
 		tab[i] = false;
 	end
-	if ( IsInRaid() ) then
-		for i=1, GetNumGroupMembers() do
-			local name, rank, subgroup = GetRaidRosterInfo(i);
-			tab[subgroup] = true;
-		end
+	for i=1, GetNumRaidMembers() do
+		local name, rank, subgroup = GetRaidRosterInfo(i);
+		tab[subgroup] = true;
 	end
 	return tab;
 end

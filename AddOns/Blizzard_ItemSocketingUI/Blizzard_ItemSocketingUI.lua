@@ -1,4 +1,4 @@
-UIPanelWindows["ItemSocketingFrame"] =		{ area = "left",	pushable = 0 };
+UIPanelWindows["ItemSocketingFrame"] =		{ area = "left",	pushable = 0, 	xoffset = -16, 		yoffset = 12 };
 
 local primaryGemTexture = "Interface\\ItemSocketingFrame\\UI-ItemSockets";
 local engineeringGemTexture = "Interface\\ItemSocketingFrame\\UI-EngineeringSockets";
@@ -25,7 +25,6 @@ function ItemSocketingFrame_OnLoad(self)
 	ItemSocketingScrollFrameScrollBar:SetPoint("TOPLEFT", ItemSocketingScrollFrame, "TOPRIGHT", 7.9999995231628, -18);
 	ItemSocketingScrollFrameScrollBar:SetHeight(221);
 	ItemSocketingDescription:SetMinimumWidth(ITEM_SOCKETING_DESCRIPTION_MIN_WIDTH, 1);
-	ButtonFrameTemplate_HideButtonBar(self);
 end
 
 function ItemSocketingFrame_OnEvent(self, event, ...)
@@ -156,14 +155,14 @@ function ItemSocketingFrame_Update()
 		ItemSocketingSocket2Right:Hide();
 		ItemSocketingSocket3Left:Show();
 		ItemSocketingSocket3Right:Show();
-		ItemSocketingSocket1:SetPoint("BOTTOM", ItemSocketingFrame, "BOTTOM", -75, 32);
+		ItemSocketingSocket1:SetPoint("BOTTOM", ItemSocketingFrame, "BOTTOM", -75, 62);
 	elseif ( numSockets == 2 ) then
 		ItemSocketingSocket1Right:Hide();
 		ItemSocketingSocket2Left:Show();
 		ItemSocketingSocket2Right:Show();
-		ItemSocketingSocket1:SetPoint("BOTTOM", ItemSocketingFrame, "BOTTOM", -35, 32);
+		ItemSocketingSocket1:SetPoint("BOTTOM", ItemSocketingFrame, "BOTTOM", -35, 62);
 	else
-		ItemSocketingSocket1:SetPoint("BOTTOM", ItemSocketingFrame, "BOTTOM", 0, 32);
+		ItemSocketingSocket1:SetPoint("BOTTOM", ItemSocketingFrame, "BOTTOM", 0, 62);
 		ItemSocketingSocket1Right:Show();
 	end
 

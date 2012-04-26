@@ -70,13 +70,13 @@ function CharacterFrame_OnLoad (self)
 end
 
 function CharacterFrame_UpdatePortrait()
-	local masteryIndex = GetSpecialization();
+	local masteryIndex = GetPrimaryTalentTree();
 	if (masteryIndex == nil) then
 		local _, class = UnitClass("player");
 		CharacterFramePortrait:SetTexture("Interface\\TargetingFrame\\UI-Classes-Circles");
 		CharacterFramePortrait:SetTexCoord(unpack(CLASS_ICON_TCOORDS[class]));
 	else
-		local _, _, _, icon = GetSpecializationInfo(masteryIndex);
+		local _, _, _, icon = GetTalentTabInfo(masteryIndex);
 		CharacterFramePortrait:SetTexCoord(0, 1, 0, 1);
 		SetPortraitToTexture(CharacterFramePortrait, icon);	
 	end

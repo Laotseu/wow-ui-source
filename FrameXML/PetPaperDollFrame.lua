@@ -80,7 +80,6 @@ function PetPaperDollFrame_OnEvent (self, event, ...)
 			end
 			PaperDoll_InitStatCategories(PETPAPERDOLL_STATCATEGORY_DEFAULTORDER, "petStatCategoryOrder", "petStatCategoriesCollapsed", "pet");
 		end
-		PetPaperDollFrame_UpdateIsAvailable();
 	elseif ( arg1 == "pet" ) then
 		if (self:IsVisible()) then
 			self:SetScript("OnUpdate", PetPaperDollFrame_QueuedUpdate);

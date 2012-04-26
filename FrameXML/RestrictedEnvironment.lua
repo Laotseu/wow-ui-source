@@ -125,8 +125,8 @@ function ENV.PlayerInCombat()
 end
 
 function ENV.PlayerInGroup()
-    return ( IsInRaid() and "raid" )
-        or ( IsInGroup() and "party" )
+    return ( GetNumRaidMembers() > 0 and "raid" )
+        or ( GetNumPartyMembers() > 0 and "party" )
 end
 
 function ENV.UnitHasVehicleUI(unit)

@@ -203,12 +203,12 @@ function CombatText_OnEvent(self, event, ...)
 	
 	elseif ( messageType == "DAMAGE_CRIT" or messageType == "SPELL_DAMAGE_CRIT" ) then
 		displayType = "crit";
-		message = "-"..BreakUpLargeNumbers(data);
+		message = "-"..data;
 	elseif ( messageType == "DAMAGE" or messageType == "SPELL_DAMAGE" or messageType == "DAMAGE_SHIELD" ) then
 		if (data == 0) then
 			return
 		end
-		message = "-"..BreakUpLargeNumbers(data);
+		message = "-"..data;
 	elseif ( messageType == "SPELL_CAST" ) then
 		message = "<"..data..">";
 	elseif ( messageType == "SPELL_AURA_START" ) then
@@ -219,34 +219,34 @@ function CombatText_OnEvent(self, event, ...)
 		message = format(AURA_END, data);
 	elseif ( messageType == "HEAL" or messageType == "PERIODIC_HEAL") then
 		if ( COMBAT_TEXT_SHOW_FRIENDLY_NAMES == "1" and messageType == "HEAL" and UnitName(self.unit) ~= data ) then
-			message = "+"..BreakUpLargeNumbers(arg3).." ["..data.."]";
+			message = "+"..arg3.." ["..data.."]";
 		else
-			message = "+"..BreakUpLargeNumbers(arg3);
+			message = "+"..arg3;
 		end
 	elseif ( messageType == "HEAL_ABSORB" or messageType == "PERIODIC_HEAL_ABSORB") then
 		if ( COMBAT_TEXT_SHOW_FRIENDLY_NAMES == "1" and messageType == "HEAL_ABSORB" and UnitName(self.unit) ~= data ) then
-			message = "+"..BreakUpLargeNumbers(arg3).." ["..data.."] "..format(ABSORB_TRAILER, arg4);
+			message = "+"..arg3.." ["..data.."] "..format(ABSORB_TRAILER, arg4);
 		else
-			message = "+"..BreakUpLargeNumbers(arg3).." "..format(ABSORB_TRAILER, arg4);
+			message = "+"..arg3.." "..format(ABSORB_TRAILER, arg4);
 		end
 	elseif ( messageType == "HEAL_CRIT" ) then
 		displayType = "crit";
 		if ( COMBAT_TEXT_SHOW_FRIENDLY_NAMES == "1" and UnitName(self.unit) ~= data ) then
-			message = "+"..BreakUpLargeNumbers(arg3).." ["..data.."]";
+			message = "+"..arg3.." ["..data.."]";
 		else
-			message = "+"..BreakUpLargeNumbers(arg3);
+			message = "+"..arg3;
 		end
 	elseif ( messageType == "HEAL_CRIT_ABSORB" ) then
 		displayType = "crit";
 		if ( COMBAT_TEXT_SHOW_FRIENDLY_NAMES == "1" and UnitName(self.unit) ~= data ) then
-			message = "+"..BreakUpLargeNumbers(arg3).." ["..data.."] "..format(ABSORB_TRAILER, arg4);
+			message = "+"..arg3.." ["..data.."] "..format(ABSORB_TRAILER, arg4);
 		else
-			message = "+"..BreakUpLargeNumbers(arg3).." "..format(ABSORB_TRAILER, arg4);
+			message = "+"..arg3.." "..format(ABSORB_TRAILER, arg4);
 		end
 	elseif ( messageType == "ENERGIZE" or messageType == "PERIODIC_ENERGIZE") then
 		local count =  tonumber(data) 
 		if (count > 0 ) then
-			data = "+"..BreakUpLargeNumbers(data);
+			data = "+"..data;
 		end
 		if( arg3 == "MANA"
 			or arg3 == "RAGE"

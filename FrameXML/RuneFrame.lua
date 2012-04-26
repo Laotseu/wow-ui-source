@@ -72,9 +72,8 @@ end
 
 function RuneButton_OnEnter(self)
 	if ( self.tooltipText ) then
-		GameTooltip_SetDefaultAnchor(GameTooltip, self);
-		GameTooltip:SetText(self.tooltipText, 1, 1, 1);
-		GameTooltip:AddLine(RUNES_TOOLTIP, nil, nil, nil, true);
+		GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+		GameTooltip:SetText(self.tooltipText);
 		GameTooltip:Show();
 	end
 end

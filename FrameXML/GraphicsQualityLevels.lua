@@ -18,7 +18,6 @@ VideoData["Graphics_Quality"]={
 				Graphics_LiquidDetailDropDown = VIDEO_OPTIONS_LOW,
 				Graphics_SunshaftsDropDown = VIDEO_OPTIONS_DISABLED,
 				Graphics_ProjectedTexturesDropDown = VIDEO_OPTIONS_DISABLED,
-				Graphics_SSAODropDown = VIDEO_OPTIONS_DISABLED,
 			},
 		},
 		[2] = {
@@ -29,13 +28,12 @@ VideoData["Graphics_Quality"]={
 				Graphics_ParticleDensityDropDown = VIDEO_OPTIONS_FAIR,
 				Graphics_EnvironmentalDetailDropDown = VIDEO_OPTIONS_FAIR,
 				Graphics_GroundClutterDropDown = VIDEO_OPTIONS_FAIR,
-				Graphics_ShadowsDropDown = VIDEO_OPTIONS_LOW,
+				Graphics_ShadowsDropDown = VIDEO_OPTIONS_FAIR,
 				Graphics_TextureResolutionDropDown = VIDEO_OPTIONS_FAIR,
 				Graphics_FilteringDropDown = VIDEO_OPTIONS_TRILINEAR,
 				Graphics_LiquidDetailDropDown = VIDEO_OPTIONS_FAIR,
 				Graphics_SunshaftsDropDown = VIDEO_OPTIONS_DISABLED,
 				Graphics_ProjectedTexturesDropDown = VIDEO_OPTIONS_DISABLED,
-				Graphics_SSAODropDown = VIDEO_OPTIONS_DISABLED,
 			},
 		},
 		[3] = {
@@ -47,12 +45,11 @@ VideoData["Graphics_Quality"]={
 				Graphics_EnvironmentalDetailDropDown = VIDEO_OPTIONS_MEDIUM,
 				Graphics_GroundClutterDropDown = VIDEO_OPTIONS_MEDIUM,
 				Graphics_ShadowsDropDown = VIDEO_OPTIONS_MEDIUM,
-				Graphics_TextureResolutionDropDown = VIDEO_OPTIONS_MEDIUM,
+				Graphics_TextureResolutionDropDown = VIDEO_OPTIONS_HIGH,
 				Graphics_FilteringDropDown = VIDEO_OPTIONS_4XANISOTROPIC,
 				Graphics_LiquidDetailDropDown = VIDEO_OPTIONS_MEDIUM,
 				Graphics_SunshaftsDropDown = VIDEO_OPTIONS_LOW,
 				Graphics_ProjectedTexturesDropDown = VIDEO_OPTIONS_ENABLED,
-				Graphics_SSAODropDown = VIDEO_OPTIONS_LOW,
 			},
 		},
 		[4] = {
@@ -69,7 +66,6 @@ VideoData["Graphics_Quality"]={
 				Graphics_LiquidDetailDropDown = VIDEO_OPTIONS_MEDIUM,
 				Graphics_SunshaftsDropDown = VIDEO_OPTIONS_HIGH,
 				Graphics_ProjectedTexturesDropDown = VIDEO_OPTIONS_ENABLED,
-				Graphics_SSAODropDown = VIDEO_OPTIONS_HIGH,
 			},
 		},
 		[5] = {
@@ -87,7 +83,6 @@ VideoData["Graphics_Quality"]={
 				Graphics_LiquidDetailDropDown = VIDEO_OPTIONS_ULTRA,
 				Graphics_SunshaftsDropDown = VIDEO_OPTIONS_HIGH,
 				Graphics_ProjectedTexturesDropDown = VIDEO_OPTIONS_ENABLED,
-				Graphics_SSAODropDown = VIDEO_OPTIONS_HIGH,
 			},
 		},
 	},
@@ -520,41 +515,31 @@ VideoData["Graphics_ViewDistanceDropDown"]={
 		[1] = {
 			text = VIDEO_OPTIONS_LOW,
 			cvars =	{
-				farClip = 200,
-				terrainLodDist = 200,
-				terrainTextureLod = 1,
+				farClip = 185,
 			},
 		},
 		[2] = {
 			text = VIDEO_OPTIONS_FAIR,
 			cvars =	{
-				farClip = 600,
-				terrainLodDist = 300,
-				terrainTextureLod = 1,
+				farClip = 507,
 			},
 		},
 		[3] = {
 			text = VIDEO_OPTIONS_MEDIUM,
 			cvars =	{
-				farClip = 800,
-				terrainLodDist = 450,
-				terrainTextureLod = 1,
+				farClip = 727,
 			},
 		},
 		[4] = {
 			text = VIDEO_OPTIONS_HIGH,
 			cvars =	{
-				farClip = 1100,
-				terrainLodDist = 550,
-				terrainTextureLod = 0,
+				farClip = 1057,
 			},
 		},
 		[5] = {
 			text = VIDEO_OPTIONS_ULTRA,
 			cvars =	{
-				farClip = 1300,
-				terrainLodDist = 650,
-				terrainTextureLod = 0,
+				farClip = 1250,
 			},
 		},
 	},
@@ -700,36 +685,6 @@ VideoData["Graphics_ParticleDensityDropDown"]={
 }
 
 -------------------------------------------------------------------------------------------------------
-VideoData["Graphics_SSAODropDown"]={
-	name = "SSAO_Tooltip";
-	description = OPTION_TOOLTIP_SSAO,
-
-	data = {
-		[1] = {
-			text = VIDEO_OPTIONS_DISABLED,
-			cvars =	{
-				ssao = 0,
-			},
-		},
-		[2] = {
-			text = VIDEO_OPTIONS_LOW,
-			cvars =	{
-				ssao = 2,
-			},
-		},
-		[3] = {
-			text = VIDEO_OPTIONS_HIGH,
-			cvars =	{
-				ssao = 1,
-			},
-		},
-	},
-	dependent = {
-		"Graphics_Quality",
-	},
-}
-
--------------------------------------------------------------------------------------------------------
 VideoData["Graphics_ShadowsDropDown"]={
 	name = SHADOW_QUALITY;
 	description = OPTION_TOOLTIP_SHADOW_QUALITY,
@@ -789,36 +744,36 @@ VideoData["Graphics_TextureResolutionDropDown"]={
 		[1] = {
 			text = VIDEO_OPTIONS_LOW,
 			cvars =	{
+				baseMip = 1,
 				terrainMipLevel = 1,
-				componentTextureLevel = 1,
-				worldBaseMip = 2,
+				componentTextureLevel = 8,
 			},
 			tooltip = VIDEO_OPTIONS_TEXTURE_DETAIL_LOW,
 		},
 		[2] = {
 			text = VIDEO_OPTIONS_FAIR,
 			cvars =	{
+				baseMip = 0,
 				terrainMipLevel = 1,
-				componentTextureLevel = 1,
-				worldBaseMip = 1,
+				componentTextureLevel = 8,
 			},
 			tooltip = VIDEO_OPTIONS_TEXTURE_DETAIL_FAIR,
 		},
 		[3] = {
 			text = VIDEO_OPTIONS_MEDIUM,
 			cvars =	{
+				baseMip = 0,
 				terrainMipLevel = 0,
-				componentTextureLevel = 0,
-				worldBaseMip = 1,
+				componentTextureLevel = 8,
 			},
-			tooltip = VIDEO_OPTIONS_TEXTURE_DETAIL_HIGH,
+			tooltip = VIDEO_OPTIONS_TEXTURE_DETAIL_MEDIUM,
 		},
 		[4] = {
 			text = VIDEO_OPTIONS_HIGH,
 			cvars =	{
+				baseMip = 0,
 				terrainMipLevel = 0,
-				componentTextureLevel = 0,
-				worldBaseMip = 0,
+				componentTextureLevel = 9,
 			},
 			tooltip = VIDEO_OPTIONS_TEXTURE_DETAIL_HIGH,
 		},

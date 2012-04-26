@@ -111,8 +111,6 @@ function GuildBankFrame_OnLoad(self)
 	GuildBankFrame.maxTabWidth = 128;
 	GuildBankFrame_UpdateTabs();
 	GuildBankFrame_UpdateTabard();
-	GuildBankFrameTopTileStreaks:Hide();
-	GuildBankFrameBg:Hide();
 end
 
 function GuildBankFrame_OnEvent(self, event, ...)
@@ -522,7 +520,7 @@ function GuildBankFrame_UpdateTabs()
 			GuildBankTabLimitBackground:SetPoint("RIGHT", GuildBankFrameWithdrawButton, "LEFT", -14, -1);
 		else
 			GuildBankTabLimitBackground:ClearAllPoints();
-			GuildBankTabLimitBackground:SetPoint("TOP", "GuildBankFrame", "TOP", 6, -378);
+			GuildBankTabLimitBackground:SetPoint("TOP", "GuildBankFrame", "TOP", 6, -388);
 		end
 
 		GuildBankLimitLabel:Show();
@@ -558,7 +556,7 @@ function GuildBankFrame_UpdateCashFlowMoney()
 		GuildBankTabLimitBackground:SetPoint("RIGHT", GuildBankFrameWithdrawButton, "LEFT", -14, -1);
 	else
 		GuildBankTabLimitBackground:ClearAllPoints();
-		GuildBankTabLimitBackground:SetPoint("TOP", "GuildBankFrame", "TOP", 6, -378);
+		GuildBankTabLimitBackground:SetPoint("TOP", "GuildBankFrame", "TOP", 6, -388);
 	end
 end
 

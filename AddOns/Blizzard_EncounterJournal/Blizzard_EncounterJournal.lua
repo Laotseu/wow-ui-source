@@ -67,6 +67,7 @@ local BOSS_LOOT_BUTTON_HEIGHT = 45;
 local INSTANCE_LOOT_BUTTON_HEIGHT = 64;
 
 
+
 function EncounterJournal_OnLoad(self)
 	EncounterJournalTitleText:SetText(ENCOUNTER_JOURNAL);
 	SetPortraitToTexture(EncounterJournalPortrait,"Interface\\EncounterJournal\\UI-EJ-PortraitIcon");
@@ -78,7 +79,14 @@ function EncounterJournal_OnLoad(self)
 	self.encounter.usedHeaders = {};
 	
 	self.encounter.infoFrame = self.encounter.info.detailsScroll.child;
-	self.encounter.info.detailsScroll.ScrollBar.scrollStep = 30;	
+	self.encounter.info.detailsScroll.ScrollBar.scrollStep = 30;
+	
+	
+	-- UIDropDownMenu_SetWidth(self.instanceSelect.tierDropDown, 170);
+	-- UIDropDownMenu_SetText(self.instanceSelect.tierDropDown, "Pick A Dungeon");
+	-- UIDropDownMenu_JustifyText(self.instanceSelect.tierDropDown, "LEFT");
+	-- UIDropDownMenu_Initialize(self.instanceSelect.tierDropDown, EncounterJournal_TierDropDown_Init);
+	
 	
 	self.encounter.info.bossTab:Click();
 	
@@ -105,25 +113,17 @@ function EncounterJournal_OnLoad(self)
 		listFunc = EJNAV_ListInstance,
 	}
 	NavBar_Initialize(self.navBar, "NavButtonTemplate", homeData, self.navBar.home, self.navBar.overflow);
+	EncounterJournal_ListInstances();
 	
 	EncounterJournal.instanceSelect.dungeonsTab:Disable();
 	EncounterJournal.instanceSelect.dungeonsTab.selectedGlow:Show();
 	EncounterJournal.instanceSelect.raidsTab:GetFontString():SetTextColor(HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
-
-	EncounterJournal.instanceSelect.tabs = {EncounterJournal.instanceSelect.dungeonsTab, EncounterJournal.instanceSelect.raidsTab};
-	EncounterJournal.instanceSelect.currTab = 1;
-	EncounterJournal_ListInstances();
-	
-	
-	UIDropDownMenu_Initialize(self.encounter.info.lootScroll.lootFilter, EncounterJournal_InitLootFilter, "MENU");
 end
 
 
 function EncounterJournal_OnShow(self)
 	UpdateMicroButtons();
 	PlaySound("igCharacterInfoOpen");
-	EJ_ResetLootFilter();
-	EncounterJournal_LootUpdate()
 	
 	--automatically navigate to the current dungeon if you are in one;
 	local instanceID = EJ_GetCurrentInstance();
@@ -132,7 +132,7 @@ function EncounterJournal_OnShow(self)
 		EncounterJournal_DisplayInstance(instanceID);
 		EncounterJournal.lastInstance = instanceID;
 		local _, _, difficultyIndex = GetInstanceInfo();
-		if IsPartyLFG() and IsInRaid() then
+		if IsPartyLFG() and GetNumRaidMembers() > 0 then
 			difficultyIndex = EJ_DIFF_LFRAID;
 		end
 		EJ_SetDifficulty(difficultyIndex);
@@ -141,6 +141,10 @@ function EncounterJournal_OnShow(self)
 		EncounterJournal_UpdatePortraits();
 		EncounterJournal.queuedPortraitUpdate = false;
 	end
+	
+	
+	local classFilter, classFilterName = EJ_GetClassFilter();
+	EncounterJournal_SetClassFilter(classFilter, classFilterName);
 end
 
 
@@ -209,9 +213,8 @@ function EncounterJournal_UpdatePortraits()
 	end
 end
 
-local infinateLoopPolice = false; --design migh make a tier that has no instances at all sigh
+
 function EncounterJournal_ListInstances()
-	EncounterJournal.instanceSelect.tier:SetText(EJ_GetTierInfo(EJ_GetCurrentTier()));
 	NavBar_Reset(EncounterJournal.navBar);
 	EncounterJournal.encounter:Hide();
 	EncounterJournal.instanceSelect:Show();
@@ -222,19 +225,6 @@ function EncounterJournal_ListInstances()
 	local index = 1;
 	local instanceID, name, description, _, buttonImage, _, _, link = EJ_GetInstanceByIndex(index, showRaid);
 	local instanceButton;
-	
-	--No instances in this tab
-	if not instanceID and not infinateLoopPolice then
-		--disable this tab and select the other one.
-		local nextTab = mod(EncounterJournal.instanceSelect.currTab, 2) + 1;
-		EncounterJournal.instanceSelect.tabs[EncounterJournal.instanceSelect.currTab].grayBox:Show();
-		EncounterJournal.instanceSelect.tabs[nextTab]:Click();
-		infinateLoopPolice = true;
-		EncounterJournal_ListInstances()
-		return;
-	end
-	infinateLoopPolice = false;
-	
 	while instanceID do
 		instanceButton = self["instance"..index];
 		if not instanceButton then -- create button
@@ -268,16 +258,6 @@ function EncounterJournal_ListInstances()
 		instanceButton:Hide();
 		index = index + 1;
 		instanceButton = self["instance"..index];
-	end
-	
-	
-	--check if the other tab is empty
-	local instanceText = EJ_GetInstanceByIndex(1, not showRaid);
-	--No instances in the other tab
-	if not instanceText then
-		--disable the other tab.
-		local nextTab = mod(EncounterJournal.instanceSelect.currTab, 2) + 1;
-		EncounterJournal.instanceSelect.tabs[nextTab].grayBox:Show();
 	end
 end
 
@@ -779,6 +759,12 @@ function EncounterJournal_ClearDetails()
 end
 
 
+function EncounterJournal_TierDropDown_Select(self, instanceID, name)
+	EncounterJournal_DisplayInstance(instanceID);
+	UIDropDownMenu_SetText(EncounterJournal.instanceSelect.tierDropDown, name);
+end
+
+
 function EncounterJournal_TabClicked(self, button)
 	local tabType = self:GetID();
 	local info = EncounterJournal.encounter.info;
@@ -813,7 +799,6 @@ end
 
 
 function EncounterJournal_LootUpdate()
-	EncounterJournal_UpdateFilterString();
 	local scrollFrame = EncounterJournal.encounter.info.lootScroll;
 	local offset = HybridScrollFrame_GetOffset(scrollFrame);
 	local items = scrollFrame.buttons;
@@ -879,7 +864,7 @@ end
 function EncounterJournal_Loot_OnUpdate(self)
 	if GameTooltip:IsOwned(self) then
 		if IsModifiedClick("COMPAREITEMS") or
-				 (GetCVarBool("alwaysCompareItems") and not IsEquippedItem(self.itemID)) then
+				 (GetCVarBool("alwaysCompareItems") and not self:IsEquippedItem()) then
 			GameTooltip_ShowCompareItem();
 		else
 			ShoppingTooltip1:Hide();
@@ -1117,6 +1102,35 @@ function EncounterJournal_OnSearchTextChanged(self)
 end
 
 
+function EncounterJournal_SetClassFilter(classID, className)
+	local index = 1;
+	local classButton = EncounterJournal.encounter.info.lootScroll.classFilter["class"..index];
+
+	while classButton do
+		if classButton:GetID() == classID then
+			classButton:SetChecked(true);
+		else
+			classButton:SetChecked(false);
+		end
+		index = index + 1;
+		classButton = EncounterJournal.encounter.info.lootScroll.classFilter["class"..index];
+	end
+	
+	if className and classID and classID > 0 then
+		EncounterJournal.encounter.info.lootScroll.classClearFilter.text:SetText(string.format(EJ_CLASS_FILTER, className));
+		EncounterJournal.encounter.info.lootScroll.classClearFilter:Show();
+		EJ_SetClassLootFilter(classID);
+		EncounterJournal.encounter.info.lootScroll:SetHeight(360);
+	else
+		EncounterJournal.encounter.info.lootScroll.classClearFilter:Hide();
+		EJ_SetClassLootFilter(0);
+		EncounterJournal.encounter.info.lootScroll:SetHeight(384);
+	end
+	
+	EncounterJournal_LootUpdate();
+end
+
+
 function EncounterJournal_OpenJournalLink(tag, jtype, id, difficulty)
 	jtype = tonumber(jtype);
 	id = tonumber(id);
@@ -1189,100 +1203,6 @@ function EncounterJournal_DifficultyInit(self, level)
 		end
 	end
 end
-
-
-function EJTierDropDown_OnLoad(self)
-	UIDropDownMenu_Initialize(self, EJTierDropDown_Initialize, "MENU");
-end
-
-
-function EJTierDropDown_Initialize(self, level)
-	local info = UIDropDownMenu_CreateInfo();
-	local numTiers = EJ_GetNumTiers();
-	local currTier = EJ_GetCurrentTier();
-	for i=1,numTiers do
-		info.text = EJ_GetTierInfo(i);
-		info.func = EncounterJournal_TierDropDown_Select
-		info.checked = i == currTier;
-		info.isNotRadio = true;
-		info.arg1 = i;
-		UIDropDownMenu_AddButton(info, level)
-	end
-end
-
-
-function EncounterJournal_TierDropDown_Select(self, tier)
-	EJ_SelectTier(tier);
-	EncounterJournal.instanceSelect.tabs[1].grayBox:Hide();
-	EncounterJournal.instanceSelect.tabs[2].grayBox:Hide();
-	EncounterJournal_ListInstances();
-end
-
-
-function EncounterJournal_SetFilter(self, lootEnum)
-	EJ_SetLootFilter(lootEnum);
-	EncounterJournal_LootUpdate();
-end
-
-
-function EncounterJournal_UpdateFilterString()
-	local name;
-	local currFilter = EJ_GetLootFilter();
-
-	if currFilter == LE_LOOT_FILTER_CLASS then
-		name = UnitClass("player");
-	elseif currFilter == LE_LOOT_FILTER_BOE then
-		name = ITEM_BIND_ON_EQUIP;
-	elseif currFilter ~= LE_LOOT_FILTER_ALL then -- Spec
-		local _, specName, _, icon = GetSpecializationInfo(currFilter - LE_LOOT_FILTER_SPEC1 + 1);
-		name = specName;
-	end
-	
-	if name then
-		EncounterJournal.encounter.info.lootScroll.classClearFilter.text:SetText(string.format(EJ_CLASS_FILTER, name));
-		EncounterJournal.encounter.info.lootScroll.classClearFilter:Show();
-		EncounterJournal.encounter.info.lootScroll:SetHeight(360);
-	else
-		EncounterJournal.encounter.info.lootScroll.classClearFilter:Hide();
-		EncounterJournal.encounter.info.lootScroll:SetHeight(384);
-	end
-end
-
-function EncounterJournal_InitLootFilter()
-	local info = UIDropDownMenu_CreateInfo();
-	local currFilter = EJ_GetLootFilter();
-	local className = UnitClass("player");
-
-
-	info.text = ALL;
-	info.checked = currFilter == LE_LOOT_FILTER_ALL;
-	info.arg1 = LE_LOOT_FILTER_ALL;
-	info.func = EncounterJournal_SetFilter;
-	UIDropDownMenu_AddButton(info);
-	
-	
-	info.text = className;
-	info.checked = currFilter == LE_LOOT_FILTER_CLASS;
-	info.arg1 = LE_LOOT_FILTER_CLASS;
-	UIDropDownMenu_AddButton(info);
-	
-	
-	local numSpecs = GetNumSpecializations();
-	for i = 1, numSpecs do
-		local _, name, _, icon = GetSpecializationInfo(i);
-		info.text = name;
-		info.arg1 = LE_LOOT_FILTER_SPEC1 + i - 1;
-		info.checked = currFilter == (LE_LOOT_FILTER_SPEC1 + i - 1);
-		UIDropDownMenu_AddButton(info);
-	end
-	
-	info.text = ITEM_BIND_ON_EQUIP;
-	info.checked = currFilter == LE_LOOT_FILTER_BOE;
-	info.arg1 = LE_LOOT_FILTER_BOE;
-	UIDropDownMenu_AddButton(info);
-end
-
-
 
 
 ----------------------------------------

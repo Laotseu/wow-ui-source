@@ -3,9 +3,8 @@ local talentSpecInfoCache = {};
 
 function InspectTalentFrameTalent_OnClick(self, button)
 	if ( IsModifiedClick("CHATLINK") ) then
-		--local link = GetTalentLink(PanelTemplates_GetSelectedTab(InspectTalentFrame), self:GetID(),
-		local link = GetTalentLink(self:GetID(),
-			InspectTalentFrame.inspect, InspectTalentFrame.talentGroup);
+		local link = GetTalentLink(PanelTemplates_GetSelectedTab(InspectTalentFrame), self:GetID(),
+			InspectTalentFrame.inspect, InspectTalentFrame.pet, InspectTalentFrame.talentGroup);
 		if ( link ) then
 			ChatEdit_InsertLink(link);
 		end
@@ -14,21 +13,19 @@ end
 
 function InspectTalentFrameTalent_OnEvent(self, event, ...)
 	if ( GameTooltip:IsOwned(self) ) then
-		--GameTooltip:SetTalent(PanelTemplates_GetSelectedTab(InspectTalentFrame), self:GetID(),
-		GameTooltip:SetTalent(self:GetID(),
-			InspectTalentFrame.inspect, InspectTalentFrame.talentGroup);
+		GameTooltip:SetTalent(PanelTemplates_GetSelectedTab(InspectTalentFrame), self:GetID(),
+			InspectTalentFrame.inspect, InspectTalentFrame.pet, InspectTalentFrame.talentGroup);
 	end
 end
 
 function InspectTalentFrameTalent_OnEnter(self)
 	GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-	--GameTooltip:SetTalent(PanelTemplates_GetSelectedTab(InspectTalentFrame), self:GetID(),
-	GameTooltip:SetTalent(self:GetID(),
-		InspectTalentFrame.inspect, InspectTalentFrame.talentGroup);
+	GameTooltip:SetTalent(PanelTemplates_GetSelectedTab(InspectTalentFrame), self:GetID(),
+		InspectTalentFrame.inspect, InspectTalentFrame.pet, InspectTalentFrame.talentGroup);
 end
 
 function InspectTalentFrame_UpdateTabs()
-	local numTabs = GetNumSpecializations(InspectTalentFrame.inspect);
+	local numTabs = GetNumTalentTabs(InspectTalentFrame.inspect, InspectTalentFrame.pet);
 	local selectedTab = PanelTemplates_GetSelectedTab(InspectTalentFrame);
 	local tab;
 	for i = 1, MAX_TALENT_TABS do
@@ -36,7 +33,7 @@ function InspectTalentFrame_UpdateTabs()
 		if ( tab ) then
 			talentSpecInfoCache[i] = talentSpecInfoCache[i] or { };
 			if ( i <= numTabs ) then
-				local id, name, description, icon, background = GetSpecializationInfo(i, InspectTalentFrame.inspect);
+				local id, name, description, icon, pointsSpent, background, previewPointsSpent, isUnlocked = GetTalentTabInfo(i, InspectTalentFrame.inspect, InspectTalentFrame.pet, InspectTalentFrame.talentGroup);
 				if ( i == selectedTab ) then
 					-- If tab is the selected tab set the points spent info
 					local displayPointsSpent = pointsSpent + previewPointsSpent;
@@ -57,7 +54,7 @@ end
 
 function InspectTalentFrame_Update()
 
-	InspectTalentFrame.talentGroup = GetActiveSpecGroup(InspectTalentFrame.inspect);
+	InspectTalentFrame.talentGroup = GetActiveTalentGroup(InspectTalentFrame.inspect);
 	InspectTalentFrame.unit = InspectFrame.unit;
 
 	-- update spec info first
@@ -83,8 +80,8 @@ function InspectTalentFrame_Update()
 	TalentFrame_Update(InspectTalentFrame);
 	
 	-- Update unspent talent point text
-	--local unspentTalentPoints = TalentFrame_GetUnspentTalentPoints(InspectTalentFrame);
-	--InspectTalentFrameTalentPointsText:SetFormattedText(UNSPENT_TALENT_POINTS, HIGHLIGHT_FONT_COLOR_CODE..unspentTalentPoints..FONT_COLOR_CODE_CLOSE);
+	local unspentTalentPoints = TalentFrame_GetUnspentTalentPoints(InspectTalentFrame);
+	InspectTalentFrameTalentPointsText:SetFormattedText(UNSPENT_TALENT_POINTS, HIGHLIGHT_FONT_COLOR_CODE..unspentTalentPoints..FONT_COLOR_CODE_CLOSE);
 end
 
 function InspectTalentFrame_OnLoad(self)
@@ -114,21 +111,22 @@ function InspectTalentFrame_OnLoad(self)
 	-- setup tabs
 	PanelTemplates_SetNumTabs(self, MAX_TALENT_TABS);
 	PanelTemplates_UpdateTabs(self);
-	InspectTalentFrame:RegisterEvent("INSPECT_READY");
 end
 
 function InspectTalentFrame_OnShow()
+	InspectTalentFrame:RegisterEvent("INSPECT_READY");
 	ButtonFrameTemplate_ShowButtonBar(InspectFrame);
---	InspectTalentFrame_Update();
+	InspectTalentFrame_Update();
 end
 
 function InspectTalentFrame_OnHide()
+	InspectTalentFrame:UnregisterEvent("INSPECT_READY");
 	wipe(talentSpecInfoCache);
 end
 
-function InspectTalentFrame_OnEvent(self, event, unit, ...)
-	if ( event == "INSPECT_READY"  and InspectFrame.unit and (UnitGUID(InspectFrame.unit) == unit) ) then
---		InspectTalentFrame_Update();
+function InspectTalentFrame_OnEvent(self, event, ...)
+	if ( event == "INSPECT_READY" ) then
+		InspectTalentFrame_Update();
 	end
 end
 

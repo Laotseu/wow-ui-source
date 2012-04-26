@@ -578,7 +578,7 @@
 					</Layer>
 				</Layers>
 				<Frames>
-					<Button name="$parentStuck" inherits="UIPanelButtonTemplate" text="STUCK_BUTTON_TEXT">
+					<Button name="$parentStuck" inherits="UIPanelButtonTemplate2" text="STUCK_BUTTON_TEXT">
 						<Anchors>
 							<Anchor point="TOP" relativeTo="$parentText3" relativePoint="BOTTOM">
 								<Offset>
@@ -1665,7 +1665,7 @@
 							</OnClick>
 						</Scripts>
 					</Button>
-					<Frame inherits="GlowBoxArrowTemplate">
+					<Frame name="PlayerTalentFrameLearnButtonTutorialArrow" inherits="GlowBoxArrowTemplate">
 						<Anchors>
 							<Anchor point="TOP" relativePoint="BOTTOM" y="4"/>
 						</Anchors>

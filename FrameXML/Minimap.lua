@@ -211,7 +211,7 @@ function MiniMapLFG_Update()
 
 		if ( mode == "lfgparty" or mode == "abandonedInDungeon" ) then
 			local name, typeID, subtypeID, minLevel, maxLevel, recLevel, minRecLevel, maxRecLevel, expansionLevel, groupID, textureFilename, difficulty, maxPlayers, description, isHoliday = GetLFGDungeonInfo(GetPartyLFGID());
-			local numPlayers = GetNumGroupMembers();
+			local numPlayers = max(GetNumPartyMembers() + 1, GetNumRaidMembers());
 			if ( numPlayers < maxPlayers ) then
 				MiniMapLFGFrame.groupSize:Show();
 				MiniMapLFGFrame.groupSize:SetText(numPlayers);
@@ -247,7 +247,7 @@ function MiniMapLFGFrameDropDown_Update()
 			info.text = TELEPORT_OUT_OF_DUNGEON;
 			info.func = MiniMapLFGFrame_TeleportOut;
 			addButton = true;
-		elseif ( IsInGroup() ) then
+		elseif ((GetNumPartyMembers() > 0) or (GetNumRaidMembers() > 0)) then
 			info.text = TELEPORT_TO_DUNGEON;
 			info.func = MiniMapLFGFrame_TeleportIn;
 			addButton = true;
@@ -271,7 +271,7 @@ function MiniMapLFGFrameDropDown_Update()
 		info.disabled = (submode == "unempowered");
 		UIDropDownMenu_AddButton(info);
 	elseif ( mode == "listed" ) then
-		if ( IsInGroup() ) then
+		if ((GetNumPartyMembers() > 0) or (GetNumRaidMembers() > 0)) then
 			info.text = UNLIST_MY_GROUP;
 		else
 			info.text = UNLIST_ME;
@@ -610,11 +610,7 @@ end
 
 function MiniMapInstanceDifficulty_Update()
 	local _, instanceType, difficulty, _, maxPlayers, playerDifficulty, isDynamicInstance = GetInstanceInfo();
-	if ( instanceType == "party" and GetChallengeMode() ) then
-		MiniMapChallengeMode:Show();
-		MiniMapInstanceDifficulty:Hide();
-		GuildInstanceDifficulty:Hide();	
-	elseif ( IS_GUILD_GROUP or ((instanceType == "party" or instanceType == "raid") and not (difficulty == 1 and maxPlayers == 5)) ) then
+	if ( IS_GUILD_GROUP or ((instanceType == "party" or instanceType == "raid") and not (difficulty == 1 and maxPlayers == 5)) ) then
 		local isHeroic = false;
 		if ( instanceType == "party" and difficulty == 2 ) then
 			isHeroic = true;
@@ -636,7 +632,7 @@ function MiniMapInstanceDifficulty_Update()
 				end
 				allowedRaidDifficulty = "RAID_DIFFICULTY"..allowedRaidDifficulty;
 			end
-			if ( difficulty == 5 or difficulty == 6 ) then  -- FIX ME REAL
+			if ( difficulty > 2 ) then
 				isHeroic = true;
 			end
 		end
@@ -667,7 +663,6 @@ function MiniMapInstanceDifficulty_Update()
 			MiniMapInstanceDifficulty:Hide();
 			SetSmallGuildTabardTextures("player", GuildInstanceDifficulty.emblem, GuildInstanceDifficulty.background, GuildInstanceDifficulty.border);
 			GuildInstanceDifficulty:Show();
-			MiniMapChallengeMode:Hide();
 		else
 			MiniMapInstanceDifficultyText:SetText(maxPlayers);
 			-- the 1 looks a little off when text is centered
@@ -684,12 +679,10 @@ function MiniMapInstanceDifficulty_Update()
 			end
 			MiniMapInstanceDifficulty:Show();
 			GuildInstanceDifficulty:Hide();
-			MiniMapChallengeMode:Hide();
 		end
 	else
 		MiniMapInstanceDifficulty:Hide();
 		GuildInstanceDifficulty:Hide();
-		MiniMapChallengeMode:Hide();
 	end
 end
 

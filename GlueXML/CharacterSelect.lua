@@ -3,7 +3,7 @@ CHARACTER_SELECT_INITIAL_FACING = nil;
 
 CHARACTER_ROTATION_CONSTANT = 0.6;
 
-MAX_CHARACTERS_DISPLAYED = 11;
+MAX_CHARACTERS_DISPLAYED = 10;
 MAX_CHARACTERS_PER_REALM = 200; -- controled by the server now, so lets set it up high
 
 CHARACTER_LIST_OFFSET = 0;
@@ -18,14 +18,11 @@ AUTO_DRAG_TIME = 0.5;				-- in seconds
 
 local translationTable = { };	-- for character reordering: key = button index, value = character ID
 
-BLIZZCON_IS_A_GO = false;
-
 CHARACTER_SELECT_LOGOS = {
 	TRIAL = "Interface\\Glues\\Common\\Glues-WoW-StarterLogo",
 	[1] = "Interface\\Glues\\Common\\Glues-WoW-ClassicLogo",
 	[2] = "Interface\\Glues\\Common\\Glues-WoW-WotLKLogo",
 	[3] = "Interface\\Glues\\Common\\Glues-WoW-CCLogo",
-	[4] = "Interface\\Glues\\Common\\Glues-WoW-MPLogo",
 	--When adding entries to here, make sure to update the zhTW and zhCN localization files.
 };
 
@@ -63,7 +60,7 @@ function CharacterSelect_OnLoad(self)
 
 	CHARACTER_LIST_OFFSET = 0;
 	if (not IsGMClient()) then
-		MAX_CHARACTERS_PER_REALM = 11;
+		MAX_CHARACTERS_PER_REALM = 10;
 	end
 end
 
@@ -187,13 +184,6 @@ function CharacterSelect_OnShow()
 	GlueDropDownMenu_SetSelectedValue(AddonCharacterDropDown, ALL);
 
 	AccountUpgradePanel_Update(CharSelectAccountUpgradeButton.isExpanded);
-
-	if( IsBlizzCon() ) then
-		CharacterSelectUI:Hide();
-	end
-	
-	-- character templates
-	CharacterTemplatesFrame_Update();
 end
 
 function CharacterSelect_OnHide(self)
@@ -312,13 +302,6 @@ function CharacterSelect_OnEvent(self, event, ...)
 		end
 		UpdateCharacterList();
 		CharSelectCharacterName:SetText(GetCharacterInfo(GetCharIDFromIndex(self.selectedIndex)));
-		if (IsBlizzCon()) then
-			if (BLIZZCON_IS_A_GO) then
-				EnterWorld();
-			else
-				SetGlueScreen("charcreate");
-			end
-		end
 	elseif ( event == "UPDATE_SELECTED_CHARACTER" ) then
 		local charID = ...;
 		if ( charID == 0 ) then
@@ -381,7 +364,7 @@ function UpdateCharacterSelection(self)
 	end
 end
 
-function UpdateCharacterList(skipSelect)
+function UpdateCharacterList()
 	local numChars = GetNumCharacters();
 	local index = 1;
 	local coords;
@@ -481,7 +464,7 @@ function UpdateCharacterList(skipSelect)
 	local connected = IsConnectedToServer();
 	for i=index, MAX_CHARACTERS_DISPLAYED, 1 do
 		local button = _G["CharSelectCharacterButton"..index];
-		if ( (CharacterSelect.createIndex == 0) and (numChars < MAX_CHARACTERS_DISPLAYED) ) then
+		if ( (CharacterSelect.createIndex == 0) and (numChars < MAX_CHARACTERS_PER_REALM) ) then
 			CharacterSelect.createIndex = index;
 			if ( connected ) then
 				--If can create characters position and show the create button
@@ -502,16 +485,11 @@ function UpdateCharacterList(skipSelect)
 	end
 
 	if ( numChars > MAX_CHARACTERS_DISPLAYED ) then
-		CharacterSelectCharacterFrame:SetWidth(280);
-		CharacterSelectCharacterFrame.scrollBar:Show();
-		CharacterSelectCharacterFrame.scrollBar:SetMinMaxValues(0, numChars - MAX_CHARACTERS_DISPLAYED);
-		CharacterSelectCharacterFrame.scrollBar.blockUpdates = true;
-		CharacterSelectCharacterFrame.scrollBar:SetValue(CHARACTER_LIST_OFFSET);
-		CharacterSelectCharacterFrame.scrollBar.blockUpdates = nil;
+		ScrollDownButton:Show();
+		ScrollDownUp:Show();
 	else
-		CharacterSelectCharacterFrame.scrollBar.blockUpdates = true;	-- keep mousewheel from doing anything
-		CharacterSelectCharacterFrame:SetWidth(260);
-		CharacterSelectCharacterFrame.scrollBar:Hide();
+		ScrollDownButton:Hide();
+		ScrollDownUp:Hide();
 	end
 	
 	if (( numChars >= MAX_CHARACTERS_DISPLAYED ) and (numChars < MAX_CHARACTERS_PER_REALM)) then 
@@ -524,9 +502,7 @@ function UpdateCharacterList(skipSelect)
 		CharacterSelect.selectedIndex = 1;
 	end
 	
-	if ( not skipSelect ) then
-		CharacterSelect_SelectCharacter(CharacterSelect.selectedIndex, 1);
-	end
+	CharacterSelect_SelectCharacter(CharacterSelect.selectedIndex, 1);
 end
 
 function CharacterSelectButton_OnClick(self)
@@ -588,7 +564,6 @@ function CharacterSelect_SelectCharacter(index, noCreate)
 	if ( index == CharacterSelect.createIndex ) then
 		if ( not noCreate ) then
 			PlaySound("gsCharacterSelectionCreateNew");
-			ClearCharacterTemplate();
 			SetGlueScreen("charcreate");
 		end
 	else
@@ -952,45 +927,4 @@ end
 
 function AccountUpgradePanel_ToggleExpandState()
 	AccountUpgradePanel_Update(not CharSelectAccountUpgradeButton.isExpanded);
-end
-
-function CharacterSelect_ScrollList(self, value)
-	if ( not self.blockUpdates ) then
-		CHARACTER_LIST_OFFSET = value;
-		UpdateCharacterList(true);	-- skip selecting
-		UpdateCharacterSelection(CharacterSelect);	-- for button selection
-	end
-end
-
-function CharacterTemplatesFrame_Update()
-	local self = CharacterTemplatesFrame;
-	local numTemplates = GetNumCharacterTemplates();
-	if ( numTemplates > 0 ) then
-		if ( not self:IsShown() ) then
-			-- set it up
-			self:Show();
-			GlueDropDownMenu_SetWidth(self.dropDown, 160);
-			GlueDropDownMenu_Initialize(self.dropDown, CharacterTemplatesFrameDropDown_Initialize);
-			GlueDropDownMenu_SetSelectedID(self.dropDown, 1);
-		end
-	else
-		self:Hide();
-	end
-end
-
-function CharacterTemplatesFrameDropDown_Initialize()
-	local info = GlueDropDownMenu_CreateInfo();
-	for i = 1, GetNumCharacterTemplates() do
-		local name, description = GetCharacterTemplateInfo(i);
-		info.text = name;
-		info.checked = nil;
-		info.func = CharacterTemplatesFrameDropDown_OnClick;
-		info.tooltipTitle = name;
-		info.tooltipText = description;
-		GlueDropDownMenu_AddButton(info);
-	end
-end
-
-function CharacterTemplatesFrameDropDown_OnClick(button)
-	GlueDropDownMenu_SetSelectedID(CharacterTemplatesFrameDropDown, button:GetID());
 end

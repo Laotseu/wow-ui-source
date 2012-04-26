@@ -122,7 +122,7 @@ function RaidWarningFrame_OnEvent(self, event, message)
 			elseif ( GROUP_TAG_LIST[term] ) then
 				local groupIndex = GROUP_TAG_LIST[term];
 				local groupList = "[";
-				for i=1, GetNumGroupMembers() do
+				for i=1, GetNumRaidMembers() do
 					local name, rank, subgroup, level, class, classFileName = GetRaidRosterInfo(i);
 					if ( subgroup == groupIndex ) then
 						local classColorTable = RAID_CLASS_COLORS[classFileName];
@@ -154,15 +154,14 @@ function RaidBossEmoteFrame_OnLoad(self)
 	self.timings["RAID_NOTICE_SCALE_DOWN_TIME"] = 0.4;
 	
 	self:RegisterEvent("RAID_BOSS_EMOTE");
-	self:RegisterEvent("QUEST_BOSS_EMOTE");
 	self:RegisterEvent("RAID_BOSS_WHISPER");
 	self:RegisterEvent("CLEAR_BOSS_EMOTES");
 end
 
 function RaidBossEmoteFrame_OnEvent(self, event, ...)
-	if (event == "RAID_BOSS_EMOTE" or event == "RAID_BOSS_WHISPER" or event == "QUEST_BOSS_EMOTE") then
+	if (event == "RAID_BOSS_EMOTE" or event == "RAID_BOSS_WHISPER") then
 		local text, playerName, displayTime, playSound = ...;
-		local body = format(text, playerName, playerName);	--No need for pflag, monsters can't be afk, dnd, or GMs.
+		local body = format(_G["CHAT_"..event.."_GET"]..text, playerName, playerName);	--No need for pflag, monsters can't be afk, dnd, or GMs.
 		local info = ChatTypeInfo[event];
 		RaidNotice_AddMessage( self, body, info, displayTime );
 --		RaidNotice_AddMessage( RaidBossEmoteFrame, "This is a TEST of the MESSAGE!", ChatTypeInfo["RAID_BOSS_EMOTE"] );

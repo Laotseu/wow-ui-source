@@ -15,9 +15,6 @@ function MerchantFrame_OnLoad(self)
 	PanelTemplates_SetTab(self, 1);
 	
 	MoneyFrame_SetMaxDisplayWidth(MerchantMoneyFrame, 160);
-	
-	UIDropDownMenu_SetWidth(self.lootFilter, 95);
-	UIDropDownMenu_Initialize(self.lootFilter, MerchantFrame_InitFilter);
 end
 
 function MerchantFrame_OnEvent(self, event, ...)
@@ -52,9 +49,8 @@ function MerchantFrame_OnShow(self)
 	MerchantFrame_UpdateCanRepairAll();
 	MerchantFrame_UpdateGuildBankRepair();
 	PanelTemplates_SetTab(MerchantFrame, 1);
-	ResetSetMerchantFilter();
-	
 	MerchantFrame_Update();
+	
 	PlaySound("igCharacterInfoOpen");
 end
 
@@ -71,7 +67,6 @@ function MerchantFrame_OnHide(self)
 end
 
 function MerchantFrame_Update()
-	MerchantFrame_UpdateFilterString()
 	if ( MerchantFrame.selectedTab == 1 ) then
 		MerchantFrame_UpdateMerchantInfo();
 	else
@@ -231,7 +226,10 @@ function MerchantFrame_UpdateMerchantInfo()
 	-- Hide buyback related items
 	MerchantItem11:Hide();
 	MerchantItem12:Hide();
-	BuybackBG:Hide();
+	BuybackFrameTopLeft:Hide();
+	BuybackFrameTopRight:Hide();
+	BuybackFrameBotLeft:Hide();
+	BuybackFrameBotRight:Hide();
 
 	-- Position merchant items
 	MerchantItem3:SetPoint("TOPLEFT", "MerchantItem1", "BOTTOMLEFT", 0, -8);
@@ -280,7 +278,10 @@ function MerchantFrame_UpdateBuybackInfo()
 	-- Show Buyback specific items
 	MerchantItem11:Show();
 	MerchantItem12:Show();
-	BuybackBG:Show();
+	BuybackFrameTopLeft:Show();
+	BuybackFrameTopRight:Show();
+	BuybackFrameBotLeft:Show();
+	BuybackFrameBotRight:Show();
 
 	-- Position buyback items
 	MerchantItem3:SetPoint("TOPLEFT", "MerchantItem1", "BOTTOMLEFT", 0, -15);
@@ -577,9 +578,9 @@ function MerchantFrame_UpdateRepairButtons()
 			MerchantRepairItemButton:SetHeight(32);
 			MerchantRepairItemButton:SetPoint("RIGHT", MerchantRepairAllButton, "LEFT", -4, 0);
 
-			MerchantRepairAllButton:SetPoint("BOTTOMRIGHT", MerchantFrame, "BOTTOMLEFT", 100, 30);
+			MerchantRepairAllButton:SetPoint("BOTTOMRIGHT", MerchantFrame, "BOTTOMLEFT", 115, 89);
 			MerchantRepairText:ClearAllPoints();
-			MerchantRepairText:SetPoint("CENTER", MerchantFrame, "BOTTOMLEFT", 80, 68);
+			MerchantRepairText:SetPoint("CENTER", MerchantFrame, "BOTTOMLEFT", 97, 129);
 			MerchantGuildBankRepairButton:Show();
 		else
 			MerchantRepairAllButton:SetWidth(36);
@@ -588,9 +589,9 @@ function MerchantFrame_UpdateRepairButtons()
 			MerchantRepairItemButton:SetHeight(36);
 			MerchantRepairItemButton:SetPoint("RIGHT", MerchantRepairAllButton, "LEFT", -2, 0);
 
-			MerchantRepairAllButton:SetPoint("BOTTOMRIGHT", MerchantFrame, "BOTTOMLEFT", 160, 32);
+			MerchantRepairAllButton:SetPoint("BOTTOMRIGHT", MerchantFrame, "BOTTOMLEFT", 172, 91);
 			MerchantRepairText:ClearAllPoints();
-			MerchantRepairText:SetPoint("BOTTOMLEFT", MerchantFrame, "BOTTOMLEFT", 14, 45);
+			MerchantRepairText:SetPoint("BOTTOMLEFT", MerchantFrame, "BOTTOMLEFT", 26, 103);
 			MerchantGuildBankRepairButton:Hide();
 		end
 		MerchantRepairText:Show();
@@ -609,20 +610,18 @@ function MerchantFrame_UpdateCurrencies()
 	
 	if ( #currencies == 0 ) then	-- common case
 		MerchantFrame:UnregisterEvent("CURRENCY_DISPLAY_UPDATE");
-		MerchantMoneyFrame:SetPoint("BOTTOMRIGHT", -4, 8);
+		MerchantMoneyFrame:SetPoint("BOTTOMRIGHT", -36, 67);
 		MerchantMoneyFrame:Show();
-		MerchantExtraCurrencyInset:Hide();
-		MerchantExtraCurrencyBg:Hide();
+		MerchantFrameExtraCurrencyTex:Hide();
 	else
 		MerchantFrame:RegisterEvent("CURRENCY_DISPLAY_UPDATE");
-		MerchantExtraCurrencyInset:Show();
-		MerchantExtraCurrencyBg:Show();
+		MerchantFrameExtraCurrencyTex:Show();
 		MerchantFrame_OrderCurrencies(currencies);
 		local numCurrencies = #currencies;
 		if ( numCurrencies > 3 ) then
 			MerchantMoneyFrame:Hide();
 		else
-			MerchantMoneyFrame:SetPoint("BOTTOMRIGHT", -169, 8);
+			MerchantMoneyFrame:SetPoint("BOTTOMRIGHT", -201, 67);
 			MerchantMoneyFrame:Show();
 		end
 		for index = 1, numCurrencies do
@@ -632,9 +631,9 @@ function MerchantFrame_UpdateCurrencies()
 				tokenButton = CreateFrame("BUTTON", "MerchantToken"..index, MerchantFrame, "BackpackTokenTemplate");
 				-- token display order is: 6 5 4 | 3 2 1
 				if ( index == 1 ) then
-					tokenButton:SetPoint("BOTTOMRIGHT", -16, 8);
+					tokenButton:SetPoint("BOTTOMRIGHT", -48, 67);
 				elseif ( index == 4 ) then
-					tokenButton:SetPoint("BOTTOMLEFT", 89, 8);
+					tokenButton:SetPoint("BOTTOMLEFT", 121, 67);
 				else
 					tokenButton:SetPoint("RIGHT", _G["MerchantToken"..index - 1], "LEFT", 0, 0);
 				end
@@ -762,63 +761,3 @@ function MerchantFrame_UpdateCurrencyAmounts()
 		end
 	end
 end
-
-
-function MerchantFrame_SetFilter(self, classIndex)
-	SetMerchantFilter(classIndex);
-	MerchantFrame.page = 1;
-	if MerchantFrame:IsVisible() then
-		MerchantFrame_Update();
-	end
-end
-
-function MerchantFrame_UpdateFilterString()
-	local name = ALL;
-	local currFilter = GetMerchantFilter();
-
-	if currFilter == LE_LOOT_FILTER_CLASS then
-		name = UnitClass("player");
-	elseif currFilter == LE_LOOT_FILTER_BOE then
-		name = ITEM_BIND_ON_EQUIP;
-	elseif currFilter ~= LE_LOOT_FILTER_ALL then -- Spec
-		local _, specName, _, icon = GetSpecializationInfo(currFilter - LE_LOOT_FILTER_SPEC1 + 1);
-		name = specName;
-	end
-	
-	UIDropDownMenu_SetText(MerchantFrame.lootFilter, name);
-end
-
-function MerchantFrame_InitFilter()
-	local info = UIDropDownMenu_CreateInfo();
-	local currFilter = GetMerchantFilter();
-	local className = UnitClass("player");
-
-
-	info.text = ALL;
-	info.checked = currFilter == LE_LOOT_FILTER_ALL;
-	info.arg1 = LE_LOOT_FILTER_ALL;
-	info.func = MerchantFrame_SetFilter;
-	UIDropDownMenu_AddButton(info);
-	
-	
-	info.text = className;
-	info.checked = currFilter == LE_LOOT_FILTER_CLASS;
-	info.arg1 = LE_LOOT_FILTER_CLASS;
-	UIDropDownMenu_AddButton(info);
-	
-	
-	local numSpecs = GetNumSpecializations();
-	for i = 1, numSpecs do
-		local _, name, _, icon = GetSpecializationInfo(i);
-		info.text = name;
-		info.arg1 = LE_LOOT_FILTER_SPEC1 + i - 1;
-		info.checked = currFilter == (LE_LOOT_FILTER_SPEC1 + i - 1);
-		UIDropDownMenu_AddButton(info);
-	end
-	
-	info.text = ITEM_BIND_ON_EQUIP;
-	info.checked = currFilter == LE_LOOT_FILTER_BOE;
-	info.arg1 = LE_LOOT_FILTER_BOE;
-	UIDropDownMenu_AddButton(info);
-end
-

@@ -1,10 +1,6 @@
 LOOTFRAME_NUMBUTTONS = 4;
 NUM_GROUP_LOOT_FRAMES = 4;
 MASTER_LOOT_THREHOLD = 4;
-LOOT_SLOT_NONE = 0;
-LOOT_SLOT_ITEM = 1;
-LOOT_SLOT_MONEY = 2;
-LOOT_SLOT_CURRENCY = 3;
 
 function LootFrame_OnLoad(self)
 	self:RegisterEvent("LOOT_OPENED");
@@ -13,8 +9,6 @@ function LootFrame_OnLoad(self)
 	self:RegisterEvent("LOOT_CLOSED");
 	self:RegisterEvent("OPEN_MASTER_LOOT_LIST");
 	self:RegisterEvent("UPDATE_MASTER_LOOT_LIST");
-	--hide button bar
-	ButtonFrameTemplate_HideButtonBar(self);
 end
 
 function LootFrame_OnEvent(self, event, ...)
@@ -109,7 +103,7 @@ function LootFrame_UpdateButton(index)
 	local button = _G["LootButton"..index];
 		local slot = (numLootToShow * (LootFrame.page - 1)) + index;
 		if ( slot <= numLootItems ) then	
-			if ( LootSlotHasItem(slot) and index <= numLootToShow ) then
+			if ( (LootSlotIsItem(slot) or LootSlotIsCoin(slot) or LootSlotIsCurrency(slot)) and index <= numLootToShow ) then
 				local texture, item, quantity, quality, locked, isQuestItem, questId, isActive = GetLootSlotInfo(slot);
 				local text = _G["LootButton"..index.."Text"];
 				if ( texture ) then
@@ -262,93 +256,20 @@ end
 
 function LootItem_OnEnter(self)
 	local slot = ((LOOTFRAME_NUMBUTTONS - 1) * (LootFrame.page - 1)) + self:GetID();
-	local slotType = GetLootSlotType(slot);
-	if ( slotType == LOOT_SLOT_ITEM ) then
+	if ( LootSlotIsItem(slot) ) then
 		GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
 		GameTooltip:SetLootItem(slot);
 		CursorUpdate(self);
 	end
-	if ( slotType == LOOT_SLOT_CURRENCY ) then
+	if ( LootSlotIsCurrency(slot) ) then
 		GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
 		GameTooltip:SetLootCurrency(slot);
 		CursorUpdate(self);
 	end
 end
 
-function GroupLootContainer_OnLoad(self)
-	self.rollFrames = {};
-	self.reservedSize = 100;
-	GroupLootContainer_CalcMaxIndex(self);
-end
-
-function GroupLootContainer_CalcMaxIndex(self)
-	local maxIdx = 0;
-	for k, v in pairs(self.rollFrames) do
-		maxIdx = max(maxIdx, k);
-	end
-	self.maxIndex = maxIdx;
-end
-
-function GroupLootContainer_AddFrame(self, frame)
-	local idx = self.maxIndex + 1;
-	for i=1, self.maxIndex do
-		if ( not self.rollFrames[i] ) then
-			idx = i;
-			break;
-		end
-	end
-	self.rollFrames[idx] = frame;
-
-	if ( idx > self.maxIndex ) then
-		self.maxIndex = idx;
-	end
-
-	GroupLootContainer_Update(self);
-	frame:Show();
-end
-
-function GroupLootContainer_RemoveFrame(self, frame)
-	local idx = nil;
-	for k, v in pairs(self.rollFrames) do
-		if ( v == frame ) then
-			idx = k;
-			break;
-		end
-	end
-
-	if ( idx ) then
-		self.rollFrames[idx] = nil;
-		if ( idx == self.maxIndex ) then
-			GroupLootContainer_CalcMaxIndex(self);
-		end
-	end
-	frame:Hide();
-	GroupLootContainer_Update(self);
-end
-
-function GroupLootContainer_Update(self)
-	local lastIdx = nil;
-
-	for i=1, self.maxIndex do
-		local frame = self.rollFrames[i];
-		if ( frame ) then
-			frame:ClearAllPoints();
-			frame:SetPoint("BOTTOM", self, "BOTTOM", 0, self.reservedSize * (i-1));
-			lastIdx = i;
-		end
-	end
-
-	if ( lastIdx ) then
-		self:SetHeight(self.reservedSize * lastIdx);
-		self:Show();
-	else
-		self:Hide();
-	end
-end
-
 function GroupLootDropDown_OnLoad(self)
-	UIDropDownMenu_Initialize(self, nil, "MENU");
-	self.initialize = GroupLootDropDown_Initialize;
+	UIDropDownMenu_Initialize(self, GroupLootDropDown_Initialize, "MENU");
 end
 
 function GroupLootDropDown_Initialize()
@@ -358,7 +279,7 @@ function GroupLootDropDown_Initialize()
 	if ( UIDROPDOWNMENU_MENU_LEVEL == 2 ) then
 		local lastIndex = UIDROPDOWNMENU_MENU_VALUE + 5 - 1;
 		for i=UIDROPDOWNMENU_MENU_VALUE, lastIndex do
-			candidate = GetMasterLootCandidate(LootFrame.selectedSlot, i);
+			candidate = GetMasterLootCandidate(i);
 			if ( candidate ) then
 				-- Add candidate button
 				info.text = candidate;
@@ -372,7 +293,7 @@ function GroupLootDropDown_Initialize()
 		return;
 	end
 	
-	if ( IsInRaid() ) then
+	if ( GetNumRaidMembers() > 0 ) then
 		-- In a raid
 		info.isTitle = 1;
 		info.text = GIVE_LOOT;
@@ -382,7 +303,7 @@ function GroupLootDropDown_Initialize()
 
 		for i=1, 40, 5 do
 			for j=i, i+4 do
-				candidate = GetMasterLootCandidate(LootFrame.selectedSlot, j);
+				candidate = GetMasterLootCandidate(j);
 				if ( candidate ) then
 					-- Add raid group
 					info.isTitle = nil;
@@ -400,7 +321,7 @@ function GroupLootDropDown_Initialize()
 	else
 		-- In a party
 		for i=1, MAX_PARTY_MEMBERS+1, 1 do
-			candidate = GetMasterLootCandidate(LootFrame.selectedSlot, i);
+			candidate = GetMasterLootCandidate(i);
 			if ( candidate ) then
 				-- Add candidate button
 				info.text = candidate;
@@ -434,8 +355,8 @@ function GroupLootFrame_OpenNewFrame(id, rollTime)
 		if ( not frame:IsShown() ) then
 			frame.rollID = id;
 			frame.rollTime = rollTime;
-			frame.Timer:SetMinMaxValues(0, rollTime);
-			GroupLootContainer_AddFrame(GroupLootContainer, frame);
+			_G["GroupLootFrame"..i.."Timer"]:SetMinMaxValues(0, rollTime);
+			frame:Show();
 			return;
 		end
 	end
@@ -453,57 +374,56 @@ function GroupLootFrame_DisableLootButton(button)
 	SetDesaturation(button:GetNormalTexture(), true);
 end
 
-local itemQualityBorder = {
-	[ITEM_QUALITY_UNCOMMON] = {0.17968750, 0.23632813, 0.74218750, 0.96875000},
-	[ITEM_QUALITY_RARE] = {0.86718750, 0.92382813, 0.00390625, 0.23046875},
-	[ITEM_QUALITY_EPIC] = {0.92578125, 0.98242188, 0.00390625, 0.23046875},
-	[ITEM_QUALITY_LEGENDARY] = {0.80859375, 0.86523438, 0.00390625, 0.23046875},
-};
-
 function GroupLootFrame_OnShow(self)
 	AlertFrame_FixAnchors();
 	local texture, name, count, quality, bindOnPickUp, canNeed, canGreed, canDisenchant, reasonNeed, reasonGreed, reasonDisenchant, deSkillRequired = GetLootRollItemInfo(self.rollID);
 	if (name == nil) then
-		GroupLootContainer_RemoveFrame(GroupLootContainer, self);
+		self:Hide();
 		return;
 	end
+	if ( bindOnPickUp ) then
+		self:SetBackdrop({bgFile = "Interface\\DialogFrame\\UI-DialogBox-Gold-Background", edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Gold-Border", tile = true, tileSize = 32, edgeSize = 32, insets = { left = 11, right = 12, top = 12, bottom = 11 } } );
+		_G[self:GetName().."Corner"]:SetTexture("Interface\\DialogFrame\\UI-DialogBox-Gold-Corner");
+		_G[self:GetName().."Decoration"]:Show();
+	else 
+		self:SetBackdrop({bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background", edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border", tile = true, tileSize = 32, edgeSize = 32, insets = { left = 11, right = 12, top = 12, bottom = 11 } } );
+		_G[self:GetName().."Corner"]:SetTexture("Interface\\DialogFrame\\UI-DialogBox-Corner");
+		_G[self:GetName().."Decoration"]:Hide();
+	end
 	
-	self.IconFrame.Icon:SetTexture(texture);
-	local borderTexCoord = itemQualityBorder[quality] or itemQualityBorder[ITEM_QUALITY_UNCOMMON];
-	self.IconFrame.Border:SetTexCoord(unpack(borderTexCoord));
-	self.Name:SetText(name);
+	local id = self:GetID();
+	_G["GroupLootFrame"..id.."IconFrameIcon"]:SetTexture(texture);
+	_G["GroupLootFrame"..id.."Name"]:SetText(name);
 	local color = ITEM_QUALITY_COLORS[quality];
-	self.Name:SetVertexColor(color.r, color.g, color.b);
-	self.Border:SetVertexColor(color.r, color.g, color.b);
+	_G["GroupLootFrame"..id.."Name"]:SetVertexColor(color.r, color.g, color.b);
 	if ( count > 1 ) then
-		self.IconFrame.Count:SetText(count);
-		self.IconFrame.Count:Show();
+		_G["GroupLootFrame"..id.."IconFrameCount"]:SetText(count);
+		_G["GroupLootFrame"..id.."IconFrameCount"]:Show();
 	else
-		self.IconFrame.Count:Hide();
+		_G["GroupLootFrame"..id.."IconFrameCount"]:Hide();
 	end
 	
 	if ( canNeed ) then
-		GroupLootFrame_EnableLootButton(self.NeedButton);
-		self.NeedButton.reason = nil;
+		GroupLootFrame_EnableLootButton(self.needButton);
+		self.needButton.reason = nil;
 	else
-		GroupLootFrame_DisableLootButton(self.NeedButton);
-		self.NeedButton.reason = _G["LOOT_ROLL_INELIGIBLE_REASON"..reasonNeed];
+		GroupLootFrame_DisableLootButton(self.needButton);
+		self.needButton.reason = _G["LOOT_ROLL_INELIGIBLE_REASON"..reasonNeed];
 	end
 	if ( canGreed) then
-		GroupLootFrame_EnableLootButton(self.GreedButton);
-		self.GreedButton.reason = nil;
+		GroupLootFrame_EnableLootButton(self.greedButton);
+		self.greedButton.reason = nil;
 	else
-		GroupLootFrame_DisableLootButton(self.GreedButton);
-		self.GreedButton.reason = _G["LOOT_ROLL_INELIGIBLE_REASON"..reasonGreed];
+		GroupLootFrame_DisableLootButton(self.greedButton);
+		self.greedButton.reason = _G["LOOT_ROLL_INELIGIBLE_REASON"..reasonGreed];
 	end
 	if ( canDisenchant) then
-		GroupLootFrame_EnableLootButton(self.DisenchantButton);
-		self.DisenchantButton.reason = nil;
+		GroupLootFrame_EnableLootButton(self.disenchantButton);
+		self.disenchantButton.reason = nil;
 	else
-		GroupLootFrame_DisableLootButton(self.DisenchantButton);
-		self.DisenchantButton.reason = format(_G["LOOT_ROLL_INELIGIBLE_REASON"..reasonDisenchant], deSkillRequired);
+		GroupLootFrame_DisableLootButton(self.disenchantButton);
+		self.disenchantButton.reason = format(_G["LOOT_ROLL_INELIGIBLE_REASON"..reasonDisenchant], deSkillRequired);
 	end
-	self.Timer:SetFrameLevel(self:GetFrameLevel() - 1);
 end
 
 function GroupLootFrame_OnHide (self)
@@ -514,7 +434,7 @@ function GroupLootFrame_OnEvent(self, event, ...)
 	if ( event == "CANCEL_LOOT_ROLL" ) then
 		local arg1 = ...;
 		if ( arg1 == self.rollID ) then
-			GroupLootContainer_RemoveFrame(GroupLootContainer, self);
+			self:Hide();
 			StaticPopup_Hide("CONFIRM_LOOT_ROLL", self.rollID);
 		end
 	end
@@ -527,65 +447,6 @@ function GroupLootFrame_OnUpdate(self, elapsed)
 		left = min;
 	end
 	self:SetValue(left);
-end
-
-function BonusRollFrame_StartBonusRoll(spellID, text, duration)
-	local frame = BonusRollFrame;
-	local _, count, icon = GetCurrencyInfo(BONUS_ROLL_REQUIRED_CURRENCY);
-	if ( count == 0 ) then
-		return;
-	end
-	frame.state = "prompt";
-	frame.spellID = spellID;
-	frame.endTime = time() + duration;
-	frame.remaining = duration;
-	icon = "Interface\\Icons\\"..icon;
-	local numRequired = 1;
-	frame.InfoFrame.Cost:SetFormattedText(BONUS_ROLL_COST, numRequired, icon);
-	frame.CurrentCountFrame.Text:SetFormattedText(BONUS_ROLL_CURRENT_COUNT, count, icon);
-	frame.Timer:SetMinMaxValues(0, duration);
-	frame.Timer:SetValue(duration);
-	GroupLootContainer_AddFrame(GroupLootContainer, frame);
-end
-
-function BonusRollFrame_CloseBonusRoll()
-	local frame = BonusRollFrame;
-	GroupLootContainer_RemoveFrame(GroupLootContainer, frame);
-end
-
-function BonusRollFrame_OnLoad(self)
-	self:RegisterEvent("BONUS_ROLL_STARTED");
-	self:RegisterEvent("BONUS_ROLL_FAILED");
-	self:RegisterEvent("BONUS_ROLL_RESULTS");
-end
-
-function BonusRollFrame_OnEvent(self)
-	if ( event == "BONUS_ROLL_FAILED" ) then
-		GroupLootContainer_RemoveFrame(GroupLootContainer, self);
-	elseif ( event == "BONUS_ROLL_STARTED" ) then
-		
-	end
-end
-
-function BonusRollFrame_OnUpdate(self, elapsed)
-	if ( self.state == "prompt" ) then
-		self.remaining = self.remaining - elapsed;
-		self.Timer:SetValue(max(0, self.remaining));
-	end
-end
-
-function BonusRollFrame_Update(self)
-	if ( self.state == "prompt" ) then
-
-	end
-end
-
-function BonusRollFrame_OnShow(self)
-	self.Timer:SetFrameLevel(self:GetFrameLevel() - 1);
-	--Update the remaining time in case we were hidden for some reason
-	if ( self.state == "prompt" ) then
-		self.remaining = self.endTime - time();
-	end
 end
 
 --

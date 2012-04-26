@@ -9,15 +9,16 @@ function InspectFrame_Show(unit)
 		NotifyInspect(unit);
 		InspectFrame.unit = unit;
 		InspectSwitchTabs(1);
+		ShowUIPanel(InspectFrame);
+		InspectFrame_UpdateTabs();
 	end
 end
 
 function InspectFrame_OnLoad(self)
 	self:RegisterEvent("PLAYER_TARGET_CHANGED");
-	self:RegisterEvent("GROUP_ROSTER_UPDATE");
+	self:RegisterEvent("PARTY_MEMBERS_CHANGED");
 	self:RegisterEvent("UNIT_NAME_UPDATE");
 	self:RegisterEvent("UNIT_PORTRAIT_UPDATE");
-	self:RegisterEvent("INSPECT_READY");
 	self.unit = nil;
 
 	-- Tab Handling code
@@ -26,20 +27,13 @@ function InspectFrame_OnLoad(self)
 	self.TitleText:SetFontObject("GameFontHighlight");
 end
 
-function InspectFrame_OnEvent(self, event, unit, ...)
-
-	if(event == "INSPECT_READY" and InspectFrame.unit and (UnitGUID(InspectFrame.unit) == unit)) then
-		ShowUIPanel(InspectFrame);
-		InspectFrame_UpdateTabs();
-	end
-
-
+function InspectFrame_OnEvent(self, event, ...)
 	if ( not self:IsShown() ) then
 		return;
 	end
-	if ( event == "PLAYER_TARGET_CHANGED" or event == "GROUP_ROSTER_UPDATE" ) then
+	if ( event == "PLAYER_TARGET_CHANGED" or event == "PARTY_MEMBERS_CHANGED" ) then
 		if ( (event == "PLAYER_TARGET_CHANGED" and self.unit == "target") or
-		     (event == "GROUP_ROSTER_UPDATE" and self.unit ~= "target") ) then
+		     (event == "PARTY_MEMBERS_CHANGED" and self.unit ~= "target") ) then
 			if ( CanInspect(self.unit) ) then
 				InspectFrame_UnitChanged(self);
 			else
@@ -55,8 +49,8 @@ function InspectFrame_OnEvent(self, event, unit, ...)
 		return;
 	elseif ( event == "UNIT_PORTRAIT_UPDATE" ) then
 		local arg1 = ...;
-		if ( not arg1 or arg1 == self.unit ) then
-			SetPortraitTexture(InspectFramePortrait, self.unit);
+		if ( arg1 == self.unit ) then
+			SetPortraitTexture(InspectFramePortrait, arg1);
 		end
 		return;
 	end
@@ -96,6 +90,9 @@ function InspectFrame_OnHide(self)
 end
 
 function InspectFrame_OnUpdate(self)
+	if ( not UnitIsVisible(self.unit) ) then
+		HideUIPanel(InspectFrame);
+	end
 end		
 
 function InspectSwitchTabs(newID)
@@ -106,6 +103,7 @@ function InspectSwitchTabs(newID)
 			oldFrame:Hide();
 		end
 		PanelTemplates_SetTab(InspectFrame, newID);
+		ShowUIPanel(InspectFrame);
 		newFrame:Show();
 	end
 end
@@ -122,8 +120,7 @@ function InspectFrame_UpdateTabs()
 	
 	-- Talent tab
 	local level = UnitLevel(InspectFrame.unit);
-	local SO_MUCH_CHAZ = 102023
-	if ( level > 0 and level < SO_MUCH_CHAZ ) then
+	if ( level > 0 and level < 10 ) then
 		PanelTemplates_DisableTab(InspectFrame, 3);
 		if ( PanelTemplates_GetSelectedTab(InspectFrame) == 3 ) then
 			InspectSwitchTabs(1);
@@ -134,7 +131,7 @@ function InspectFrame_UpdateTabs()
 	end
 	
 	-- Guild tab
-	local _, _, _, guildName = GetInspectGuildInfo(InspectFrame.unit);
+	local guildName = GetGuildInfo(InspectFrame.unit);
 	if ( guildName and guildName ~= "" ) then
 		PanelTemplates_EnableTab(InspectFrame, 4);
 	else

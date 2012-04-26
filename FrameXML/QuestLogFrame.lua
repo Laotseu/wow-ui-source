@@ -118,7 +118,7 @@ end
 function QuestLogTitleButton_OnLoad(self)
 	self:RegisterForClicks("LeftButtonUp", "RightButtonUp");
 	self:RegisterEvent("UNIT_QUEST_LOG_CHANGED");
-	self:RegisterEvent("GROUP_ROSTER_UPDATE");
+	self:RegisterEvent("PARTY_MEMBERS_CHANGED");
 	self:RegisterEvent("PARTY_MEMBER_ENABLE");
 	self:RegisterEvent("PARTY_MEMBER_DISABLE");
 
@@ -235,7 +235,7 @@ function QuestLog_OnLoad(self)
 	self:RegisterEvent("QUEST_WATCH_UPDATE");
 	self:RegisterEvent("UPDATE_FACTION");
 	self:RegisterEvent("UNIT_QUEST_LOG_CHANGED");
-	self:RegisterEvent("GROUP_ROSTER_UPDATE");
+	self:RegisterEvent("PARTY_MEMBERS_CHANGED");
 	self:RegisterEvent("PARTY_MEMBER_ENABLE");
 	self:RegisterEvent("PARTY_MEMBER_DISABLE");
 	self:RegisterEvent("DISPLAY_SIZE_CHANGED");
@@ -276,9 +276,9 @@ function QuestLog_OnEvent(self, event, ...)
 			AddQuestWatch(arg1,MAX_QUEST_WATCH_TIME);
 			QuestLog_Update();
 		end
-	elseif ( event == "GROUP_ROSTER_UPDATE" or event == "PARTY_MEMBER_ENABLE" or event == "PARTY_MEMBER_DISABLE" ) then
+	elseif ( event == "PARTY_MEMBERS_CHANGED" or event == "PARTY_MEMBER_ENABLE" or event == "PARTY_MEMBER_DISABLE" ) then
 		QuestLog_Update();
-		if ( event == "GROUP_ROSTER_UPDATE" ) then
+		if ( event == "PARTY_MEMBERS_CHANGED" ) then
 			QuestLogControlPanel_UpdateState();
 		end
 	elseif ( event == "DISPLAY_SIZE_CHANGED" and self:IsShown() ) then
@@ -385,7 +385,7 @@ function QuestLog_Update()
 	end
 
 	-- update the group timer
-	local haveGroup = IsInGroup();
+	local haveGroup = GetNumPartyMembers() > 0 or GetNumRaidMembers() > 1;
 	if ( haveGroup ) then
 		QuestLogFrame.groupUpdateTimer = 0;
 	else
@@ -402,7 +402,7 @@ function QuestLog_Update()
 	local buttonHeight = buttons[1]:GetHeight();
 	local displayedHeight = 0;
 
-	local numPartyMembers = GetNumSubgroupMembers();
+	local numPartyMembers = GetNumPartyMembers();
 	local questIndex, questLogTitle, questTitleTag, questNumGroupMates, questNormalText, questCheck;
 	local title, level, questTag, suggestedGroup, isHeader, isCollapsed, isComplete, isDaily, questID, startEvent, displayQuestID;
 	local color;
@@ -567,12 +567,12 @@ function QuestLog_UpdateQuestCount(numQuests)
 			width = QuestLogDailyQuestCount:GetWidth();
 		end
 		QuestLogCount:SetHeight(textHeight*2+vPadding);
-		QuestLogCount:SetPoint("TOPLEFT", parent, "TOPLEFT", 70, -28);
+		QuestLogCount:SetPoint("TOPLEFT", parent, "TOPLEFT", 80, -38);
 	else
 		QuestLogDailyQuestCount:Hide();
 		QuestLogDailyQuestCountMouseOverFrame:Hide();
 		QuestLogCount:SetHeight(textHeight+vPadding);
-		QuestLogCount:SetPoint("TOPLEFT", parent, "TOPLEFT", 70, -31);
+		QuestLogCount:SetPoint("TOPLEFT", parent, "TOPLEFT", 80, -41);
 	end
 	QuestLogCount:SetWidth(width+hPadding);
 end
@@ -586,7 +586,7 @@ function QuestLog_UpdateQuestDetails(resetScrollBar)
 end
 
 function QuestLog_UpdatePartyInfoTooltip(questLogTitle)
-	local numPartyMembers = GetNumSubgroupMembers();
+	local numPartyMembers = GetNumPartyMembers();
 	if ( numPartyMembers == 0 or questLogTitle.isHeader ) then
 		return;
 	end
@@ -619,9 +619,9 @@ function QuestLog_UpdatePortrait()
 	local questPortrait, questPortraitText, questPortraitName = GetQuestLogPortraitGiver();
 	if (questPortrait and questPortrait ~= 0 and QuestLogShouldShowPortrait()) then
 		if (QuestLogDetailFrame.attached) then
-			QuestFrame_ShowQuestPortrait(QuestLogFrame, questPortrait, questPortraitText, questPortraitName, -5, -42);
+			QuestFrame_ShowQuestPortrait(QuestLogFrame, questPortrait, questPortraitText, questPortraitName, -5, -62);
 		else
-			QuestFrame_ShowQuestPortrait(QuestLogDetailFrame, questPortrait, questPortraitText, questPortraitName, -3, -42);
+			QuestFrame_ShowQuestPortrait(QuestLogDetailFrame, questPortrait, questPortraitText, questPortraitName, -3, -62);
 		end
 	else
 		QuestFrame_HideQuestPortrait();
@@ -639,12 +639,10 @@ function QuestLog_SetSelection(questIndex)
 	if ( questIndex == 0 ) then
 		QuestLogFrame.selectedIndex = nil;
 		HideUIPanel(QuestLogDetailFrame);
-		QuestLogDetailScrollChildFrame:Hide();
+		QuestLogDetailScrollFrame:Hide();
 		QuestLogFrameCompleteButton:Hide();
 		QuestFrame_HideQuestPortrait();
 		return;
-	else
-		QuestLogDetailScrollChildFrame:Show();
 	end
 
 	local title, level, questTag, suggestedGroup, isHeader, isCollapsed, isComplete, isDaily = GetQuestLogTitle(questIndex);
@@ -845,8 +843,11 @@ function QuestLogDetailFrame_AttachToQuestLog()
 	end
 	QuestLogDetailScrollFrame:SetParent(QuestLogFrame);
 	QuestLogDetailScrollFrame:ClearAllPoints();
-	QuestLogDetailScrollFrame:SetPoint("TOPRIGHT", QuestLogFrame, "TOPRIGHT", -33, -65);
+	QuestLogDetailScrollFrame:SetPoint("TOPRIGHT", QuestLogFrame, "TOPRIGHT", -32, -77);
+	QuestLogDetailScrollFrame:SetHeight(333);
 	QuestLogDetailScrollFrameScrollBar:SetPoint("TOPLEFT", QuestLogDetailScrollFrame, "TOPRIGHT", 6, -13);
+	QuestLogDetailScrollFrameScrollBackgroundBottomRight:Hide();
+	QuestLogDetailScrollFrameScrollBackgroundTopLeft:Hide();
 	QuestLog_UpdatePortrait();
 end
 
@@ -859,8 +860,11 @@ function QuestLogDetailFrame_DetachFromQuestLog()
 	end
 	QuestLogDetailScrollFrame:SetParent(QuestLogDetailFrame);
 	QuestLogDetailScrollFrame:ClearAllPoints();
-	QuestLogDetailScrollFrame:SetPoint("TOPLEFT", QuestLogDetailFrame, "TOPLEFT", 8, -65);
-	QuestLogDetailScrollFrameScrollBar:SetPoint("TOPLEFT", QuestLogDetailScrollFrame, "TOPRIGHT", 6, -14);
+	QuestLogDetailScrollFrame:SetPoint("TOPLEFT", QuestLogDetailFrame, "TOPLEFT", 19, -76);
+	QuestLogDetailScrollFrame:SetHeight(334);
+	QuestLogDetailScrollFrameScrollBar:SetPoint("TOPLEFT", QuestLogDetailScrollFrame, "TOPRIGHT", 6, -16);
+	QuestLogDetailScrollFrameScrollBackgroundBottomRight:Show();
+	QuestLogDetailScrollFrameScrollBackgroundTopLeft:Show();
 	QuestLog_UpdatePortrait();
 end
 
@@ -876,11 +880,11 @@ function QuestLogControlPanel_UpdatePosition()
 	local parent;
 	if ( QuestLogFrame:IsShown() ) then
 		parent = QuestLogFrame;
-		QuestLogControlPanel:SetPoint("BOTTOMLEFT", parent, "BOTTOMLEFT", 4, 1);
+		QuestLogControlPanel:SetPoint("BOTTOMLEFT", parent, "BOTTOMLEFT", 18, 11);
 		QuestLogControlPanel:SetWidth(307);
 	elseif ( QuestLogDetailFrame:IsShown() ) then
 		parent = QuestLogDetailFrame;
-		QuestLogControlPanel:SetPoint("BOTTOMLEFT", parent, "BOTTOMLEFT", 4, 1);
+		QuestLogControlPanel:SetPoint("BOTTOMLEFT", parent, "BOTTOMLEFT", 18, 5);
 		QuestLogControlPanel:SetWidth(327);
 	end
 	if ( parent ) then
@@ -907,7 +911,7 @@ function QuestLogControlPanel_UpdateState()
 
 		QuestLogFrameTrackButton:Enable();
 
-		if ( GetQuestLogPushable() and IsInGroup() ) then
+		if ( GetQuestLogPushable() and ( GetNumPartyMembers() > 0 or GetNumRaidMembers() > 1 ) ) then
 			QuestLogFramePushQuestButton:Enable();
 		else
 			QuestLogFramePushQuestButton:Disable();
@@ -925,6 +929,6 @@ function QuestLogShowMapPOI_UpdatePosition()
 	
 	if ( parent ) then
 		QuestLogFrameShowMapButton:SetParent(parent);
-		QuestLogFrameShowMapButton:SetPoint("TOPRIGHT", -24, -25);
+		QuestLogFrameShowMapButton:SetPoint("TOPRIGHT", -25, -38);
 	end
 end

@@ -12,7 +12,6 @@ function QuestFrame_OnLoad(self)
 	self:RegisterEvent("QUEST_COMPLETE");
 	self:RegisterEvent("QUEST_FINISHED");
 	self:RegisterEvent("QUEST_ITEM_UPDATE");
-	self:RegisterEvent("QUEST_LOG_UPDATE");
 end
 
 function QuestFrame_OnEvent(self, event, ...)
@@ -59,12 +58,6 @@ function QuestFrame_OnEvent(self, event, ...)
 			QuestInfo_ShowRewards();		
 			QuestRewardScrollFrameScrollBar:SetValue(0);
 		end
-	elseif ( event == "QUEST_LOG_UPDATE" ) then
-		-- just update if at greeting panel
-		if ( QuestFrameGreetingPanel:IsShown() ) then
-			QuestFrameGreetingPanel_OnShow(QuestFrameGreetingPanel);
-		end
-		return;
 	end
 	
 	QuestFrame_SetPortrait();
@@ -95,11 +88,12 @@ function QuestFrameRewardPanel_OnShow()
 	QuestFrameProgressPanel:Hide();
 	local material = QuestFrame_GetMaterial();
 	QuestFrame_SetMaterial(QuestFrameRewardPanel, material);
+	QuestFrameRewardPanelBotRight:SetTexture("Interface\\QuestFrame\\UI-QuestGreeting-BotRight-blank");
 	QuestInfo_Display(QUEST_TEMPLATE_REWARD, QuestRewardScrollChildFrame, QuestFrameCompleteQuestButton, material);
 	QuestRewardScrollFrameScrollBar:SetValue(0);
 	local questPortrait, questPortraitText, questPortraitName = GetQuestPortraitTurnIn();
 	if (questPortrait ~= 0) then
-		QuestFrame_ShowQuestPortrait(QuestFrame, questPortrait, questPortraitText, questPortraitName, -3, -42);
+		QuestFrame_ShowQuestPortrait(QuestFrame, questPortrait, questPortraitText, questPortraitName, -33, -62);
 	else
 		QuestFrame_HideQuestPortrait();
 	end
@@ -111,9 +105,6 @@ function QuestRewardCancelButton_OnClick()
 end
 
 function QuestRewardCompleteButton_OnClick()
-	if ( GetNumQuestChoices() == 1 ) then
-		QuestInfoFrame.itemChoice = 1;
-	end
 	if ( QuestInfoFrame.itemChoice == 0 and GetNumQuestChoices() > 0 ) then
 		QuestChooseRewardError();
 	else
@@ -330,7 +321,6 @@ function QuestFrame_OnShow()
 	if (TutorialFrame.id == 1 or TutorialFrame.id == 55 or TutorialFrame.id == 57) then
 		TutorialFrame_Hide();
 	end
-	NPCFriendshipStatusBar_Update(QuestFrame);
 end
 
 function QuestFrame_OnHide()
@@ -343,6 +333,7 @@ function QuestFrame_OnHide()
 		QuestFrame.dialog:Hide();
 		QuestFrame.dialog = nil;
 	end
+	QuestFrameDetailPanelBotRight:SetTexture("Interface\\QuestFrame\\UI-QuestGreeting-BotRight");
 	if ( QuestFrame.autoQuest ) then
 		QuestFrameDeclineButton:Show();
 		QuestFrameCloseButton:Enable();
@@ -421,6 +412,7 @@ function QuestFrameDetailPanel_OnShow()
 	QuestFrameProgressPanel:Hide();
 	QuestFrameGreetingPanel:Hide();
 	if ( QuestGetAutoAccept() ) then
+		QuestFrameDetailPanelBotRight:SetTexture("Interface\\QuestFrame\\UI-QuestGreeting-BotRight-blank");
 		QuestFrameDeclineButton:Hide();
 		QuestFrameCloseButton:Disable();
 		QuestFrame.autoQuest = true;
@@ -432,7 +424,7 @@ function QuestFrameDetailPanel_OnShow()
 	QuestDetailScrollFrameScrollBar:SetValue(0);
 	local questPortrait, questPortraitText, questPortraitName = GetQuestPortraitGiver();
 	if (questPortrait ~= 0) then
-		QuestFrame_ShowQuestPortrait(QuestFrame, questPortrait, questPortraitText, questPortraitName, -3, -42);
+		QuestFrame_ShowQuestPortrait(QuestFrame, questPortrait, questPortraitText, questPortraitName, -33, -62);
 	else
 		QuestFrame_HideQuestPortrait();
 	end

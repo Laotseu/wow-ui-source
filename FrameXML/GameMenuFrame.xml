@@ -69,7 +69,7 @@
 				</Anchors>
 				<Scripts>
 					<OnShow>
-						if (IsBlizzCon()) then
+						if (tonumber(GetCVar("blizzcon")) == 1) then
 							self:Disable();
 						else
 							self:Enable();

@@ -17,7 +17,6 @@ MAX_PLAYER_LEVEL_TABLE[0] = 60;
 MAX_PLAYER_LEVEL_TABLE[1] = 70;
 MAX_PLAYER_LEVEL_TABLE[2] = 80;
 MAX_PLAYER_LEVEL_TABLE[3] = 85;
-MAX_PLAYER_LEVEL_TABLE[4] = 90;
 MAX_PLAYER_LEVEL = 0;
 REPUTATIONFRAME_ROWSPACING = 23;
 
@@ -413,7 +412,7 @@ function ReputationWatchBar_Update(newLevel)
 	
 	-- update the xp bar
 	TextStatusBar_UpdateTextString(MainMenuExpBar);
-	ExpBar_Update();
+	MainMenuExpBar_Update();
 	
 	if ( visibilityChanged ) then
 		UIParent_ManageFramePositions();

@@ -587,23 +587,7 @@
 					</Layer>
 				</Layers>
 			</Frame>
-
-      <Frame name="$parentSSAODropDown" inherits="VideoOptionsDropDownMenuTemplate" id="15">
-        <Anchors>
-          <Anchor point="TOPLEFT" relativeTo="$parentParticleDensityDropDown" relativePoint="BOTTOMLEFT"/>
-        </Anchors>
-        <Layers>
-          <Layer level="BACKGROUND">
-            <FontString name="$parentLabel" inherits="OptionsFontSmall" text="SSAO_Label">
-              <Anchors>
-                <Anchor point="RIGHT" relativePoint="LEFT"/>
-              </Anchors>
-            </FontString>
-          </Layer>
-        </Layers>
-      </Frame>
-
-    </Frames>
+		</Frames>
 	</Frame>	
 
 	<!-- Advanced Panel -->

@@ -12,13 +12,12 @@ UNITPOPUP_SPACER_SPACING = 6;
 UnitPopupButtons = { };
 UnitPopupButtons["CANCEL"] = { text = CANCEL, dist = 0, space = 1 };
 UnitPopupButtons["TRADE"] = { text = TRADE, dist = 2 };
-UnitPopupButtons["INSPECT"] = { text = INSPECT, dist = 0 };
+UnitPopupButtons["INSPECT"] = { text = INSPECT, dist = 1 };
 UnitPopupButtons["ACHIEVEMENTS"] = { text = COMPARE_ACHIEVEMENTS, dist = 1 };
 UnitPopupButtons["TARGET"] = { text = TARGET, dist = 0 };
 UnitPopupButtons["IGNORE"]	= { text = IGNORE, dist = 0 };
 UnitPopupButtons["POP_OUT_CHAT"] = { text = MOVE_TO_WHISPER_WINDOW, dist = 0 };
 UnitPopupButtons["DUEL"] = { text = DUEL, dist = 3, space = 1 };
-UnitPopupButtons["PET_BATTLE_PVP_DUEL"] = { text = PET_BATTLE_PVP_DUEL, dist = 5, space = 1 };
 UnitPopupButtons["WHISPER"]	= { text = WHISPER, dist = 0 };
 UnitPopupButtons["INVITE"]	= { text = PARTY_INVITE, dist = 0 };
 UnitPopupButtons["UNINVITE"] = { text = PARTY_UNINVITE, dist = 0 };
@@ -53,7 +52,6 @@ UnitPopupButtons["MASTER_LOOTER"] = { text = LOOT_MASTER_LOOTER, dist = 0 };
 UnitPopupButtons["GROUP_LOOT"] = { text = LOOT_GROUP_LOOT, dist = 0 };
 UnitPopupButtons["NEED_BEFORE_GREED"] = { text = LOOT_NEED_BEFORE_GREED, dist = 0 };
 UnitPopupButtons["RESET_INSTANCES"] = { text = RESET_INSTANCES, dist = 0 };
-UnitPopupButtons["RESET_CHALLENGE_MODE"] = { text = RESET_CHALLENGE_MODE, dist = 0 };
 UnitPopupButtons["CONVERT_TO_RAID"] = { text = CONVERT_TO_RAID, dist = 0 };
 UnitPopupButtons["CONVERT_TO_PARTY"] = { text = CONVERT_TO_PARTY, dist = 0 };
 
@@ -73,10 +71,6 @@ UnitPopupButtons["RAID_DIFFICULTY1"] = { text = RAID_DIFFICULTY1, dist = 0, chec
 UnitPopupButtons["RAID_DIFFICULTY2"] = { text = RAID_DIFFICULTY2, dist = 0, checkable = 1 };
 UnitPopupButtons["RAID_DIFFICULTY3"] = { text = RAID_DIFFICULTY3, dist = 0, checkable = 1 };
 UnitPopupButtons["RAID_DIFFICULTY4"] = { text = RAID_DIFFICULTY4, dist = 0, checkable = 1 };
-
-UnitPopupButtons["CHALLENGE_MODE"] = { text = CHALLENGE_MODE, dist = 0,  nested = 1};
-UnitPopupButtons["CHALLENGE_MODE_ENABLE"] = { text = ENABLE, dist = 0, checkable = 1 };
-UnitPopupButtons["CHALLENGE_MODE_DISABLE"] = { text = DISABLE, dist = 0, checkable = 1 };
 
 UnitPopupButtons["PVP_FLAG"] = { text = PVP_FLAG, dist = 0, nested = 1};
 UnitPopupButtons["PVP_ENABLE"] = { text = ENABLE, dist = 0, checkable = 1, checkable = 1 };
@@ -116,8 +110,6 @@ UnitPopupButtons["SET_FOCUS"] = { text = SET_FOCUS, dist = 0 };
 UnitPopupButtons["CLEAR_FOCUS"] = { text = CLEAR_FOCUS, dist = 0 };
 UnitPopupButtons["LOCK_FOCUS_FRAME"] = { text = LOCK_FOCUS_FRAME, dist = 0 };
 UnitPopupButtons["UNLOCK_FOCUS_FRAME"] = { text = UNLOCK_FOCUS_FRAME, dist = 0 };
-UnitPopupButtons["MOVE_FOCUS_FRAME"] = { text = MOVE_FRAME, dist = 0, nested = 1 };
-UnitPopupButtons["FOCUS_FRAME_BUFFS_ON_TOP"] = { text = BUFFS_ON_TOP, dist = 0, checkable = 1, isNotRadio = 1 };
 
 UnitPopupButtons["MOVE_PLAYER_FRAME"] = { text = MOVE_FRAME, dist = 0, nested = 1 };
 UnitPopupButtons["LOCK_PLAYER_FRAME"] = { text = LOCK_FRAME, dist = 0 };
@@ -170,11 +162,11 @@ UnitPopupButtons["CHAT_BAN"] = { text = CHAT_BAN, dist = 0 };
 
 -- First level menus
 UnitPopupMenus = { };
-UnitPopupMenus["SELF"] = { "SET_FOCUS", "PVP_FLAG", "LOOT_METHOD", "LOOT_THRESHOLD", "OPT_OUT_LOOT_TITLE", "LOOT_PROMOTE", "CONVERT_TO_RAID", "CONVERT_TO_PARTY", "DUNGEON_DIFFICULTY", "RAID_DIFFICULTY", "CHALLENGE_MODE", "RESET_INSTANCES", "RESET_CHALLENGE_MODE", "RAID_TARGET_ICON", "SELECT_ROLE", "LEAVE", "MOVE_PLAYER_FRAME", "MOVE_TARGET_FRAME", "CANCEL"};
+UnitPopupMenus["SELF"] = { "SET_FOCUS", "PVP_FLAG", "LOOT_METHOD", "LOOT_THRESHOLD", "OPT_OUT_LOOT_TITLE", "LOOT_PROMOTE", "CONVERT_TO_RAID", "CONVERT_TO_PARTY", "DUNGEON_DIFFICULTY", "RAID_DIFFICULTY", "RESET_INSTANCES", "RAID_TARGET_ICON", "SELECT_ROLE", "LEAVE", "MOVE_PLAYER_FRAME", "MOVE_TARGET_FRAME", "CANCEL"};
 UnitPopupMenus["PET"] = { "SET_FOCUS", "PET_PAPERDOLL", "PET_RENAME", "PET_DISMISS", "PET_ABANDON", "MOVE_PLAYER_FRAME", "MOVE_TARGET_FRAME", "CANCEL" };
-UnitPopupMenus["PARTY"] = { "SET_FOCUS", "MUTE", "UNMUTE", "PARTY_SILENCE", "PARTY_UNSILENCE", "RAID_SILENCE", "RAID_UNSILENCE", "BATTLEGROUND_SILENCE", "BATTLEGROUND_UNSILENCE", "WHISPER", "PROMOTE", "PROMOTE_GUIDE", "LOOT_PROMOTE", "VOTE_TO_KICK", "UNINVITE", "INSPECT", "ACHIEVEMENTS", "TRADE", "FOLLOW", "DUEL", "PET_BATTLE_PVP_DUEL", "RAID_TARGET_ICON", "SELECT_ROLE", "PVP_REPORT_AFK", "RAF_SUMMON", "RAF_GRANT_LEVEL", "MOVE_PLAYER_FRAME", "MOVE_TARGET_FRAME", "REPORT_PLAYER", "CANCEL" };
-UnitPopupMenus["PLAYER"] = { "SET_FOCUS", "WHISPER", "INSPECT", "INVITE", "ACHIEVEMENTS", "TRADE", "FOLLOW", "DUEL", "PET_BATTLE_PVP_DUEL", "RAID_TARGET_ICON", "RAF_SUMMON", "RAF_GRANT_LEVEL", "MOVE_PLAYER_FRAME", "MOVE_TARGET_FRAME", "REPORT_PLAYER", "CANCEL" };
-UnitPopupMenus["RAID_PLAYER"] = { "SET_FOCUS", "MUTE", "UNMUTE", "RAID_SILENCE", "RAID_UNSILENCE", "BATTLEGROUND_SILENCE", "BATTLEGROUND_UNSILENCE", "WHISPER", "INSPECT", "ACHIEVEMENTS", "TRADE", "FOLLOW", "DUEL", "PET_BATTLE_PVP_DUEL", "RAID_TARGET_ICON", "SELECT_ROLE", "RAID_LEADER", "RAID_PROMOTE", "RAID_DEMOTE", "LOOT_PROMOTE", "VOTE_TO_KICK", "RAID_REMOVE", "PVP_REPORT_AFK", "RAF_SUMMON", "RAF_GRANT_LEVEL", "MOVE_PLAYER_FRAME", "MOVE_TARGET_FRAME", "REPORT_PLAYER", "CANCEL" };
+UnitPopupMenus["PARTY"] = { "SET_FOCUS", "MUTE", "UNMUTE", "PARTY_SILENCE", "PARTY_UNSILENCE", "RAID_SILENCE", "RAID_UNSILENCE", "BATTLEGROUND_SILENCE", "BATTLEGROUND_UNSILENCE", "WHISPER", "PROMOTE", "PROMOTE_GUIDE", "LOOT_PROMOTE", "VOTE_TO_KICK", "UNINVITE", "INSPECT", "ACHIEVEMENTS", "TRADE", "FOLLOW", "DUEL", "RAID_TARGET_ICON", "SELECT_ROLE", "PVP_REPORT_AFK", "RAF_SUMMON", "RAF_GRANT_LEVEL", "MOVE_PLAYER_FRAME", "MOVE_TARGET_FRAME", "REPORT_PLAYER", "CANCEL" };
+UnitPopupMenus["PLAYER"] = { "SET_FOCUS", "WHISPER", "INSPECT", "INVITE", "ACHIEVEMENTS", "TRADE", "FOLLOW", "DUEL", "RAID_TARGET_ICON", "RAF_SUMMON", "RAF_GRANT_LEVEL", "MOVE_PLAYER_FRAME", "MOVE_TARGET_FRAME", "REPORT_PLAYER", "CANCEL" };
+UnitPopupMenus["RAID_PLAYER"] = { "SET_FOCUS", "MUTE", "UNMUTE", "RAID_SILENCE", "RAID_UNSILENCE", "BATTLEGROUND_SILENCE", "BATTLEGROUND_UNSILENCE", "WHISPER", "INSPECT", "ACHIEVEMENTS", "TRADE", "FOLLOW", "DUEL", "RAID_TARGET_ICON", "SELECT_ROLE", "RAID_LEADER", "RAID_PROMOTE", "RAID_DEMOTE", "LOOT_PROMOTE", "VOTE_TO_KICK", "RAID_REMOVE", "PVP_REPORT_AFK", "RAF_SUMMON", "RAF_GRANT_LEVEL", "MOVE_PLAYER_FRAME", "MOVE_TARGET_FRAME", "REPORT_PLAYER", "CANCEL" };
 UnitPopupMenus["RAID"] = { "SET_FOCUS", "MUTE", "UNMUTE", "RAID_SILENCE", "RAID_UNSILENCE", "BATTLEGROUND_SILENCE", "BATTLEGROUND_UNSILENCE", "RAID_LEADER", "RAID_PROMOTE", "RAID_MAINTANK", "RAID_MAINASSIST", "LOOT_PROMOTE", "RAID_DEMOTE", "VOTE_TO_KICK", "RAID_REMOVE", "PVP_REPORT_AFK", "MOVE_PLAYER_FRAME", "MOVE_TARGET_FRAME", "REPORT_PLAYER", "CANCEL" };
 UnitPopupMenus["FRIEND"] = { "WHISPER", "POP_OUT_CHAT", "INVITE", "TARGET", "SET_NOTE", "IGNORE", "REPORT_PLAYER", "GUILD_PROMOTE", "GUILD_LEAVE", "PVP_REPORT_AFK", "REMOVE_FRIEND", "CANCEL" };
 UnitPopupMenus["FRIEND_OFFLINE"] = { "SET_NOTE", "IGNORE", "REMOVE_FRIEND", "CANCEL" };
@@ -187,7 +179,7 @@ UnitPopupMenus["CHAT_ROSTER"] = { "WHISPER", "TARGET", "MUTE", "UNMUTE", "CHAT_S
 UnitPopupMenus["VEHICLE"] = { "SET_FOCUS", "RAID_TARGET_ICON", "VEHICLE_LEAVE", "MOVE_PLAYER_FRAME", "MOVE_TARGET_FRAME", "CANCEL" };
 UnitPopupMenus["TARGET"] = { "SET_FOCUS", "RAID_TARGET_ICON", "MOVE_PLAYER_FRAME", "MOVE_TARGET_FRAME", "CANCEL" };
 UnitPopupMenus["ARENAENEMY"] = { "SET_FOCUS", "CANCEL" };
-UnitPopupMenus["FOCUS"] = { "CLEAR_FOCUS", "MOVE_FOCUS_FRAME", "RAID_TARGET_ICON", "CANCEL" };
+UnitPopupMenus["FOCUS"] = { "CLEAR_FOCUS", "LOCK_FOCUS_FRAME", "UNLOCK_FOCUS_FRAME", "RAID_TARGET_ICON", "CANCEL" };
 UnitPopupMenus["BOSS"] = { "SET_FOCUS", "RAID_TARGET_ICON", "CANCEL" };
 
 -- Second level menus
@@ -198,11 +190,9 @@ UnitPopupMenus["OPT_OUT_LOOT_TITLE"] = { "OPT_OUT_LOOT_ENABLE", "OPT_OUT_LOOT_DI
 UnitPopupMenus["REPORT_PLAYER"] = { "REPORT_SPAM", "REPORT_BAD_LANGUAGE", "REPORT_BAD_NAME", "REPORT_CHEATING" };
 UnitPopupMenus["DUNGEON_DIFFICULTY"] = { "DUNGEON_DIFFICULTY1", "DUNGEON_DIFFICULTY2" };
 UnitPopupMenus["RAID_DIFFICULTY"] = { "RAID_DIFFICULTY1", "RAID_DIFFICULTY2", "RAID_DIFFICULTY3", "RAID_DIFFICULTY4" };
-UnitPopupMenus["CHALLENGE_MODE"] = { "CHALLENGE_MODE_ENABLE", "CHALLENGE_MODE_DISABLE"};
 UnitPopupMenus["BN_REPORT"] = { "BN_REPORT_SPAM", "BN_REPORT_ABUSE", "BN_REPORT_NAME" };
 UnitPopupMenus["MOVE_PLAYER_FRAME"] = { "UNLOCK_PLAYER_FRAME", "LOCK_PLAYER_FRAME", "RESET_PLAYER_FRAME_POSITION", "PLAYER_FRAME_SHOW_CASTBARS" };
 UnitPopupMenus["MOVE_TARGET_FRAME"] = { "UNLOCK_TARGET_FRAME", "LOCK_TARGET_FRAME", "RESET_TARGET_FRAME_POSITION" , "TARGET_FRAME_BUFFS_ON_TOP"};
-UnitPopupMenus["MOVE_FOCUS_FRAME"] = { "UNLOCK_FOCUS_FRAME", "LOCK_FOCUS_FRAME", "FOCUS_FRAME_BUFFS_ON_TOP"};
 
 UnitPopupShown = {};
 UnitPopupShown[1] = {};
@@ -267,7 +257,7 @@ function UnitPopup_ShowMenu (dropdownMenu, which, unit, name, userData)
 	dropdownMenu.selectedLootThreshold = _G["ITEM_QUALITY"..GetLootThreshold().."_DESC"];
 	UnitPopupButtons["LOOT_THRESHOLD"].text = dropdownMenu.selectedLootThreshold;
 	-- This allows player to view loot settings if he's not the leader
-	if ( IsInGroup() and UnitIsGroupLeader("player") and not HasLFGRestrictions() ) then
+	if ( ((GetNumPartyMembers() > 0) or (GetNumRaidMembers() > 0)) and IsPartyLeader() and not HasLFGRestrictions()) then
 		-- If this is true then player is the party leader
 		UnitPopupButtons["LOOT_METHOD"].nested = 1;
 		UnitPopupButtons["LOOT_THRESHOLD"].nested = 1;
@@ -290,10 +280,8 @@ function UnitPopup_ShowMenu (dropdownMenu, which, unit, name, userData)
 	if ( instanceType == "none" ) then
 		UnitPopupButtons["DUNGEON_DIFFICULTY"].nested = 1;
 		UnitPopupButtons["RAID_DIFFICULTY"].nested = 1;		
-		UnitPopupButtons["CHALLENGE_MODE"].nested = 1;
 	else
 		UnitPopupButtons["DUNGEON_DIFFICULTY"].nested = nil;
-		UnitPopupButtons["CHALLENGE_MODE"].nested = nil;
 		if ( allowedRaidDifficultyChange ) then
 			UnitPopupButtons["RAID_DIFFICULTY"].nested = 1;
 		else
@@ -355,31 +343,11 @@ function UnitPopup_ShowMenu (dropdownMenu, which, unit, name, userData)
 						info.checked = 1;
 					end
 					local inParty = 0;
-					if ( IsInGroup() ) then
+					if ( (GetNumPartyMembers() > 0) or (GetNumRaidMembers() > 0) ) then
 						inParty = 1;
 					end
 					local isLeader = 0;
-					if ( UnitIsGroupLeader("player") ) then
-						isLeader = 1;
-					end
-					local inInstance, instanceType = IsInInstance();
-					if ( ( inParty == 1 and isLeader == 0 ) or inInstance ) then
-						info.disabled = 1;	
-					end
-				elseif ( strsub(value, 1, 14) ==  "CHALLENGE_MODE" and (strlen(value) > 14)) then
-					local challengeMode = GetChallengeMode();
-					if ( challengeMode and strsub(value, 16, 21) == "ENABLE" ) then
-						info.checked = 1;
-					end
-					if ( not challengeMode and strsub(value, 16, 22) == "DISABLE" ) then
-						info.checked = 1;
-					end
-					local inParty = 0;
-					if ( IsInGroup() ) then
-						inParty = 1;
-					end
-					local isLeader = 0;
-					if ( UnitIsGroupLeader("player") ) then
+					if ( IsPartyLeader() ) then
 						isLeader = 1;
 					end
 					local inInstance, instanceType = IsInInstance();
@@ -398,11 +366,11 @@ function UnitPopup_ShowMenu (dropdownMenu, which, unit, name, userData)
 						end
 					end
 					local inParty = 0;
-					if ( IsInGroup() ) then
+					if ( (GetNumPartyMembers() > 0) or (GetNumRaidMembers() > 0) ) then
 						inParty = 1;
 					end
 					local isLeader = 0;
-					if ( UnitIsGroupLeader("player") ) then
+					if ( IsPartyLeader() ) then
 						isLeader = 1;
 					end
 					local inInstance, instanceType = IsInInstance();
@@ -430,10 +398,6 @@ function UnitPopup_ShowMenu (dropdownMenu, which, unit, name, userData)
 					end
 				elseif ( value == "TARGET_FRAME_BUFFS_ON_TOP" ) then
 					if ( TARGET_FRAME_BUFFS_ON_TOP ) then
-						info.checked = 1;
-					end
-				elseif ( value == "FOCUS_FRAME_BUFFS_ON_TOP" ) then
-					if ( FOCUS_FRAME_BUFFS_ON_TOP ) then
 						info.checked = 1;
 					end
 				elseif ( value == "PLAYER_FRAME_SHOW_CASTBARS" ) then
@@ -547,22 +511,22 @@ function UnitPopup_HideButtons ()
 	local dropdownMenu = UIDROPDOWNMENU_INIT_MENU;
 	local inInstance, instanceType = IsInInstance();
 	local inParty = 0;
-	if ( IsInGroup() ) then
+	if ( (GetNumPartyMembers() > 0) or (GetNumRaidMembers() > 0) ) then
 		inParty = 1;
 	end
 
 	local inRaid = 0;
-	if ( IsInRaid() ) then
+	if ( (GetNumRaidMembers() > 0) ) then
 		inRaid = 1;
 	end
 
 	local isLeader = 0;
-	if ( UnitIsGroupLeader("player") ) then
+	if ( IsPartyLeader() ) then
 		isLeader = 1;
 	end
 
 	local isAssistant = 0;
-	if ( UnitIsGroupAssistant("player") ) then
+	if ( IsRaidOfficer() ) then
 		isAssistant = 1;
 	end
 
@@ -584,7 +548,8 @@ function UnitPopup_HideButtons ()
 			end
 		elseif ( value == "INVITE" ) then
 			if ( dropdownMenu.unit ) then
-				if ( canCoop == 0  or UnitIsUnit("player", dropdownMenu.unit) ) then
+				local _, server = UnitName(dropdownMenu.unit);
+				if ( canCoop == 0  or UnitIsUnit("player", dropdownMenu.unit) or (server and server ~= "") ) then
 					UnitPopupShown[UIDROPDOWNMENU_MENU_LEVEL][index] = 0;
 				end
 			elseif ( (dropdownMenu == PVPTeamManagementFrameTeamDropDown) and not PVPTeamManagementFrameTeamDropDown.online ) then
@@ -633,10 +598,6 @@ function UnitPopup_HideButtons ()
 			end
 		elseif ( value == "DUEL" ) then
 			if ( UnitCanAttack("player", dropdownMenu.unit) ) then
-				UnitPopupShown[UIDROPDOWNMENU_MENU_LEVEL][index] = 0;
-			end
-		elseif ( value == "PET_BATTLE_PVP_DUEL" ) then
-			if ( not UnitCanPetBattle("player", dropdownMenu.unit) ) then
 				UnitPopupShown[UIDROPDOWNMENU_MENU_LEVEL][index] = 0;
 			end
 		elseif ( value == "INSPECT" or value == "ACHIEVEMENTS" ) then
@@ -745,7 +706,7 @@ function UnitPopup_HideButtons ()
 				UnitPopupShown[UIDROPDOWNMENU_MENU_LEVEL][index] = 0;
 			end
 		elseif ( value == "UNINVITE" ) then
-			if ( (inParty == 0) or (isLeader == 0) or (instanceType == "pvp") or (instanceType == "arena") or HasLFGRestrictions() or IsInGroup(LE_PARTY_CATEGORY_INSTANCE) ) then
+			if ( (inParty == 0) or (isLeader == 0) or (instanceType == "pvp") or (instanceType == "arena") or HasLFGRestrictions() or IsInFakeRaid() ) then
 				UnitPopupShown[UIDROPDOWNMENU_MENU_LEVEL][index] = 0;
 			end
 		elseif ( value == "VOTE_TO_KICK" ) then
@@ -753,7 +714,7 @@ function UnitPopup_HideButtons ()
 				UnitPopupShown[UIDROPDOWNMENU_MENU_LEVEL][index] = 0;
 			end
 		elseif ( value == "LEAVE" ) then
-			if ( inParty == 0 or IsInGroup(LE_PARTY_CATEGORY_INSTANCE) ) then
+			if ( (inParty == 0 and not IsOnePersonParty()) or IsInFakeRaid() ) then
 				UnitPopupShown[UIDROPDOWNMENU_MENU_LEVEL][index] = 0;
 			end
 		elseif ( value == "FREE_FOR_ALL" ) then
@@ -845,16 +806,8 @@ function UnitPopup_HideButtons ()
 			if ( ( inParty == 1 and isLeader == 0 ) or inInstance) then
 				UnitPopupShown[UIDROPDOWNMENU_MENU_LEVEL][index] = 0;
 			end
-		elseif ( value == "RESET_CHALLENGE_MODE" ) then
-			if ( not inInstance or not GetChallengeMode() or ( inParty == 1 and isLeader == 0 ) ) then
-				UnitPopupShown[UIDROPDOWNMENU_MENU_LEVEL][index] = 0;
-			end
 		elseif ( value == "DUNGEON_DIFFICULTY" ) then
 			if ( UnitLevel("player") < 65 and GetDungeonDifficulty() == 1 ) then
-				UnitPopupShown[UIDROPDOWNMENU_MENU_LEVEL][index] = 0;
-			end
-		elseif ( value == "CHALLENGE_MODE" ) then
-			if ( UnitLevel("player") < 90 ) then
 				UnitPopupShown[UIDROPDOWNMENU_MENU_LEVEL][index] = 0;
 			end
 		elseif ( value == "RAID_DIFFICULTY" ) then
@@ -881,14 +834,14 @@ function UnitPopup_HideButtons ()
 				end
 			end
 		elseif ( value == "RAID_LEADER" ) then
-			if ( (isLeader == 0) or UnitIsGroupLeader(dropdownMenu.unit)or not dropdownMenu.name ) then
+			if ( (isLeader == 0) or UnitIsPartyLeader(dropdownMenu.unit)or not dropdownMenu.name ) then
 				UnitPopupShown[UIDROPDOWNMENU_MENU_LEVEL][index] = 0;
 			end
 		elseif ( value == "RAID_PROMOTE" ) then
 			if ( isLeader == 0 or IsEveryoneAssistant() ) then
 				UnitPopupShown[UIDROPDOWNMENU_MENU_LEVEL][index] = 0;
 			elseif ( isLeader == 1 ) then
-				if ( UnitIsGroupAssistant(dropdownMenu.unit) ) then
+				if ( UnitIsRaidOfficer(dropdownMenu.unit) ) then
 					UnitPopupShown[UIDROPDOWNMENU_MENU_LEVEL][index] = 0;
 				end			
 			end
@@ -896,10 +849,10 @@ function UnitPopup_HideButtons ()
 			if ( ( isLeader == 0 and isAssistant == 0 ) or not dropdownMenu.name ) then			
 				UnitPopupShown[UIDROPDOWNMENU_MENU_LEVEL][index] = 0;
 			elseif ( not GetPartyAssignment("MAINTANK", dropdownMenu.name, 1) and not GetPartyAssignment("MAINASSIST", dropdownMenu.name, 1) ) then
-				if ( isLeader == 0  and isAssistant == 1 and UnitIsGroupAssistant(dropdownMenu.unit) ) then
+				if ( isLeader == 0  and isAssistant == 1 and UnitIsRaidOfficer(dropdownMenu.unit) ) then
 					UnitPopupShown[UIDROPDOWNMENU_MENU_LEVEL][index] = 0;
 				elseif ( isLeader == 1 or isAssistant == 1 ) then
-					if ( UnitIsGroupLeader(dropdownMenu.unit) or not UnitIsGroupAssistant(dropdownMenu.unit) or IsEveryoneAssistant()) then
+					if ( UnitIsPartyLeader(dropdownMenu.unit) or not UnitIsRaidOfficer(dropdownMenu.unit) or IsEveryoneAssistant()) then
 						UnitPopupShown[UIDROPDOWNMENU_MENU_LEVEL][index] = 0;
 					end
 				end
@@ -919,9 +872,9 @@ function UnitPopup_HideButtons ()
 		elseif ( value == "RAID_REMOVE" ) then
 			if ( HasLFGRestrictions() ) then
 				UnitPopupShown[UIDROPDOWNMENU_MENU_LEVEL][index] = 0;
-			elseif ( ( isLeader == 0 and isAssistant == 0 ) or not dropdownMenu.name or IsInGroup(LE_PARTY_CATEGORY_INSTANCE) ) then			
+			elseif ( ( isLeader == 0 and isAssistant == 0 ) or not dropdownMenu.name or IsInFakeRaid() ) then			
 				UnitPopupShown[UIDROPDOWNMENU_MENU_LEVEL][index] = 0;
-			elseif ( isLeader == 0 and isAssistant == 1 and UnitIsGroupAssistant(dropdownMenu.unit) ) then
+			elseif ( isLeader == 0 and isAssistant == 1 and UnitIsRaidOfficer(dropdownMenu.unit) ) then
 				UnitPopupShown[UIDROPDOWNMENU_MENU_LEVEL][index] = 0;
 			elseif ( isLeader == 1 and UnitIsUnit(dropdownMenu.unit, "player") ) then
 				UnitPopupShown[UIDROPDOWNMENU_MENU_LEVEL][index] = 0;
@@ -1143,7 +1096,7 @@ function UnitPopup_HideButtons ()
 				UnitPopupShown[UIDROPDOWNMENU_MENU_LEVEL][index] = 0;
 			end
 		elseif ( value == "SELECT_ROLE" ) then
-			if ( not ( IsInGroup() and not HasLFGRestrictions() and (isLeader ~= 0 or isAssistant ~= 0 or UnitIsUnit(dropdownMenu.unit, "player")) ) ) then
+			if ( not ( (GetNumPartyMembers() > 0 or GetNumRaidMembers() > 0) and not HasLFGRestrictions() and (isLeader ~= 0 or isAssistant ~= 0 or UnitIsUnit(dropdownMenu.unit, "player")) ) ) then
 				UnitPopupShown[UIDROPDOWNMENU_MENU_LEVEL][index] = 0;
 			end
 		end
@@ -1167,7 +1120,7 @@ function UnitPopup_OnUpdate (elapsed)
 	local currentDropDown = UIDROPDOWNMENU_OPEN_MENU;
 
 	local inParty = 0;
-	if ( IsInGroup() ) then
+	if ( (GetNumPartyMembers() > 0) or (GetNumRaidMembers() > 0) ) then
 		inParty = 1;
 	end
 
@@ -1177,11 +1130,11 @@ function UnitPopup_OnUpdate (elapsed)
 	end
 
 	local isLeader = 0;
-	if ( UnitIsGroupLeader("player") ) then
+	if ( IsPartyLeader() ) then
 		isLeader = 1;
 	end
 	local isAssistant = 0;
-	if ( UnitIsGroupAssistant("player") ) then
+	if ( IsRaidOfficer() ) then
 		isAssistant = 1;
 	end
 	
@@ -1207,21 +1160,21 @@ function UnitPopup_OnUpdate (elapsed)
 							enable = 0;
 						end
 					end
-
+					
 					if ( value == "TRADE" ) then
 						if ( UnitIsDeadOrGhost("player") or (not HasFullControl()) or UnitIsDeadOrGhost(dropdownFrame.unit) ) then
 							enable = 0;
 						end
 					elseif ( value == "LEAVE" ) then
-						if ( inParty == 0 ) then
+						if ( inParty == 0 and not IsOnePersonParty()) then
 							enable = 0;
 						end
 					elseif ( value == "INVITE" ) then
-						if ( inParty == 1 and (isLeader == 0 and isAssistant == 0) ) then
+						if ( (inParty == 1 and (isLeader == 0 and isAssistant == 0)) or currentDropDown.server ) then
 							enable = 0;
 						end
 					elseif ( value == "UNINVITE" ) then
-						if ( inParty == 0 or (isLeader == 0) or HasLFGRestrictions() or IsInGroup(LE_PARTY_CATEGORY_INSTANCE) ) then
+						if ( inParty == 0 or (isLeader == 0) or HasLFGRestrictions() or IsInFakeRaid() ) then
 							enable = 0;
 						end
 					elseif ( value == "BN_INVITE" ) then
@@ -1257,10 +1210,6 @@ function UnitPopup_OnUpdate (elapsed)
 							enable = 0;
 						end
 					elseif ( value == "DUEL" ) then
-						if ( UnitIsDeadOrGhost("player") or (not HasFullControl()) or UnitIsDeadOrGhost(dropdownFrame.unit) ) then
-							enable = 0;
-						end
-					elseif ( value == "PET_BATTLE_PVP_DUEL" ) then
 						if ( UnitIsDeadOrGhost("player") or (not HasFullControl()) or UnitIsDeadOrGhost(dropdownFrame.unit) ) then
 							enable = 0;
 						end
@@ -1302,14 +1251,8 @@ function UnitPopup_OnUpdate (elapsed)
 						if ( allowedRaidDifficultyChange and allowedRaidDifficultyChange == value ) then
 							enable = 1;
 						end
-					elseif ( value == "CHALLENGE_MODE" and inInstance ) then
-						enable = 0;
-					elseif ( ( strsub(value, 1, 14) == "CHALLENGE_MODE" ) and ( strlen(value) > 14 ) ) then
-						if ( ( inParty == 1 and isLeader == 0 ) or inInstance or HasLFGRestrictions() ) then
-							enable = 0;	
-						end
 					elseif ( value == "CONVERT_TO_PARTY" ) then
-						if ( GetNumGroupMembers() > MEMBERS_PER_RAID_GROUP ) then
+						if ( GetNumRaidMembers() > MEMBERS_PER_RAID_GROUP ) then
 							enable = 0;
 						end
 					elseif ( value == "RESET_INSTANCES" ) then
@@ -1371,16 +1314,16 @@ function UnitPopup_OnClick (self)
 	end
 
 	local inParty = 0;
-	if ( IsInGroup() ) then
+	if ( (GetNumPartyMembers() > 0) or (GetNumRaidMembers() > 0) ) then
 		inParty = 1;
 	end
 
 	local isLeader = 0;
-	if ( UnitIsGroupLeader("player") ) then
+	if ( IsPartyLeader() ) then
 		isLeader = 1;
 	end
 	local isAssistant = 0;
-	if ( UnitIsGroupAssistant("player") ) then
+	if ( IsRaidOfficer() ) then
 		isAssistant = 1;
 	end
 
@@ -1436,10 +1379,8 @@ function UnitPopup_OnClick (self)
 		FCF_OpenTemporaryWindow(dropdownFrame.chatType, dropdownFrame.chatTarget, dropdownFrame.chatFrame, true);
 	elseif ( button == "DUEL" ) then
 		StartDuel(unit, 1);
-	elseif ( button == "PET_BATTLE_PVP_DUEL" ) then
-		C_PetBattles.StartPVPDuel(unit, 1);
 	elseif ( button == "INVITE" ) then
-		InviteToGroup(fullname);
+		InviteUnit(fullname);
 	elseif ( button == "UNINVITE" or button == "VOTE_TO_KICK" ) then
 		UninviteUnit(fullname, nil, 1);
 	elseif ( button == "REMOVE_FRIEND" ) then
@@ -1545,12 +1486,6 @@ function UnitPopup_OnClick (self)
 	elseif ( strsub(button, 1, 18) == "DUNGEON_DIFFICULTY" and (strlen(button) > 18) ) then
 		local dungeonDifficulty = tonumber( strsub(button,19,19) );
 		SetDungeonDifficulty(dungeonDifficulty);
-	elseif ( button == "CHALLENGE_MODE_ENABLE" ) then
-		SetChallengeMode(1);
-		CloseDropDownMenus();
-	elseif ( button == "CHALLENGE_MODE_DISABLE" ) then
-		SetChallengeMode(nil);
-		CloseDropDownMenus();
 	elseif ( strsub(button, 1, 15) == "RAID_DIFFICULTY" and (strlen(button) > 15) ) then
 		local raidDifficulty = tonumber( strsub(button,16,16) );
 		SetRaidDifficulty(raidDifficulty);
@@ -1566,8 +1501,6 @@ function UnitPopup_OnClick (self)
 		ConvertToParty();
 	elseif ( button == "RESET_INSTANCES" ) then
 		StaticPopup_Show("CONFIRM_RESET_INSTANCES");
-	elseif ( button == "RESET_CHALLENGE_MODE" ) then
-		StaticPopup_Show("CONFIRM_RESET_CHALLENGE_MODE");
 	elseif ( button == "FOLLOW" ) then
 		FollowUnit(fullname, 1);
 	elseif ( button == "MUTE" ) then
@@ -1579,7 +1512,7 @@ function UnitPopup_OnClick (self)
 	elseif ( button == "RAID_PROMOTE" ) then
 		PromoteToAssistant(fullname, 1);
 	elseif ( button == "RAID_DEMOTE" ) then
-		if ( isLeader == 1 and UnitIsGroupAssistant(unit) ) then
+		if ( isLeader == 1 and UnitIsRaidOfficer(unit) ) then
 			DemoteAssistant(fullname, 1);
 		end
 		if ( GetPartyAssignment("MAINTANK", fullname, 1) ) then
@@ -1647,10 +1580,7 @@ function UnitPopup_OnClick (self)
 		TargetFrame_ResetUserPlacedPosition();
 	elseif ( button == "TARGET_FRAME_BUFFS_ON_TOP" ) then
 		TARGET_FRAME_BUFFS_ON_TOP = not TARGET_FRAME_BUFFS_ON_TOP;
-		TargetFrame_UpdateBuffsOnTop();
-	elseif ( button == "FOCUS_FRAME_BUFFS_ON_TOP" ) then
-		FOCUS_FRAME_BUFFS_ON_TOP = not FOCUS_FRAME_BUFFS_ON_TOP;
-		FocusFrame_UpdateBuffsOnTop();
+		TargetFrame_UpdateAuras(TargetFrame);
 	elseif ( button == "PLAYER_FRAME_SHOW_CASTBARS" ) then
 		PLAYER_FRAME_CASTBARS_SHOWN = not PLAYER_FRAME_CASTBARS_SHOWN;
 		if ( PLAYER_FRAME_CASTBARS_SHOWN ) then

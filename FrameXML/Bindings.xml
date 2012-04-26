@@ -211,123 +211,123 @@
 	</Binding>
 	
 	<Binding name="SHAPESHIFTBUTTON1">
-		StanceBar_Select(1)
+		ShapeshiftBar_ChangeForm(1)
 	</Binding>
 	<Binding name="SHAPESHIFTBUTTON2">
-		StanceBar_Select(2)
+		ShapeshiftBar_ChangeForm(2)
 	</Binding>
 	<Binding name="SHAPESHIFTBUTTON3">
-		StanceBar_Select(3)
+		ShapeshiftBar_ChangeForm(3)
 	</Binding>
 	<Binding name="SHAPESHIFTBUTTON4">
-		StanceBar_Select(4)
+		ShapeshiftBar_ChangeForm(4)
 	</Binding>
 	<Binding name="SHAPESHIFTBUTTON5">
-		StanceBar_Select(5)
+		ShapeshiftBar_ChangeForm(5)
 	</Binding>
 	<Binding name="SHAPESHIFTBUTTON6">
-		StanceBar_Select(6)
+		ShapeshiftBar_ChangeForm(6)
 	</Binding>
 	<Binding name="SHAPESHIFTBUTTON7">
-		StanceBar_Select(7)
+		ShapeshiftBar_ChangeForm(7)
 	</Binding>
 	<Binding name="SHAPESHIFTBUTTON8">
-		StanceBar_Select(8)
+		ShapeshiftBar_ChangeForm(8)
 	</Binding>
 	<Binding name="SHAPESHIFTBUTTON9">
-		StanceBar_Select(9)
+		ShapeshiftBar_ChangeForm(9)
 	</Binding>
 	<Binding name="SHAPESHIFTBUTTON10">
-		StanceBar_Select(10)
+		ShapeshiftBar_ChangeForm(10)
 	</Binding>
 
 	<Binding name="BONUSACTIONBUTTON1" runOnUp="true">
 		if (PetHasActionBar()) then
 			if ( keystate == "down" ) then
-				PetActionButtonDown(1);
+				BonusActionButtonDown(1);
 			else
-				PetActionButtonUp(1);
+				BonusActionButtonUp(1);
 			end
 		end
 	</Binding>
 	<Binding name="BONUSACTIONBUTTON2" runOnUp="true">
 		if (PetHasActionBar()) then
 			if ( keystate == "down" ) then
-				PetActionButtonDown(2);
+				BonusActionButtonDown(2);
 			else
-				PetActionButtonUp(2);
+				BonusActionButtonUp(2);
 			end
 		end
 	</Binding>
 	<Binding name="BONUSACTIONBUTTON3" runOnUp="true">
 		if (PetHasActionBar()) then
 			if ( keystate == "down" ) then
-				PetActionButtonDown(3);
+				BonusActionButtonDown(3);
 			else
-				PetActionButtonUp(3);
+				BonusActionButtonUp(3);
 			end
 		end
 	</Binding>
 	<Binding name="BONUSACTIONBUTTON4" runOnUp="true">
 		if (PetHasActionBar()) then
 			if ( keystate == "down" ) then
-				PetActionButtonDown(4);
+				BonusActionButtonDown(4);
 			else
-				PetActionButtonUp(4);
+				BonusActionButtonUp(4);
 			end
 		end
 	</Binding>
 	<Binding name="BONUSACTIONBUTTON5" runOnUp="true">
 		if (PetHasActionBar()) then
 			if ( keystate == "down" ) then
-				PetActionButtonDown(5);
+				BonusActionButtonDown(5);
 			else
-				PetActionButtonUp(5);
+				BonusActionButtonUp(5);
 			end
 		end
 	</Binding>
 	<Binding name="BONUSACTIONBUTTON6" runOnUp="true">
 		if (PetHasActionBar()) then
 			if ( keystate == "down" ) then
-				PetActionButtonDown(6);
+				BonusActionButtonDown(6);
 			else
-				PetActionButtonUp(6);
+				BonusActionButtonUp(6);
 			end
 		end
 	</Binding>
 	<Binding name="BONUSACTIONBUTTON7" runOnUp="true">
 		if (PetHasActionBar()) then
 			if ( keystate == "down" ) then
-				PetActionButtonDown(7);
+				BonusActionButtonDown(7);
 			else
-				PetActionButtonUp(7);
+				BonusActionButtonUp(7);
 			end
 		end
 	</Binding>
 	<Binding name="BONUSACTIONBUTTON8" runOnUp="true">
 		if (PetHasActionBar()) then
 			if ( keystate == "down" ) then
-				PetActionButtonDown(8);
+				BonusActionButtonDown(8);
 			else
-				PetActionButtonUp(8);
+				BonusActionButtonUp(8);
 			end
 		end
 	</Binding>
 	<Binding name="BONUSACTIONBUTTON9" runOnUp="true">
 		if (PetHasActionBar()) then
 			if ( keystate == "down" ) then
-				PetActionButtonDown(9);
+				BonusActionButtonDown(9);
 			else
-				PetActionButtonUp(9);
+				BonusActionButtonUp(9);
 			end
 		end
 	</Binding>
 	<Binding name="BONUSACTIONBUTTON10" runOnUp="true">
 		if (PetHasActionBar()) then
 			if ( keystate == "down" ) then
-				PetActionButtonDown(10);
+				BonusActionButtonDown(10);
 			else
-				PetActionButtonUp(10);
+				BonusActionButtonUp(10);
 			end
 		end
 	</Binding>
@@ -710,13 +710,13 @@
 		ToggleFriendsFrame(3);
 	</Binding>
 	<Binding name="TOGGLERAIDFINDER">
-		PVEFrame_ToggleFrame("GroupFinderFrame", RaidFinderFrame);
-	</Binding>
-	<Binding name="TOGGLERAIDTAB">
 		ToggleRaidFrame(1);
 	</Binding>
-	<Binding name="TOGGLELFRPARENT">
+	<Binding name="TOGGLERAIDTAB">
 		ToggleRaidFrame(2);
+	</Binding>
+	<Binding name="TOGGLELFRPARENT">
+		ToggleRaidFrame(3);
 	</Binding>
 	<Binding name="TOGGLELFGPARENT"> <!--Keeping the name as the old LFG so that people's bindings aren't reset -->
 		ToggleLFDParentFrame();
@@ -745,10 +745,6 @@
 	<Binding name="TOGGLEENCOUNTERJOURNAL">
 		ToggleEncounterJournal();
 	</Binding>
-	<Binding name="TOGGLECOMPANIONJOURNAL">
-		TogglePetJournal();
-	</Binding>
-
 
 	<!-- Misc -->
 	<Binding name="STOPCASTING" header="MISC">
