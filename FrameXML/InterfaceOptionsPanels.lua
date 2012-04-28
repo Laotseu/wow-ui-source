@@ -1775,7 +1775,7 @@ function BlizzardOptionsPanel_UpdateDebuffFrames()
 	TargetofTarget_Update(frame.totFrame);
 	-- Party frames and their pets
 	for i = 1, MAX_PARTY_MEMBERS do
-		if ( GetPartyMember(i) ) then
+		if ( UnitExists("party"..i) ) then
 			frame = _G["PartyMemberFrame"..i];
 			PartyMemberFrame_UpdateMember(frame);
 			PartyMemberFrame_UpdatePet(frame);
@@ -2087,7 +2087,6 @@ HelpPanelOptions = {
 	showTutorials = { text = "SHOW_TUTORIALS" },
 	showGameTips = { text = "SHOW_TIPOFTHEDAY_TEXT" },
 	UberTooltips = { text = "USE_UBERTOOLTIPS" },
-	showNewbieTips = { text = "SHOW_NEWBIE_TIPS_TEXT" },
 	scriptErrors = { text = "SHOW_LUA_ERRORS" },
 	colorblindMode = { text = "USE_COLORBLIND_MODE" },
 	enableMovePad = { text = "MOVE_PAD" },

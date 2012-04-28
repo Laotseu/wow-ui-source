@@ -1,7 +1,5 @@
 NUM_WORLDMAP_POIS = 0;
 NUM_WORLDMAP_GRAVEYARDS = 0;
-NUM_WORLDMAP_POI_COLUMNS = 14;
-WORLDMAP_POI_TEXTURE_WIDTH = 256;
 NUM_WORLDMAP_OVERLAYS = 0;
 NUM_WORLDMAP_FLAGS = 2;
 NUM_WORLDMAP_DEBUG_ZONEMAP = 0;
@@ -85,16 +83,15 @@ function WorldMapFrame_OnLoad(self)
 	self:RegisterEvent("PLAYER_ENTERING_WORLD");
 	self:RegisterEvent("WORLD_MAP_UPDATE");
 	self:RegisterEvent("CLOSE_WORLD_MAP");
-	self:RegisterEvent("WORLD_MAP_NAME_UPDATE");
 	self:RegisterEvent("VARIABLES_LOADED");
-	self:RegisterEvent("PARTY_MEMBERS_CHANGED");
-	self:RegisterEvent("RAID_ROSTER_UPDATE");
+	self:RegisterEvent("GROUP_ROSTER_UPDATE");
 	self:RegisterEvent("DISPLAY_SIZE_CHANGED");
 	self:RegisterEvent("QUEST_LOG_UPDATE");
 	self:RegisterEvent("QUEST_POI_UPDATE");
 	self:RegisterEvent("SKILL_LINES_CHANGED");
 	self:RegisterEvent("REQUEST_CEMETERY_LIST_RESPONSE");
 	self:RegisterEvent("UNIT_PORTRAIT_UPDATE");
+	self:RegisterEvent("ARTIFACT_DIG_SITE_UPDATED");
 	
 	self:SetClampRectInsets(0, 0, 0, -60);				-- don't overlap the xp/rep bars
 	self.poiHighlight = nil;
@@ -197,6 +194,10 @@ function WorldMapFrame_OnEvent(self, event, ...)
 		if ( not self.blockWorldMapUpdate and self:IsShown() ) then
 			WorldMapFrame_UpdateMap();
 		end
+	elseif ( event == "ARTIFACT_DIG_SITE_UPDATED" ) then
+		if ( self:IsShown() ) then
+			RefreshWorldMap();
+		end
 	elseif ( event == "CLOSE_WORLD_MAP" ) then
 		HideUIPanel(self);
 	elseif ( event == "VARIABLES_LOADED" ) then
@@ -210,7 +211,7 @@ function WorldMapFrame_OnEvent(self, event, ...)
 		end
 		WorldMapQuestShowObjectives:SetChecked(GetCVarBool("questPOI"));
 		WorldMapQuestShowObjectives_Toggle();
-	elseif ( event == "PARTY_MEMBERS_CHANGED" or event == "RAID_ROSTER_UPDATE" ) then
+	elseif ( event == "GROUP_ROSTER_UPDATE" ) then
 		if ( self:IsShown() ) then
 			WorldMapFrame_UpdateUnits("WorldMapRaid", "WorldMapParty");
 		end
@@ -242,8 +243,6 @@ function WorldMapFrame_OnEvent(self, event, ...)
 end
 
 function WorldMapFrame_OnUpdate(self)
-	RequestBattlefieldPositions();
-
 	local nextBattleTime = GetOutdoorPVPWaitTime();
 	if ( nextBattleTime and not IsInInstance()) then
 		local battleSec = mod(nextBattleTime, 60);
@@ -270,15 +269,15 @@ function WorldMapFrame_OnKeyDown(self, key)
 end
 
 function WorldMapFrame_Update()
-	local mapFileName, textureHeight = GetMapInfo();
-	if ( not mapFileName ) then
+	local mapName, textureHeight, _, isMicroDungeon, microDungeonMapName = GetMapInfo();
+	if ( not mapName ) then
 		if ( GetCurrentMapContinent() == WORLDMAP_COSMIC_ID ) then
-			mapFileName = "Cosmic";
+			mapName = "Cosmic";
 			OutlandButton:Show();
 			AzerothButton:Show();
 		else
 			-- Temporary Hack (Temporary meaning 6 yrs, haha)
-			mapFileName = "World";
+			mapName = "World";
 			OutlandButton:Hide();
 			AzerothButton:Hide();
 		end
@@ -301,23 +300,32 @@ function WorldMapFrame_Update()
 			TheMaelstromButton:Hide();
 		end
 	end
-
-	local texName;
+	
 	local dungeonLevel = GetCurrentMapDungeonLevel();
 	if (DungeonUsesTerrainMap()) then
 		dungeonLevel = dungeonLevel - 1;
 	end
-	local completeMapFileName;
-	if ( dungeonLevel > 0 ) then
-		completeMapFileName = mapFileName..dungeonLevel.."_";
+	
+	local fileName;
+
+	local path;
+	if (not isMicroDungeon) then
+		path = "Interface\\WorldMap\\"..mapName.."\\";
+		fileName = mapName;
 	else
-		completeMapFileName = mapFileName;
+		path = "Interface\\WorldMap\\MicroDungeon\\"..mapName.."\\"..microDungeonMapName.."\\";
+		fileName = microDungeonMapName;
 	end
+	
+	if ( dungeonLevel > 0 ) then
+		fileName = fileName..dungeonLevel.."_";
+	end
+	
 	local numOfDetailTiles = GetNumberOfDetailTiles();
 	for i=1, numOfDetailTiles do
-		texName = "Interface\\WorldMap\\"..mapFileName.."\\"..completeMapFileName..i;
+		texName = path..fileName..i;
 		_G["WorldMapDetailTile"..i]:SetTexture(texName);
-	end		
+	end
 	--WorldMapHighlight:Hide();
 
 	-- Enable/Disable zoom out button
@@ -345,7 +353,7 @@ function WorldMapFrame_Update()
 			if( (GetCurrentMapAreaID() ~= WORLDMAP_WINTERGRASP_ID) and (areaID == WORLDMAP_WINTERGRASP_POI_AREAID) ) then
 				worldMapPOI:Hide();
 			else
-				local x1, x2, y1, y2 = WorldMap_GetPOITextureCoords(textureIndex);
+				local x1, x2, y1, y2 = GetPOITextureCoords(textureIndex);
 				_G[worldMapPOIName.."Texture"]:SetTexCoord(x1, x2, y1, y2);
 				x = x * WorldMapButton:GetWidth();
 				y = -y * WorldMapButton:GetHeight();
@@ -619,25 +627,6 @@ function WorldMap_GetGraveyardButton(index)
 	return button;
 end
 
-function WorldMap_GetPOITextureCoords(index)
-	local worldMapPixelsPerIcon = 18;
-	local worldMapIconDimension = 16;
-	
-	local offsetPixelsPerSide = (worldMapPixelsPerIcon - worldMapIconDimension)/2;
-	local normalizedOffsetPerSide = offsetPixelsPerSide * 1/WORLDMAP_POI_TEXTURE_WIDTH;
-	local xCoord1, xCoord2, yCoord1, yCoord2; 
-	local coordIncrement = worldMapPixelsPerIcon / WORLDMAP_POI_TEXTURE_WIDTH;
-	local xOffset = mod(index, NUM_WORLDMAP_POI_COLUMNS);
-	local yOffset = floor(index / NUM_WORLDMAP_POI_COLUMNS);
-	
-	xCoord1 = xOffset * coordIncrement + normalizedOffsetPerSide;
-	xCoord2 = xCoord1 + coordIncrement - normalizedOffsetPerSide;
-	yCoord1 = yOffset * coordIncrement + normalizedOffsetPerSide;
-	yCoord2 = yCoord1 + coordIncrement - normalizedOffsetPerSide;
-	
-	return xCoord1, xCoord2, yCoord1, yCoord2;
-end
-
 function WorldMapContinentsDropDown_Update()
 	UIDropDownMenu_Initialize(WorldMapContinentDropDown, WorldMapContinentsDropDown_Initialize);
 	UIDropDownMenu_SetWidth(WorldMapContinentDropDown, 130);
@@ -698,7 +687,10 @@ function WorldMapLevelDropDown_Update()
 		WorldMapLevelUpButton:Hide();
 		WorldMapLevelDownButton:Hide();
 	else
-		UIDropDownMenu_SetSelectedID(WorldMapLevelDropDown, GetCurrentMapDungeonLevel());
+		local floorMapCount, firstFloor = GetNumDungeonMapLevels();
+		local levelID = GetCurrentMapDungeonLevel() - firstFloor + 1;
+
+		UIDropDownMenu_SetSelectedID(WorldMapLevelDropDown, levelID);
 		WorldMapLevelDropDown:Show();
 		if ( WORLDMAP_SETTINGS.size ~= WORLDMAP_WINDOWED_SIZE ) then
 			WorldMapLevelUpButton:Show();
@@ -714,14 +706,19 @@ function WorldMapLevelDropDown_Initialize()
 	local mapname = strupper(GetMapInfo() or "");
 	
 	local usesTerrainMap = DungeonUsesTerrainMap();
-
-	for i=1, GetNumDungeonMapLevels() do
+	local floorMapCount, firstFloor = GetNumDungeonMapLevels();
+	if (usesTerrainMap) then
+		floorMapCount = floorMapCount - 1;
+	end
+	local lastFloor = firstFloor + floorMapCount - 1;
+	for i=firstFloor, lastFloor do
 		local floorNum = i;
 		if (usesTerrainMap) then
 			floorNum = i - 1;
 		end
+		
 		local floorname =_G["DUNGEON_FLOOR_" .. mapname .. floorNum];
-		info.text = floorname or string.format(FLOOR_NUMBER, i);
+		info.text = floorname or string.format(FLOOR_NUMBER, i - firstFloor + 1);
 		info.func = WorldMapLevelButton_OnClick;
 		info.checked = (i == level);
 		UIDropDownMenu_AddButton(info);
@@ -730,7 +727,11 @@ end
 
 function WorldMapLevelButton_OnClick(self)
 	UIDropDownMenu_SetSelectedID(WorldMapLevelDropDown, self:GetID());
-	SetDungeonMapLevel(self:GetID());
+
+	local floorMapCount, firstFloor = GetNumDungeonMapLevels();
+	local level = firstFloor + self:GetID() - 1;
+	
+	SetDungeonMapLevel(level);
 end
 
 function WorldMapLevelUp_OnClick(self)
@@ -885,7 +886,8 @@ local BLIP_TEX_COORDS = {
 ["SHAMAN"] = { 0.75, 0.875, 0, 0.25 },
 ["MAGE"] = { 0.875, 1, 0, 0.25 },
 ["WARLOCK"] = { 0, 0.125, 0.25, 0.5 },
-["DRUID"] = { 0.25, 0.375, 0.25, 0.5 }
+["DRUID"] = { 0.25, 0.375, 0.25, 0.5 },
+["MONK"] = { 0.125, 0.25, 0.25, 0.5 }
 }
 
 local BLIP_RAID_Y_OFFSET = 0.5;
@@ -990,7 +992,7 @@ function WorldMapButton_OnUpdate(self, elapsed)
 
 	--Position groupmates
 	local playerCount = 0;
-	if ( GetNumRaidMembers() > 0 ) then
+	if ( IsInRaid() ) then
 		for i=1, MAX_PARTY_MEMBERS do
 			local partyMemberFrame = _G["WorldMapParty"..i];
 			partyMemberFrame:Hide();
@@ -1051,22 +1053,6 @@ function WorldMapButton_OnUpdate(self, elapsed)
 				end
 				partyMemberFrame:Show();
 			end
-		end
-	end
-	-- Position Team Members
-	local numTeamMembers = GetNumBattlefieldPositions();
-	for i=playerCount+1, MAX_RAID_MEMBERS do
-		local partyX, partyY, name = GetBattlefieldPosition(i - playerCount);
-		local partyMemberFrame = _G["WorldMapRaid"..i];
-		if ( partyX == 0 and partyY == 0 ) then
-			partyMemberFrame:Hide();
-		else
-			partyX = partyX * WorldMapDetailFrame:GetWidth();
-			partyY = -partyY * WorldMapDetailFrame:GetHeight();
-			partyMemberFrame:SetPoint("CENTER", "WorldMapDetailFrame", "TOPLEFT", partyX, partyY);
-			partyMemberFrame.name = name;
-			partyMemberFrame.unit = nil;
-			partyMemberFrame:Show();
 		end
 	end
 
@@ -1744,6 +1730,8 @@ function WorldMapFrame_UpdateMap(questId)
 end
 
 function ArchaeologyDigSiteFrame_OnUpdate()
+	ScenarioPOIFrame:DrawNone();
+	ScenarioPOIFrame:DrawAll();
 	WorldMapArchaeologyDigSites:DrawNone();
 	local numEntries = ArchaeologyMapUpdateAll();
 	for i = 1, numEntries do

@@ -33,6 +33,7 @@ WATCHFRAME_TIMERLINES = {};
 WATCHFRAME_ACHIEVEMENTLINES = {};
 WATCHFRAME_QUESTLINES = {};
 WATCHFRAME_LINKBUTTONS = {};
+WATCHFRAME_SCENARIOLINES = {};
 local WATCHFRAME_SETLINES = { };			-- buffer to hold lines for a quest/achievement that will be displayed only if there is room
 local WATCHFRAME_SETLINES_NUMLINES;		-- the number of visual lines to be rendered for the buffered data - used just for item wrapping right now
 
@@ -205,6 +206,33 @@ local function WatchFrame_ReleaseUnusedQuestLines ()
 	end
 end
 
+local scenarioLineIndex = 1;
+local function WatchFrame_GetScenarioLine()
+	local line = WATCHFRAME_SCENARIOLINES[scenarioLineIndex];
+	if ( not line ) then
+		WATCHFRAME_SCENARIOLINES[scenarioLineIndex] = WatchFrame.lineCache:GetFrame();
+		line = WATCHFRAME_SCENARIOLINES[scenarioLineIndex];
+	end
+
+	line:Reset();
+	scenarioLineIndex = scenarioLineIndex + 1;
+	return line;
+end
+
+local function WatchFrame_ResetScenarioLines()
+	scenarioLineIndex = 1;
+end
+
+local function WatchFrame_ReleaseUnusedScenarioLines()
+	local line
+	for i = scenarioLineIndex, #WATCHFRAME_SCENARIOLINES do
+		line = WATCHFRAME_SCENARIOLINES[i];
+		line:Hide();
+		line.frameCache:ReleaseFrame(line);
+		WATCHFRAME_SCENARIOLINES[i] = nil;
+	end
+end
+
 function WatchFrame_OnLoad (self)
 	self:RegisterEvent("PLAYER_ENTERING_WORLD");
 	self:RegisterEvent("QUEST_LOG_UPDATE");
@@ -217,6 +245,7 @@ function WatchFrame_OnLoad (self)
 	self:RegisterEvent("PLAYER_MONEY");
 	self:RegisterEvent("VARIABLES_LOADED");
 	self:RegisterEvent("QUEST_AUTOCOMPLETE");
+	self:RegisterEvent("SCENARIO_UPDATE");
 	self:SetScript("OnSizeChanged", WatchFrame_OnSizeChanged); -- Has to be set here instead of in XML for now due to OnSizeChanged scripts getting run before OnLoad scripts.
 	self.lineCache = UIFrameCache:New("FRAME", "WatchFrameLine", WatchFrameLines, "WatchFrameLineTemplate");
 	self.buttonCache = UIFrameCache:New("BUTTON", "WatchFrameLinkButton", WatchFrameLines, "WatchFrameLinkButtonTemplate")
@@ -227,7 +256,8 @@ function WatchFrame_OnLoad (self)
 	watchFrameTestLine.dash:SetText(QUEST_DASH);
 	DASH_WIDTH = watchFrameTestLine.dash:GetWidth();
 	WATCHFRAMELINES_FONTHEIGHT = fontHeight;
-	WATCHFRAMELINES_FONTSPACING = (WATCHFRAME_LINEHEIGHT - WATCHFRAMELINES_FONTHEIGHT) / 2
+	WATCHFRAMELINES_FONTSPACING = (WATCHFRAME_LINEHEIGHT - WATCHFRAMELINES_FONTHEIGHT) / 2;
+	WatchFrame_AddObjectiveHandler(WatchFrameScenario_DisplayScenario);
 	WatchFrame_AddObjectiveHandler(WatchFrameAutoQuest_DisplayAutoQuestPopUps);
 	WatchFrame_AddObjectiveHandler(WatchFrame_HandleDisplayQuestTimers);
 	WatchFrame_AddObjectiveHandler(WatchFrame_HandleDisplayTrackedAchievements);
@@ -271,7 +301,7 @@ function WatchFrame_OnEvent (self, event, ...)
 		end
 		
 		WatchFrame_Update();
-	elseif ( event == "ITEM_PUSH" ) then
+	elseif ( event == "ITEM_PUSH" or event == "SCENARIO_UPDATE" ) then
 		WatchFrame_Update();
 	elseif ( event == "ZONE_CHANGED_NEW_AREA" ) then
 		if ( not WorldMapFrame:IsShown() and WatchFrame.showObjectives ) then
@@ -385,16 +415,29 @@ function WatchFrame_Update (self)
 	local maxLineWidth;
 	local numObjectives;
 	local totalObjectives = 0;
+	local totalPopUps = 0;
 	
 	WatchFrame_ResetLinkButtons();
 	
 	for i = 1, #WATCHFRAME_OBJECTIVEHANDLERS do
-		nextAnchor, maxLineWidth, numObjectives = WATCHFRAME_OBJECTIVEHANDLERS[i](lineFrame, nextAnchor, maxHeight, maxFrameWidth);
+		nextAnchor, maxLineWidth, numObjectives, numPopUps = WATCHFRAME_OBJECTIVEHANDLERS[i](lineFrame, nextAnchor, maxHeight, maxFrameWidth);
 		maxWidth = max(maxLineWidth, maxWidth);
-		totalObjectives = totalObjectives + numObjectives
+		totalObjectives = totalObjectives + numObjectives;
+		totalPopUps = totalPopUps + numPopUps;
 	end
+	
 	--disabled for now, might make it an option
 	--lineFrame:SetWidth(min(maxWidth, maxFrameWidth));
+	
+	-- shadow
+	if ( totalPopUps > 0) then
+		if (not lineFrame.Shadow:IsShown()) then
+			lineFrame.Shadow:Show();
+			lineFrame.Shadow.FadeIn:Play();
+		end
+	else
+		lineFrame.Shadow:Hide();
+	end
 	
 	if ( totalObjectives > 0 ) then
 		WatchFrameHeader:Show();
@@ -423,7 +466,7 @@ function WatchFrame_Update (self)
 	self.updating = nil;
 end
 
-function WatchFrame_AddObjectiveHandler (func)
+function WatchFrame_AddObjectiveHandler (func, index)
 	local numFunctions = #WATCHFRAME_OBJECTIVEHANDLERS
 	for i = 1, numFunctions do
 		if ( WATCHFRAME_OBJECTIVEHANDLERS[i] == func ) then
@@ -431,7 +474,11 @@ function WatchFrame_AddObjectiveHandler (func)
 		end
 	end
 	
-	tinsert(WATCHFRAME_OBJECTIVEHANDLERS, func);
+	if ( index ) then
+		tinsert(WATCHFRAME_OBJECTIVEHANDLERS, index, func);
+	else
+		tinsert(WATCHFRAME_OBJECTIVEHANDLERS, func);
+	end
 	return true;
 end
 
@@ -490,7 +537,7 @@ function WatchFrame_DisplayQuestTimers (lineFrame, nextAnchor, maxHeight, frameW
 			WatchFrameLines_RemoveUpdateFunction(WatchFrame_HandleQuestTimerUpdate);
 			WATCHFRAME_NUM_TIMERS = 0;
 		end
-		return nextAnchor, 0, 0;
+		return nextAnchor, 0, 0, 0;
 	end
 	
 	WatchFrame_ResetTimerLines();
@@ -538,7 +585,7 @@ function WatchFrame_DisplayQuestTimers (lineFrame, nextAnchor, maxHeight, frameW
 	end
 	
 	WatchFrame_ReleaseUnusedTimerLines();
-	return nextAnchor, maxWidth, 0;
+	return nextAnchor, maxWidth, 0, 0;
 end
 
 function WatchFrame_HandleQuestTimerUpdate ()
@@ -652,7 +699,8 @@ function WatchFrame_DisplayTrackedAchievements (lineFrame, nextAnchor, maxHeight
 	local numCriteria, criteriaDisplayed;
 	local achievementID, achievementName, completed, description, icon;
 	local criteriaString, criteriaType, criteriaCompleted, quantity, totalQuantity, name, flags, assetID, quantityString, criteriaID, eligible, achievementCategory;
-	local displayOnlyArena = ArenaEnemyFrames and ArenaEnemyFrames:IsShown();
+	local _, instanceType = IsInInstance();
+	local displayOnlyArena = ArenaEnemyFrames and ArenaEnemyFrames:IsShown() and (instanceType == "arena");
 
 	local lineWidth = 0;
 	local maxWidth = 0;
@@ -710,7 +758,7 @@ function WatchFrame_DisplayTrackedAchievements (lineFrame, nextAnchor, maxHeight
 								criteriaDisplayed = criteriaDisplayed + 1;
 								WatchFrameLines_AddUpdateFunction(WatchFrame_UpdateTimedAchievements);
 							end
-							if ( bit.band(flags, ACHIEVEMENT_CRITERIA_PROGRESS_BAR) == ACHIEVEMENT_CRITERIA_PROGRESS_BAR ) then
+							if ( bit.band(flags, EVALUATION_TREE_FLAG_PROGRESS_BAR) == EVALUATION_TREE_FLAG_PROGRESS_BAR ) then
 								-- progress bar
 								if ( string.find(strlower(quantityString), "interface\\moneyframe") ) then	-- no easy way of telling it's a money progress bar
 									criteriaString = quantityString.."\n"..description;
@@ -797,7 +845,7 @@ function WatchFrame_DisplayTrackedAchievements (lineFrame, nextAnchor, maxHeight
 	end
 
 	WatchFrame_ReleaseUnusedAchievementLines();
-	return previousLine or nextAnchor, maxWidth, numTrackedAchievements;
+	return previousLine or nextAnchor, maxWidth, numTrackedAchievements, 0;
 end
 
 function WatchFrame_DisplayTrackedQuests (lineFrame, nextAnchor, maxHeight, frameWidth)
@@ -1011,7 +1059,7 @@ function WatchFrame_DisplayTrackedQuests (lineFrame, nextAnchor, maxHeight, fram
 		QuestPOI_SelectButtonByQuestId("WatchFrameLines", WORLDMAP_SETTINGS.selectedQuestId, true);	
 	end
 	
-	return lastLine or nextAnchor, maxWidth, numQuestWatches;	
+	return lastLine or nextAnchor, maxWidth, numQuestWatches, 0;
 end
 
 function WatchFrameLines_OnUpdate (self, elapsed)
@@ -1156,7 +1204,7 @@ function WatchFrameDropDown_Initialize (self)
 		info.checked = false;
 		UIDropDownMenu_AddButton(info, UIDROPDOWN_MENU_LEVEL);
 		
-		if ( GetQuestLogPushable(GetQuestIndexForWatch(self.index)) and ( GetNumPartyMembers() > 0 or GetNumRaidMembers() > 1 ) ) then
+		if ( GetQuestLogPushable(GetQuestIndexForWatch(self.index)) and IsInGroup() ) then
 			info.text = SHARE_QUEST;
 			info.func = WatchFrame_ShareQuest;
 			info.arg1 = self.index;
@@ -1382,21 +1430,10 @@ function WatchFrame_GetCurrentMapQuests()
 end
 
 function WatchFrameQuestPOI_OnClick(self, button)
-	if ( button == "RightButton" ) then	
-		WORLDMAP_SETTINGS.selectedQuestId = self.questId;
-		QuestPOI_SelectButtonByQuestId("WatchFrameLines", self.questId, true);
-		SetSuperTrackedQuestID(self.questId);
-		PlaySound("igMainMenuOptionCheckBoxOn");
-	else
-		if ( WorldMapFrame:IsShown() ) then
-			if ( WORLDMAP_SETTINGS.selectedQuestId == self.questId ) then
-				HideUIPanel(WorldMapFrame);
-				return;
-			end
-			PlaySound("igMainMenuOptionCheckBoxOn");
-		end
-		WorldMap_OpenToQuest(self.questId);
-	end
+	WORLDMAP_SETTINGS.selectedQuestId = self.questId;
+	QuestPOI_SelectButtonByQuestId("WatchFrameLines", self.questId, true);
+	SetSuperTrackedQuestID(self.questId);
+	PlaySound("igMainMenuOptionCheckBoxOn");
 end
 
 function WatchFrame_SetWidth(width)
@@ -1648,16 +1685,7 @@ function WatchFrameAutoQuest_DisplayAutoQuestPopUps(lineFrame, nextAnchor, maxHe
 		_G["WatchFrameAutoQuestPopUp"..i]:Hide();
 	end
 	
-	if (numPopUps > 0) then
-		if (not lineFrame.AutoQuestShadow:IsShown()) then
-			lineFrame.AutoQuestShadow:Show();
-			lineFrame.AutoQuestShadow.FadeIn:Play();
-		end
-	else
-		lineFrame.AutoQuestShadow:Hide();
-	end
-	
-	return nextAnchor, maxWidth, 0;
+	return nextAnchor, maxWidth, 0, numPopUps;
 end
 
 function WatchFrameAutoQuest_OnUpdate(frame, timestep)
@@ -1665,8 +1693,8 @@ function WatchFrameAutoQuest_OnUpdate(frame, timestep)
 	local scrollStart = 65;
 	local scrollEnd = -9;
 	
-	-- Pause animation while the AutoQuestShadow is animating
-	if (WatchFrameLinesAutoQuestShadow.FadeIn:IsPlaying()) then
+	-- Pause animation while the lineframe shadow is animating
+	if (WatchFrameLinesShadow.FadeIn:IsPlaying()) then
 		return;
 	end
 	
@@ -1724,4 +1752,110 @@ end
 function WatchFrameAutoQuest_ClearPopUpByLogIndex(questIndex)
 	local questId = select(9, GetQuestLogTitle(questIndex));
 	WatchFrameAutoQuest_ClearPopUp(questId);
+end
+
+--------------------------------------------------------------------------------------------
+-- Scenario
+--------------------------------------------------------------------------------------------
+function WatchFrameScenario_DisplayScenario(lineFrame, nextAnchor, maxHeight, frameWidth)
+	WatchFrame_ResetScenarioLines();
+	-- for return values
+	local width = 0;
+	local numObjectives = 0;
+	local numPopups = 0;
+	
+	local frame = WatchFrameScenarioFrame;
+	local name, currentStage, numStages = C_Scenario.GetInfo();
+	if ( currentStage > 0 and currentStage <= numStages ) then
+		frame:SetParent(lineFrame);
+		frame:ClearAllPoints();
+		if (nextAnchor) then
+			frame:SetPoint("TOP", nextAnchor, "BOTTOM", 0, -WATCHFRAME_TYPE_OFFSET);
+		else
+			frame:SetPoint("TOP", lineFrame, "TOP", 0, -WATCHFRAME_INITIAL_OFFSET + 4)
+		end
+		frame:Show();
+		nextAnchor = frame;
+		WATCHFRAME_SETLINES_NUMLINES = 0;	-- without a normal header this wouldn't get reset
+		-- step info
+		local stageName, stageDescription, numCriteria = C_Scenario.GetStepInfo();
+		if ( currentStage == numStages ) then
+			frame.stageLevel:SetText(SCENARIO_STAGE_FINAL);
+			frame.finalBg:Show();
+		else
+			frame.stageLevel:SetFormattedText(SCENARIO_STAGE, currentStage);
+			frame.finalBg:Hide();
+		end
+		frame.stageName:SetText(stageName);
+		WatchFrameScenario_SetProgressDots(currentStage, numStages);
+		-- criteria info
+		for i = 1, numCriteria do
+			local criteriaString, criteriaType, criteriaCompleted, quantity, totalQuantity, flags, assetID, quantityString, criteriaID = C_Scenario.GetCriteriaInfo(i);
+			if ( not criteriaCompleted ) then
+				criteriaString = string.format("%d/%d %s", quantity, totalQuantity, criteriaString);
+				local line = WatchFrame_GetScenarioLine();
+				if ( i == 1 ) then
+					WatchFrame_SetLine(line, nextAnchor, WATCHFRAMELINES_FONTSPACING - 6, not IS_HEADER, criteriaString, DASH_SHOW);
+					line:SetPoint("RIGHT", lineFrame, "RIGHT", 0, 0);
+					line:SetPoint("LEFT", lineFrame, "LEFT", 0, 0);
+				else
+					WatchFrame_SetLine(line, nextAnchor, WATCHFRAMELINES_FONTSPACING, not IS_HEADER, criteriaString, DASH_SHOW);
+				end
+				line:Show();
+				nextAnchor = line;
+			end
+		end
+		-- done
+		width = frame:GetWidth();
+		numObjectives = 1;
+		numPopups = 1;
+	else
+		frame:Hide();
+	end
+
+	WatchFrame_ReleaseUnusedScenarioLines();
+	return nextAnchor, width, numObjectives, numPopups;
+end
+
+function WatchFrameScenario_SetProgressDots(currentStage, numStages)
+	local frame = WatchFrameScenarioFrame;
+	-- create new stage textures if needed
+	for i = frame.numTexStages + 1, numStages do
+		local texture = frame:CreateTexture(nil, "ARTWORK");
+		texture:SetTexture("Interface\\Scenarios\\ScenariosParts");
+		texture:SetPoint("CENTER", frame["stage"..(i - 1)], "CENTER", 19, 0);
+		frame["stage"..i] = texture;
+	end
+	frame.numTexStages = max(frame.numTexStages, numStages);
+	-- set stages
+	for i = 1, frame.numTexStages do
+		local texture = frame["stage"..i];
+		if ( i > numStages ) then
+			texture:Hide();
+		else
+			local stageState;	--  -1 = past, 0 = current, 1 = future
+			if ( i < currentStage ) then
+				stageState = -1;
+			elseif ( i == currentStage ) then
+				stageState = 0;
+			else
+				stageState = 1;
+			end
+			-- change texture if different stage
+			if ( texture.stage ~= stageState ) then
+				if ( stageState == - 1 ) then
+					texture:SetTexCoord(0.00195313, 0.01757813, 0.00195313, 0.01757813);
+					texture:SetSize(8, 8);
+				elseif ( stageState == 0 ) then
+					texture:SetTexCoord(0.02539063, 0.07617188, 0.02148438, 0.07226563);
+					texture:SetSize(26, 26);
+				else
+					texture:SetTexCoord(0.00195313, 0.02148438, 0.02148438, 0.04101563);
+					texture:SetSize(10, 10);
+				end
+				texture.stage = stageState;
+			end
+			texture:Show();
+		end
+	end
 end

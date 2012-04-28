@@ -43,8 +43,7 @@ function BattlefieldMinimap_OnLoad (self)
 	self:RegisterEvent("PLAYER_LOGOUT");
 	self:RegisterEvent("WORLD_MAP_UPDATE");
 	self:RegisterEvent("ZONE_CHANGED_NEW_AREA");
-	self:RegisterEvent("PARTY_MEMBERS_CHANGED");
-	self:RegisterEvent("RAID_ROSTER_UPDATE");
+	self:RegisterEvent("GROUP_ROSTER_UPDATE");
 
 	CreateMiniWorldMapArrowFrame(BattlefieldMinimap);
 
@@ -111,7 +110,7 @@ function BattlefieldMinimap_OnEvent(self, event, ...)
 		if ( BattlefieldMinimap:IsVisible() ) then
 			BattlefieldMinimap_Update();
 		end
-	elseif ( event == "PARTY_MEMBERS_CHANGED" or event == "RAID_ROSTER_UPDATE" ) then
+	elseif ( event == "GROUP_ROSTER_UPDATE" ) then
 		if ( self:IsShown() ) then
 			WorldMapFrame_UpdateUnits("BattlefieldMinimapRaid", "BattlefieldMinimapParty");
 		end
@@ -161,7 +160,7 @@ function BattlefieldMinimap_Update()
 		if ( i <= numPOIs ) then
 			local name, description, textureIndex, x, y, maplinkID, showInBattleMap = GetMapLandmarkInfo(i);
 			if ( showInBattleMap ) then
-				local x1, x2, y1, y2 = WorldMap_GetPOITextureCoords(textureIndex);
+				local x1, x2, y1, y2 = GetPOITextureCoords(textureIndex);
 				_G[battlefieldPOIName.."Texture"]:SetTexCoord(x1, x2, y1, y2);
 				x = x * BattlefieldMinimap:GetWidth();
 				y = -y * BattlefieldMinimap:GetHeight();
@@ -302,7 +301,7 @@ function BattlefieldMinimap_OnUpdate(self, elapsed)
 			if ( i <= numPOIs ) then
 				local name, description, textureIndex, x, y, maplinkID,showInBattleMap = GetMapLandmarkInfo(i);
 				if ( showInBattleMap ) then
-					local x1, x2, y1, y2 = WorldMap_GetPOITextureCoords(textureIndex);
+					local x1, x2, y1, y2 = GetPOITextureCoords(textureIndex);
 					_G[battlefieldPOIName.."Texture"]:SetTexCoord(x1, x2, y1, y2);
 					x = x * BattlefieldMinimap:GetWidth();
 					y = -y * BattlefieldMinimap:GetHeight();
@@ -328,7 +327,7 @@ function BattlefieldMinimap_OnUpdate(self, elapsed)
 	else
 		--Position groupmates
 		local playerCount = 0;
-		if ( GetNumRaidMembers() > 0 ) then
+		if ( IsInRaid() ) then
 			for i=1, MAX_PARTY_MEMBERS do
 				local partyMemberFrame = _G["BattlefieldMinimapParty"..i];
 				partyMemberFrame:Hide();
@@ -359,22 +358,6 @@ function BattlefieldMinimap_OnUpdate(self, elapsed)
 					partyMemberFrame:SetPoint("CENTER", "BattlefieldMinimap", "TOPLEFT", partyX, partyY);
 					partyMemberFrame:Show();
 				end
-			end
-		end
-		-- Position Team Members
-		local numTeamMembers = GetNumBattlefieldPositions();
-		for i=playerCount+1, MAX_RAID_MEMBERS do
-			local partyX, partyY, name = GetBattlefieldPosition(i - playerCount);
-			local partyMemberFrame = _G["BattlefieldMinimapRaid"..i];
-			if ( partyX == 0 and partyY == 0 ) then
-				partyMemberFrame:Hide();
-			else
-				partyX = partyX * BattlefieldMinimap:GetWidth();
-				partyY = -partyY * BattlefieldMinimap:GetHeight();
-				partyMemberFrame:SetPoint("CENTER", "BattlefieldMinimap", "TOPLEFT", partyX, partyY);
-				partyMemberFrame.name = name;
-				partyMemberFrame.unit = nil;
-				partyMemberFrame:Show();
 			end
 		end
 

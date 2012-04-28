@@ -31,7 +31,7 @@
 			<AbsDimension x="256" y="70"/>
 		</Size>
 		<HitRectInsets>
-			<AbsInset left="0" right="0" top="0" bottom="15"/>
+			<AbsInset left="-10" right="30" top="0" bottom="15"/>
 		</HitRectInsets>
 		<Layers>
 			<Layer level="ARTWORK">
@@ -628,7 +628,7 @@
 						<Anchors>
 							<Anchor point="BOTTOMRIGHT">
 								<Offset>
-									<AbsDimension x="-30" y="25"/>
+									<AbsDimension x="-2" y="10"/>
 								</Offset>
 							</Anchor>
 						</Anchors>
@@ -745,7 +745,7 @@
 					</Button>
 					<Frame name="CharacterSelectCharacterFrame">
 						<Size>
-							<AbsDimension x="260" y="642"/>
+							<AbsDimension x="260" y="710"/>
 						</Size>
 						<Anchors>
 							<Anchor point="TOPRIGHT">
@@ -781,6 +781,52 @@
 							</Layer>
 						</Layers>
 						<Frames>
+							<Slider name="$parentScrollBar" frameStrata="DIALOG" parentKey="scrollBar" inherits="GlueScrollBarTemplate" hidden="true">
+								<Anchors>
+									<Anchor point="TOPRIGHT">
+										<Offset>
+											<AbsDimension x="-6" y="-20"/>
+										</Offset>
+									</Anchor>
+									<Anchor point="BOTTOMRIGHT">
+										<Offset>
+											<AbsDimension x="-6" y="24"/>
+										</Offset>
+									</Anchor>
+								</Anchors>
+								<Layers>
+									<Layer level="BACKGROUND">
+										<Texture>
+											<Anchors>
+												<Anchor point="TOPLEFT" x="-2" y="0"/>
+												<Anchor point="BOTTOMRIGHT" x="-1" y="0"/>
+											</Anchors>
+											<Color r="0" g="0" b="0"/>
+										</Texture>
+									</Layer>
+									<Layer level="BORDER">
+										<Texture file="Interface\Glues\CharacterCreate\Frame-Sides">
+											<Size x="16" y="0"/>
+											<Anchors>
+												<Anchor point="TOPLEFT" x="-11" y="15"/>
+												<Anchor point="BOTTOMLEFT" x="-11" y="-15"/>
+											</Anchors>
+											<TexCoords left="0.5" right="1" top="0" bottom="1"/>
+										</Texture>
+									</Layer>
+								</Layers>
+								<Scripts>
+									<OnLoad>
+										self:SetValueStep(1);
+										CharacterSelectCharacterFrameScrollBarScrollUpButton:SetPoint("BOTTOM", self, "TOP", 0, -3);
+										CharacterSelectCharacterFrameScrollBarScrollDownButton:SetPoint("TOP", self, "BOTTOM", 0, 3);
+									</OnLoad>
+									<OnValueChanged>
+										GlueScrollFrame_OnVerticalScroll(self:GetParent(), value);
+										CharacterSelect_ScrollList(self, value);
+									</OnValueChanged>
+								</Scripts>
+							</Slider>
 							<Button name="CharSelectChangeRealmButton" inherits="GlueButtonSmallTemplate" text="CHANGE_REALM">
 								<Size>
 									<AbsDimension x="135" y="33"/>
@@ -861,6 +907,12 @@
 							<Button name="CharSelectCharacterButton10" inherits="CharSelectCharacterButtonTemplate" id="10">
 								<Anchors>
 									<Anchor point="TOP" relativeTo="CharSelectCharacterButton9" relativePoint="BOTTOM" x="0" y="13"/>
+									<Anchor point="LEFT" x="24" y="0"/>
+								</Anchors>
+							</Button>
+								<Button name="CharSelectCharacterButton11" inherits="CharSelectCharacterButtonTemplate" id="11">
+								<Anchors>
+									<Anchor point="TOP" relativeTo="CharSelectCharacterButton10" relativePoint="BOTTOM" x="0" y="13"/>
 									<Anchor point="LEFT" x="24" y="0"/>
 								</Anchors>
 							</Button>
@@ -948,6 +1000,12 @@
 									<Anchor point="RIGHT" relativeTo="$parent" relativePoint="LEFT" x="9" y="0"/>
 								</Anchors>
 							</Button>
+							<Button name="CharSelectPaidService11" inherits="CharSelectPaidServiceTemplate" id="11">
+								<Anchors>
+									<Anchor point="TOP" relativeTo="CharSelectCharacterButton11" relativePoint="TOP" x="0" y="6"/>
+									<Anchor point="RIGHT" relativeTo="$parent" relativePoint="LEFT" x="9" y="0"/>
+								</Anchors>
+							</Button>
 						</Frames>
 						<Backdrop bgFile="Interface\Glues\Common\Glue-Tooltip-Background" edgeFile="Interface\Glues\Common\Glue-Tooltip-Border" tile="true">
 							<BackgroundInsets>
@@ -960,48 +1018,19 @@
 								<AbsValue val="16"/>
 							</EdgeSize>
 						</Backdrop>
+						<Scripts>
+							<OnMouseWheel>
+								self.scrollBar:SetValue(self.scrollBar:GetValue() - delta);
+							</OnMouseWheel>
+						</Scripts>
 					</Frame>
-					<Button name="ScrollDownButton" hidden="true">
-						<Size x="50" y="50"/>
-						<Anchors>
-							<Anchor point="TOPRIGHT" relativeTo="CharacterSelectCharacterFrame" relativePoint="BOTTOMRIGHT">
-								<Offset x="5" y="10"/>
-							</Anchor>
-						</Anchors>
-						<Scripts>
-							<OnClick>
-								CharacterSelectScrollDown_OnClick()
-							</OnClick>
-						</Scripts>
-						<NormalTexture file="Interface\ChatFrame\UI-ChatIcon-ScrollDown-Up"/>
-						<PushedTexture file="Interface\ChatFrame\UI-ChatIcon-ScrollDown-Down"/>
-						<DisabledTexture file="Interface\ChatFrame\UI-ChatIcon-ScrollDown-Disabled"/>
-						<HighlightTexture file="Interface\Buttons\UI-Common-MouseHilight" alphaMode="ADD"/>
-					</Button>
-					<Button name="ScrollDownUp" hidden="true">
-						<Size x="50" y="50"/>
-						<Anchors>
-							<Anchor point="TOPLEFT" relativeTo="CharacterSelectCharacterFrame" relativePoint="BOTTOMLEFT">
-								<Offset x="2" y="10"/>
-							</Anchor>
-						</Anchors>
-						<Scripts>
-							<OnClick>
-								CharacterSelectScrollUp_OnClick()
-							</OnClick>
-						</Scripts>
-						<NormalTexture file="Interface\ChatFrame\UI-ChatIcon-ScrollUp-Up"/>
-						<PushedTexture file="Interface\ChatFrame\UI-ChatIcon-ScrollUp-Down"/>
-						<DisabledTexture file="Interface\ChatFrame\UI-ChatIcon-ScrollUp-Disabled"/>
-						<HighlightTexture file="Interface\Buttons\UI-Common-MouseHilight" alphaMode="ADD"/>
-					</Button>
 					<Button name="CreateCharacterButtonSpecial" inherits="GlueButtonSmallTemplate" hidden="true" text="CREATE_NEW_CHARACTER">
 						<Size>
 							<AbsDimension x="200" y="45"/>
 						</Size>
 						<Anchors>
 							<Anchor point="TOP" relativeTo="CharacterSelectCharacterFrame" relativePoint="BOTTOM">
-								<Offset x="4" y="5"/>
+								<Offset x="-220" y="0"/>
 							</Anchor>
 						</Anchors>
 						<Scripts>
@@ -1017,6 +1046,62 @@
 							</OnUpdate>
 						</Scripts>
 					</Button>
+					<Frame name="CharacterTemplatesFrame" hidden="true">
+						<Size x="220" y="150"/>
+						<Anchors>
+							<Anchor point="BOTTOMLEFT" x="32" y="86"/>
+						</Anchors>
+						<Backdrop bgFile="Interface\Glues\Common\Glue-Tooltip-Background" edgeFile="Interface\Glues\Common\Glue-Tooltip-Border" tile="true">
+							<BackgroundInsets>
+								<AbsInset left="10" right="5" top="4" bottom="9"/>
+							</BackgroundInsets>
+							<TileSize>
+								<AbsValue val="16"/>
+							</TileSize>
+							<EdgeSize>
+								<AbsValue val="16"/>
+							</EdgeSize>
+						</Backdrop>
+						<Layers>
+							<Layer level="ARTWORK">
+								<FontString inherits="GlueFontNormal" text="TEMPLATE_CHARACTER">
+									<Anchors>
+										<Anchor point="TOP" x="0" y="-12"/>
+									</Anchors>	
+								</FontString>
+								<FontString inherits="GlueFontHighlightSmall" text="TEMPLATE_CHARACTER_LABEL">	
+									<Anchors>
+										<Anchor point="TOP" x="0" y="-38"/>
+									</Anchors>
+								</FontString>
+							</Layer>
+						</Layers>
+						<Frames>
+							<Frame name="$parentDropDown" inherits="GlueDropDownMenuTemplate" enableMouse="true" parentKey="dropDown">
+								<Anchors>
+									<Anchor point="TOP" x="0" y="-54"/>
+								</Anchors>
+							</Frame>
+							<Button inherits="GlueButtonSmallTemplate" text="CREATE_CHARACTER">
+								<Size>
+									<AbsDimension x="200" y="45"/>
+								</Size>
+								<Anchors>
+									<Anchor point="BOTTOM" x="0" y="10"/>
+								</Anchors>
+								<Scripts>
+									<OnLoad>
+										self:SetWidth(self:GetTextWidth() + 50);
+									</OnLoad>
+									<OnClick>
+										PlaySound("gsCharacterSelectionCreateNew");
+										SetCharacterTemplate(GlueDropDownMenu_GetSelectedID(CharacterTemplatesFrameDropDown));
+										SetGlueScreen("charcreate");
+									</OnClick>
+								</Scripts>
+							</Button>
+						</Frames>
+					</Frame>
 				</Frames>
 				<Scripts>
 					<OnMouseDown>

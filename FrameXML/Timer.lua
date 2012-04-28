@@ -43,7 +43,6 @@ function GetPlayerFactionGroup()
 end
 
 function TimerTracker_OnEvent(self, event, ...)
-	
 	if event == "START_TIMER" then
 		local timerType, timeSeconds, totalTime  = ...;
 		local timer;
@@ -66,10 +65,12 @@ function TimerTracker_OnEvent(self, event, ...)
 			
 			local factionGroup = GetPlayerFactionGroup();
 
-			if ( not timer.factionGroup or (timer.factionGroup ~= factionGroup) ) then
-				timer.faction:SetTexture("Interface\\Timer\\"..factionGroup.."-Logo");
-				timer.factionGlow:SetTexture("Interface\\Timer\\"..factionGroup.."Glow-Logo");
-				timer.factionGroup = factionGroup;
+			if ( factionGroup ~= "Neutral" ) then
+				if ( not timer.factionGroup or (timer.factionGroup ~= factionGroup) ) then
+					timer.faction:SetTexture("Interface\\Timer\\"..factionGroup.."-Logo");
+					timer.factionGlow:SetTexture("Interface\\Timer\\"..factionGroup.."Glow-Logo");
+					timer.factionGroup = factionGroup;
+				end
 			end
 		else
 			for a,b in pairs(self.timerList) do
@@ -110,7 +111,7 @@ function TimerTracker_OnEvent(self, event, ...)
 			timer.glow2:SetTexture(timer.style.texture.."Glow");
 			
 			local factionGroup = GetPlayerFactionGroup();
-			if ( factionGroup ) then
+			if ( factionGroup and factionGroup ~= "Neutral" ) then
 				timer.faction:SetTexture("Interface\\Timer\\"..factionGroup.."-Logo");
 				timer.factionGlow:SetTexture("Interface\\Timer\\"..factionGroup.."Glow-Logo");
 			end
@@ -140,7 +141,6 @@ function StartTimer_BigNumberOnUpdate(self, elasped)
 	self.updateTime = self.updateTime - elasped;
 	local minutes, seconds = floor(self.time/60), floor(mod(self.time, 60)); 
 
-	
 	if self.time < TIMER_MEDIUM_MARKER then
 		self.fadeBarOut:Play();
 		self.barShowing = false;
@@ -150,7 +150,7 @@ function StartTimer_BigNumberOnUpdate(self, elasped)
 		self.fadeBarIn:Play();
 		self.barShowing = true;
 	elseif self.updateTime <= 0 then
-		ValidateTimer(self.type);
+		QueryWorldCountdownTimer(self.type);
 		self.updateTime = TIMER_UPDATE_INTERVAL;
 	end
 
@@ -193,7 +193,7 @@ function StartTimer_SetTexNumbers(self, ...)
 	local columns = floor(style.texW/style.w);
 	local numberOffset = 0;
 	local numShown = 0;
-	
+
 	while digits[i] do -- THIS WILL DISPLAY SECOND AS A NUMBER 2:34 would be 154
 		if timeDigits > 0 then
 			digit = mod(timeDigits, 10);
@@ -216,7 +216,6 @@ function StartTimer_SetTexNumbers(self, ...)
 		end
 		i = i + 1;
 	end
-	
 	
 	if numberOffset > 0 then
 		PlaySoundKitID(25477, "SFX", false);
