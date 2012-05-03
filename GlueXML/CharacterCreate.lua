@@ -18,6 +18,12 @@ PREVIEW_FRAME_HEIGHT = 130;
 PREVIEW_FRAME_X_OFFSET = 19;
 PREVIEW_FRAME_Y_OFFSET = -7;
 
+FACTION_MODEL_BACKGROUND = {
+	["Alliance"] = "Interface\\Glues\\Models\\UI_Alliance\\UI_Alliance.mdx",
+	["Horde"] = "Interface\\Glues\\Models\\UI_Horde\\UI_Horde.mdx",
+	["Player"] = "Interface\\Glues\\Models\\UI_PandarenCharacterSelect\\UI_PandarenCharacterSelect.mdx",
+}
+
 FACTION_BACKDROP_COLOR_TABLE = {
 	["Alliance"] = {0.5, 0.5, 0.5, 0.09, 0.09, 0.19, 0, 0, 0.2, 0.29, 0.33, 0.91},
 	["Horde"] = {0.5, 0.2, 0.2, 0.19, 0.05, 0.05, 0.2, 0, 0, 0.90, 0.05, 0.07},
@@ -97,7 +103,7 @@ MODEL_CAMERA_CONFIG = {
 	},
 	[3] = {
 		["Draenei"] = { tx = 0.155, ty = 0.009, tz = 2.177, cz = 1.971, distance = 0.734, light =  0.75 },
-		["NightElf"] = { tx = 0.121, ty = 0.034, tz = 2.068, cz = 2.055, distance = 0.652, light =  0.85 },
+		["NightElf"] = { tx = 0.071, ty = 0.034, tz = 2.068, cz = 2.055, distance = 0.682, light =  0.85 },
 		["Scourge"] = { tx = 0.198, ty = 0.001, tz = 1.669, cz = 1.509, distance = 0.563, light =  0.75 },
 		["Orc"] = { tx = -0.069, ty = -0.007, tz = 1.863, cz = 1.718, distance = 0.585, light =  0.75 },
 		["Gnome"] = { tx = 0.031, ty = 0.009, tz = 0.787, cz = 0.693, distance = 0.726, light =  0.85 },
@@ -360,11 +366,18 @@ function CharacterCreateEnumerateClasses(...)
 		button = _G["CharCreateClassButton"..index];
 		button:Show();
 		button.nameFrame.text:SetText(select(i, ...));
-		if ( select(i+2, ...) == true and (IsRaceClassValid(CharacterCreate.selectedRace, index)) ) then
-			button:Enable();
-			SetButtonDesaturated(button);
-			button.tooltip = nil;
-			_G["CharCreateClassButton"..index.."DisableTexture"]:Hide();
+		if ( select(i+2, ...) == true ) then
+			if (IsRaceClassValid(CharacterCreate.selectedRace, index)) then
+				button:Enable();
+				SetButtonDesaturated(button);
+				button.tooltip = nil;
+				_G["CharCreateClassButton"..index.."DisableTexture"]:Hide();
+			else
+				button:Disable();
+				SetButtonDesaturated(button, 1);
+				button.tooltip = CLASS_DISABLED;
+				_G["CharCreateClassButton"..index.."DisableTexture"]:Show();
+			end
 		else
 			button:Disable();
 			SetButtonDesaturated(button, 1);
@@ -397,12 +410,14 @@ function SetCharacterRace(id)
 		end
 	end
 
+	local name, faction = GetFactionForRace(CharacterCreate.selectedRace);
+
 	-- Set background
-	local backgroundFilename = GetCreateBackgroundModel();
-	SetBackgroundModel(CharacterCreate, backgroundFilename);
+	-- local backgroundFilename = GetCreateBackgroundModel();
+	-- SetBackgroundModel(CharacterCreate, backgroundFilename);
+	SetCharCustomizeBackground(FACTION_MODEL_BACKGROUND[faction]);
 
 	-- Set backdrop colors based on faction
-	local name, faction = GetFactionForRace(CharacterCreate.selectedRace);
 	local backdropColor = FACTION_BACKDROP_COLOR_TABLE[faction];
 	CharCreateRaceFrame.factionBg:SetGradient("VERTICAL", 0, 0, 0, backdropColor[7], backdropColor[8], backdropColor[9]);
 	CharCreateClassFrame.factionBg:SetGradient("VERTICAL", 0, 0, 0, backdropColor[7], backdropColor[8], backdropColor[9]);
