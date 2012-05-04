@@ -52,6 +52,9 @@ GlueAmbienceTracks["DARKPORTAL"] = "GlueScreenIntro";
 GlueAmbienceTracks["DEATHKNIGHT"] = "GlueScreenIntro";
 GlueAmbienceTracks["CHARACTERSELECT"] = "GlueScreenIntro";
 GlueAmbienceTracks["PANDAREN"] = "AMB_GlueScreen_Pandaren";
+GlueAmbienceTracks["HORDE"] = "GlueScreenIntro";
+GlueAmbienceTracks["ALLIANCE"] = "GlueScreenIntro";
+GlueAmbienceTracks["PANDARENCHARACTERSELECT"] = "GlueScreenIntro";
 
 -- indicies for adding lights ModelFFX:Add*Light
 LIGHT_LIVE  = 0;
@@ -315,14 +318,22 @@ function SetLighting(model, race)
     model:ResetLights();
 end
 
--- Function to set the background model for character select and create screens
-function SetBackgroundModel(model, name)
-    local nameupper = strupper(name);
-    local path = "Interface\\Glues\\Models\\UI_"..name.."\\UI_"..name..".m2";
-	local overridePath = _G["BACKGROUND_MODEL_"..nameupper];
-	if (overridePath) then
-		path = overridePath;
+-- Function to get the background tag from a full path ( '..\UI_tagName.m2' )
+function GetBackgroundModelTag(path)
+	local pathUpper = strupper(path);
+	local matchStart;
+	local matchEnd;
+	local tag;
+	matchStart, matchEnd, tag = string.find(pathUpper, 'UI_(%a+).M2');
+	if ( not tag ) then
+		tag = "CHARACTERSELECT"; -- default
 	end
+	return tag;
+end
+
+-- Function to set the background model for character select and create screens
+function SetBackgroundModel(model, path)
+	local nameupper = GetBackgroundModelTag(path);
 	if ( model == CharacterCreate ) then
 		SetCharCustomizeBackground(path);
 	else
@@ -332,6 +343,7 @@ function SetBackgroundModel(model, name)
 		PlayGlueAmbience(GlueAmbienceTracks[nameupper], 4.0);
 	end
 	SetLighting(model, nameupper)
+	return nameupper;
 end
 
 function SecondsToTime(seconds, noSeconds)

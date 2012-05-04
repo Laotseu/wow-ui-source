@@ -913,6 +913,7 @@ SPD = "SPD %d";
 SPEED = "SPD";
 SPELL_DETAIL = "Spell Detail";
 SPI = "SPI";
+SSAO_LABEL = "SSAO";
 STA = "STA";
 STEREO_HARDWARE_CURSOR = "Hardware Cursor";
 STEREO_VIDEO_LABEL = "Stereo";

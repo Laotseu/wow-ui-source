@@ -36,7 +36,7 @@ function CharacterSelect_OnLoad(self)
 	self.createIndex = 0;
 	self.selectedIndex = 0;
 	self.selectLast = 0;
-	self.currentModel = nil;
+	self.currentBGTag = nil;
 	self:RegisterEvent("ADDON_LIST_UPDATE");
 	self:RegisterEvent("CHARACTER_LIST_UPDATE");
 	self:RegisterEvent("UPDATE_SELECTED_CHARACTER");
@@ -72,10 +72,10 @@ function CharacterSelect_OnShow()
 	-- request account data times from the server (so we know if we should refresh keybindings, etc...)
 	ReadyForAccountDataTimes()
 	
-	local CurrentModel = CharacterSelect.currentModel;
+	local bgTag = CharacterSelect.currentBGTag;
 
-	if ( CurrentModel ) then
-		PlayGlueAmbience(GlueAmbienceTracks[strupper(CurrentModel)], 4.0);
+	if ( bgTag ) then
+		PlayGlueAmbience(GlueAmbienceTracks[bgTag], 4.0);
 	end
 
 	UpdateAddonButton();
@@ -593,8 +593,8 @@ function CharacterSelect_SelectCharacter(index, noCreate)
 		end
 	else
 		local charID = GetCharIDFromIndex(index);
-		CharacterSelect.currentModel = GetSelectBackgroundModel(charID);
-		SetBackgroundModel(CharacterSelect,CharacterSelect.currentModel);
+		local backgroundFileName = GetSelectBackgroundModel(charID);
+		CharacterSelect.currentBGTag = SetBackgroundModel(CharacterSelect, backgroundFileName);
 		SelectCharacter(charID);
 	end
 end
@@ -703,16 +703,17 @@ function CharacterSelect_PaidServiceOnClick(self, button, down, service)
 end
 
 function CharacterSelect_DeathKnightSwap(self)
-	if ( CharacterSelect.currentModel == "DEATHKNIGHT" ) then
-		if (self.currentModel ~= "DEATHKNIGHT") then
-			self.currentModel = "DEATHKNIGHT";
+	local deathKnightTag = "DEATHKNIGHT";
+	if ( CharacterSelect.currentBGTag == deathKnightTag ) then
+		if (self.currentBGTag ~= deathKnightTag) then
+			self.currentBGTag = deathKnightTag;
 			self:SetNormalTexture("Interface\\Glues\\Common\\Glue-Panel-Button-Up-Blue");
 			self:SetPushedTexture("Interface\\Glues\\Common\\Glue-Panel-Button-Down-Blue");
 			self:SetHighlightTexture("Interface\\Glues\\Common\\Glue-Panel-Button-Highlight-Blue");
 		end
 	else
-		if (self.currentModel == "DEATHKNIGHT") then
-			self.currentModel = nil;
+		if (self.currentBGTag == deathKnightTag) then
+			self.currentBGTag = nil;
 			self:SetNormalTexture("Interface\\Glues\\Common\\Glue-Panel-Button-Up");
 			self:SetPushedTexture("Interface\\Glues\\Common\\Glue-Panel-Button-Down");
 			self:SetHighlightTexture("Interface\\Glues\\Common\\Glue-Panel-Button-Highlight");

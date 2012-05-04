@@ -18,12 +18,6 @@ PREVIEW_FRAME_HEIGHT = 130;
 PREVIEW_FRAME_X_OFFSET = 19;
 PREVIEW_FRAME_Y_OFFSET = -7;
 
-FACTION_MODEL_BACKGROUND = {
-	["Alliance"] = "Interface\\Glues\\Models\\UI_Alliance\\UI_Alliance.mdx",
-	["Horde"] = "Interface\\Glues\\Models\\UI_Horde\\UI_Horde.mdx",
-	["Player"] = "Interface\\Glues\\Models\\UI_PandarenCharacterSelect\\UI_PandarenCharacterSelect.mdx",
-}
-
 FACTION_BACKDROP_COLOR_TABLE = {
 	["Alliance"] = {0.5, 0.5, 0.5, 0.09, 0.09, 0.19, 0, 0, 0.2, 0.29, 0.33, 0.91},
 	["Horde"] = {0.5, 0.2, 0.2, 0.19, 0.05, 0.05, 0.2, 0, 0, 0.90, 0.05, 0.07},
@@ -189,6 +183,8 @@ function CharacterCreate_OnShow()
 	
 	-- setup customization
 	CharacterChangeFixup();
+
+	SetFaceCustomizeCamera(false);
 	
 	if( IsBlizzCon() ) then
 		BLIZZCON_IS_A_GO = false;
@@ -413,9 +409,8 @@ function SetCharacterRace(id)
 	local name, faction = GetFactionForRace(CharacterCreate.selectedRace);
 
 	-- Set background
-	-- local backgroundFilename = GetCreateBackgroundModel();
-	-- SetBackgroundModel(CharacterCreate, backgroundFilename);
-	SetCharCustomizeBackground(FACTION_MODEL_BACKGROUND[faction]);
+	local backgroundFilename = GetCreateBackgroundModel();
+	SetBackgroundModel(CharacterCreate, backgroundFilename);
 
 	-- Set backdrop colors based on faction
 	local backdropColor = FACTION_BACKDROP_COLOR_TABLE[faction];
@@ -568,6 +563,9 @@ function CharacterCreate_Back()
 		--back to awesome gear
 		SetSelectedPreviewGearType(1);
 
+		-- back to normal camera
+		SetFaceCustomizeCamera(false);
+
 		return;
 	end
 
@@ -606,6 +604,13 @@ function CharacterCreate_Forward()
 
 		--You just went to customization mode - show the boring start gear
 		SetSelectedPreviewGearType(0);
+
+		-- set cam
+		if (CharacterCreateFrame.customizationType and CharacterCreateFrame.customizationType > 1) then
+			SetFaceCustomizeCamera(true);
+		else
+			SetFaceCustomizeCamera(false);
+		end
 	else
 		CharacterCreate_Finish();
 	end
@@ -836,6 +841,12 @@ function CharCreateSelectCustomizationType(newType)
 	_G["CharCreateCustomizationButton"..newType]:SetChecked(1);
 	CharacterCreateFrame.customizationType = newType;
 	CharCreate_ResetFeaturesDisplay();
+
+	if (newType > 1) then
+		SetFaceCustomizeCamera(true);
+	else
+		SetFaceCustomizeCamera(false);
+	end
 end
 
 function CharCreate_ResetFeaturesDisplay()
