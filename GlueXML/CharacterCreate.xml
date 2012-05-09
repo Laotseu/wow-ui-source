@@ -238,6 +238,17 @@
 				</Layers>
 			</Frame>
 		</Frames>
+		<Scripts>
+			<OnEnter>
+				if ( self.tooltip ) then
+					CharacterCreateTooltip:SetOwner(self, -3, -5);
+					CharacterCreateTooltip:SetText(self.tooltip);
+				end
+			</OnEnter>
+			<OnLeave>
+				CharacterCreateTooltip:Hide();
+			</OnLeave>
+		</Scripts>
 	</CheckButton>
 	<CheckButton name="CharCreateRaceButtonTemplate" inherits="CharCreateIconButtonTemplate" virtual="true">
 		<Scripts>
