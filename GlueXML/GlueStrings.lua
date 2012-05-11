@@ -711,6 +711,7 @@ OPTION_TOOLTIP_SOUND_OUTPUT = "Selects where you would like to hear your game so
 OPTION_TOOLTIP_SOUND_QUALITY = "Adjusts the quality of game sounds.\nDecrease to improve performance.";
 OPTION_TOOLTIP_SOUND_VOLUME = "Adjusts the sound effect volume.";
 OPTION_TOOLTIP_SPELL_DETAIL = "Controls the detail level of spell effects.  Decrease to improve performance.";
+OPTION_TOOLTIP_SSAO = "Controls the rendering quality of the ambient occlusion effect. Decreasing this may greatly improve performance.";
 OPTION_TOOLTIP_STEREO_HARDWARE_CURSOR = "While enabling this option may improve performance, the 3D cursor functionality will not work with it enabled.";
 OPTION_TOOLTIP_SUNSHAFTS = "Controls the method and quality used to display sunshaft and glare effects. Disabling this setting may improve performance.";
 OPTION_TOOLTIP_TERRAIN_HIGHLIGHTS = "Enables specular highlights on terrain. Disabling this can sometimes improve performance.";

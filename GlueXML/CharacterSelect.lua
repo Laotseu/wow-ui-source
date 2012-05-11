@@ -873,6 +873,11 @@ ACCOUNT_UPGRADE_FEATURES = {
 		  [3] = { icon = "Interface\\Icons\\Ability_Mount_CelestialHorse", text = UPGRADE_FEATURE_9 },
 		  logo = "Interface\\Glues\\Common\\Glues-WoW-CCLogo",
 		  banner = { 0.0, 0.777, 0.138, 0.272 }},
+	[3] =	{ [1] = { icon = "Interface\\Icons\\achievement_level_90", text = "Battle to Level 90!" },
+		  [2] = { icon = "Interface\\Glues\\AccountUpgrade\\upgrade-panda", text = "New Race: Pandaren\nNew Class: Monk!" },
+		  [3] = { icon = "Interface\\Icons\\achievement_zone_icecrown_01", text = "Explore the mysterious continent of Pandaria!" },
+		  logo = "Interface\\Glues\\Common\\Glues-WoW-MPLogo",
+		  banner = { 0.0, 0.777, 0.138, 0.272 }},
 }
 
 -- Account upgrade panel
@@ -883,6 +888,7 @@ function AccountUpgradePanel_Update(isExpanded)
 	else
 		tag = GetAccountExpansionLevel();
 	end
+tag = 3
 
 	if ( CHARACTER_SELECT_LOGOS[tag] ) then
 		CharacterSelectLogo:SetTexture(CHARACTER_SELECT_LOGOS[tag]);
