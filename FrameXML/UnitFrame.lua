@@ -4,7 +4,7 @@ PowerBarColor["MANA"] = { r = 0.00, g = 0.00, b = 1.00 };
 PowerBarColor["RAGE"] = { r = 1.00, g = 0.00, b = 0.00 };
 PowerBarColor["FOCUS"] = { r = 1.00, g = 0.50, b = 0.25 };
 PowerBarColor["ENERGY"] = { r = 1.00, g = 1.00, b = 0.00 };
-PowerBarColor["UNUSED"] = { r = 0.00, g = 1.00, b = 1.00 };
+PowerBarColor["LIGHT_FORCE"] = { r = 0.71, g = 1.0, b = 0.92 }; --light force is chi apparently
 PowerBarColor["RUNES"] = { r = 0.50, g = 0.50, b = 0.50 };
 PowerBarColor["RUNIC_POWER"] = { r = 0.00, g = 0.82, b = 1.00 };
 PowerBarColor["SOUL_SHARDS"] = { r = 0.50, g = 0.32, b = 0.55 };
@@ -20,7 +20,7 @@ PowerBarColor[0] = PowerBarColor["MANA"];
 PowerBarColor[1] = PowerBarColor["RAGE"];
 PowerBarColor[2] = PowerBarColor["FOCUS"];
 PowerBarColor[3] = PowerBarColor["ENERGY"];
-PowerBarColor[4] = PowerBarColor["UNUSED"];
+PowerBarColor[4] = PowerBarColor["LIGHT_FORCE"]; 
 PowerBarColor[5] = PowerBarColor["RUNES"];
 PowerBarColor[6] = PowerBarColor["RUNIC_POWER"];
 PowerBarColor[7] = PowerBarColor["SOUL_SHARDS"];
@@ -60,43 +60,45 @@ function UnitFrame_Initialize (self, unit, name, portrait, healthbar, healthtext
 	UnitFrame_Update(self);
 	self:RegisterForClicks("LeftButtonUp", "RightButtonUp");
 	self:RegisterEvent("UNIT_NAME_UPDATE");
-	self:RegisterEvent("UNIT_PORTRAIT_UPDATE");
 	self:RegisterEvent("UNIT_DISPLAYPOWER");
+	self:RegisterEvent("UNIT_PORTRAIT_UPDATE");
 	if ( self.myHealPredictionBar ) then
-		self:RegisterEvent("UNIT_MAXHEALTH");
-		self:RegisterEvent("UNIT_HEAL_PREDICTION");
+		self:RegisterUnitEvent("UNIT_MAXHEALTH", unit);
+		self:RegisterUnitEvent("UNIT_HEAL_PREDICTION", unit);
 	end
 end
 
 function UnitFrame_SetUnit (self, unit, healthbar, manabar)
+	-- update unit events if unit changes
+	if ( self.unit ~= unit ) then
+		if ( self.myHealPredictionBar ) then
+			self:RegisterUnitEvent("UNIT_MAXHEALTH", unit);
+			self:RegisterUnitEvent("UNIT_HEAL_PREDICTION", unit);
+		end
+		if ( not healthbar.frequentUpdates ) then
+			healthbar:RegisterUnitEvent("UNIT_HEALTH", unit);
+		end
+		if ( manabar and not manabar.frequentUpdates ) then
+			UnitFrameManaBar_RegisterDefaultEvents(manabar);
+		end
+	end
+
 	self.unit = unit;
 	healthbar.unit = unit;
 	if ( manabar ) then	--Party Pet frames don't have a mana bar.
 		manabar.unit = unit;
 	end
 	self:SetAttribute("unit", unit);
-	if ( (self==PlayerFrame or self==PetFrame) and unit=="player") then
-		local _,class = UnitClass("player");
-		if ( class=="DEATHKNIGHT" ) then
-			if ( self==PlayerFrame ) then
-				RuneFrame:SetScale(1)
-				RuneFrame:ClearAllPoints()
-				RuneFrame:SetPoint("TOP", self,"BOTTOM", 52, 34)
-			elseif ( self==PetFrame ) then
-				RuneFrame:SetScale(0.6)
-				RuneFrame:ClearAllPoints()
-				RuneFrame:SetPoint("TOP",self,"BOTTOM",25,20)
-			end
-		end
-	end
 	securecall("UnitFrame_Update", self);
 end
 
 function UnitFrame_Update (self)
-	if ( self.overrideName ) then
-		self.name:SetText(GetUnitName(self.overrideName));
-	else
-		self.name:SetText(GetUnitName(self.unit));
+	if (self.name) then
+		if ( self.overrideName ) then
+			self.name:SetText(GetUnitName(self.overrideName));
+		else
+			self.name:SetText(GetUnitName(self.unit));
+		end
 	end
 	
 	UnitFramePortrait_Update(self);
@@ -128,9 +130,13 @@ function UnitFrame_OnEvent(self, event, ...)
 			end
 		elseif ( event == "UNIT_MAXHEALTH" ) then
 			UnitFrameHealPredictionBars_UpdateMax(self);
+			UnitFrameHealPredictionBars_Update(self);
 		elseif ( event == "UNIT_HEAL_PREDICTION" ) then
 			UnitFrameHealPredictionBars_Update(self);
 		end
+	elseif ( not arg1 and event == "UNIT_PORTRAIT_UPDATE" ) then
+		-- this is an update all portraits signal
+		UnitFramePortrait_Update(self);
 	end
 end
 
@@ -282,9 +288,9 @@ function UnitFrameHealthBar_Initialize (unit, statusbar, statustext, frequentUpd
 	if ( GetCVarBool("predictedHealth") and frequentUpdates ) then
 		statusbar:SetScript("OnUpdate", UnitFrameHealthBar_OnUpdate);
 	else
-		statusbar:RegisterEvent("UNIT_HEALTH");
+		statusbar:RegisterUnitEvent("UNIT_HEALTH", unit);
 	end
-	statusbar:RegisterEvent("UNIT_MAXHEALTH");
+	statusbar:RegisterUnitEvent("UNIT_MAXHEALTH", unit);
 	statusbar:SetScript("OnEvent", UnitFrameHealthBar_OnEvent);
 
 	-- Setup newbie tooltip
@@ -306,7 +312,7 @@ function UnitFrameHealthBar_OnEvent(self, event, ...)
 			self:SetScript("OnUpdate", UnitFrameHealthBar_OnUpdate);
 			self:UnregisterEvent("UNIT_HEALTH");
 		else
-			self:RegisterEvent("UNIT_HEALTH");
+			self:RegisterUnitEvent("UNIT_HEALTH", self.unit);
 			self:SetScript("OnUpdate", nil);
 		end
 	else
@@ -377,7 +383,7 @@ function UnitFrameManaBar_UnregisterDefaultEvents(self)
 end
 
 function UnitFrameManaBar_RegisterDefaultEvents(self)
-	self:RegisterEvent("UNIT_POWER");
+	self:RegisterUnitEvent("UNIT_POWER", self.unit);
 end
 
 function UnitFrameManaBar_Initialize (unit, statusbar, statustext, frequentUpdates)
@@ -396,8 +402,8 @@ function UnitFrameManaBar_Initialize (unit, statusbar, statustext, frequentUpdat
 	else
 		UnitFrameManaBar_RegisterDefaultEvents(statusbar);
 	end
-	statusbar:RegisterEvent("UNIT_MAXPOWER");
 	statusbar:RegisterEvent("UNIT_DISPLAYPOWER");
+	statusbar:RegisterUnitEvent("UNIT_MAXPOWER", unit);
 	statusbar:SetScript("OnEvent", UnitFrameManaBar_OnEvent);
 end
 
@@ -509,7 +515,7 @@ function UnitFrame_UpdateThreatIndicator(indicator, numericIndicator, unit)
 			end
 
 			if ( numericIndicator ) then
-				if ( ShowNumericThreat() ) then
+				if ( ShowNumericThreat() and not (UnitClassification(indicator.unit) == "minus") ) then
 					local isTanking, status, percentage, rawPercentage = UnitDetailedThreatSituation(indicator.feedbackUnit, indicator.unit);
 					local display = rawPercentage;
 					if ( isTanking ) then

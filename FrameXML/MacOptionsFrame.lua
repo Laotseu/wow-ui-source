@@ -8,7 +8,8 @@ MacOptionsFrameCheckButtons["MOVIE_RECORDING_ENABLE_COMPRESSION"] = { index = 6,
 MacOptionsFrameCheckButtons["ITUNES_SHOW_FEEDBACK"] = { index = 7, cvar = "iTunesRemoteFeedback", tooltipText = ITUNES_SHOW_FEEDBACK_TOOLTIP};
 MacOptionsFrameCheckButtons["ITUNES_SHOW_ALL_TRACK_CHANGES"] = { index = 8, cvar = "iTunesTrackDisplay", tooltipText = ITUNES_SHOW_ALL_TRACK_CHANGES_TOOLTIP};
 MacOptionsFrameCheckButtons["MAC_DISABLE_OS_SHORTCUTS"] = { index = 9, cvar = "MacDisableOsShortcuts", tooltipText = MAC_DISABLE_OS_SHORTCUTS_TOOLTIP};
-MacOptionsFrameCheckButtons["MAC_SWAP_CONTROL_AND_COMMAND"] = { index = 10, cvar = "MacSwapControlAndCommand", tooltipText = MAC_SWAP_CONTROL_AND_COMMAND_TOOLTIP};
+MacOptionsFrameCheckButtons["MAC_USE_COMMAND_AS_CONTROL"] = { index = 10, cvar = "MacUseCommandAsControl", tooltipText = MAC_USE_COMMAND_AS_CONTROL_TOOLTIP};
+MacOptionsFrameCheckButtons["MAC_USE_COMMAND_LEFT_CLICK_AS_RIGHT_CLICK"] = { index = 11, cvar = "MacUseCommandLeftClickAsRightClick", tooltipText = MAC_USE_COMMAND_LEFT_CLICK_AS_RIGHT_CLICK_TOOLTIP};
 
 local function MovieRecordingSupported()
 	if (not IsMacClient()) then
@@ -114,8 +115,6 @@ function MacOptionsFrame_Load()
 			HideUIPanel(MacOptionsFrame);
 			HideUIPanel(GameMenuFrame);
 			_G["MacOptionsFrameCheckButton9"]:SetChecked(0);
-		else
-			MacOptions_SetOSShortcutsDisabled(checked == "1");
 		end
 	end;
 	
@@ -334,8 +333,8 @@ function MacOptionsFrame_SetDefaults()
 	for index, value in pairs(MacOptionsFrameCheckButtons) do
 		checkButton = _G["MacOptionsFrameCheckButton"..value.index];
 		checkButton:SetChecked(GetCVarDefault(value.cvar));
-	end
-	if(not MovieRecording_IsCursorRecordingSupported()) then
+	end    
+	if((not MovieRecordingSupported()) or (not MovieRecording_IsCursorRecordingSupported())) then
 		local button = _G["MacOptionsFrameCheckButton3"];
 		button:SetChecked(0);
 		MacOptionsFrame_DisableCheckBox(button);

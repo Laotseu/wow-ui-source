@@ -1,4 +1,4 @@
-EXPANSION_LEVEL = GetExpansionLevel(); --This doesn't change while logged in, so we just need to do it once.
+EXPANSION_LEVEL = GetExpansionLevel(); --This can change while logged in, when an expansion releases
 
 LFD_MAX_REWARDS = 2;
 
@@ -13,9 +13,6 @@ LFD_PROPOSAL_FAILED_CLOSE_TIME = 5;
 LFD_NUM_ROLES = 3;
 
 LFD_MAX_SHOWN_LEVEL_DIFF = 15;
-
-local NUM_STATISTIC_TYPES = 1;
-
 
 -------------------------------------
 -----------LFD Frame--------------
@@ -35,7 +32,7 @@ function LFDFrame_OnLoad(self)
 	self:RegisterEvent("VOTE_KICK_REASON_NEEDED");
 	self:RegisterEvent("LFG_UPDATE_RANDOM_INFO");
 	self:RegisterEvent("LFG_OPEN_FROM_GOSSIP");
-	self:RegisterEvent("GOSSIP_CLOSED");
+	self:RegisterEvent("UPDATE_EXPANSION_LEVEL");
 	
 	ButtonFrameTemplate_HideAttic(self);
 	self.Inset:SetPoint("TOPLEFT", self, "BOTTOMLEFT", 2, 284);
@@ -74,157 +71,25 @@ function LFDFrame_OnEvent(self, event, ...)
 		end
 	elseif ( event == "LFG_OPEN_FROM_GOSSIP" ) then
 		local dungeonID = ...;
-		LFDParentFrame.fromGossip = true;
-		ShowUIPanel(LFDParentFrame);
+		PVEFrame_ShowFrame("GroupFinderFrame", LFDParentFrame);
 		LFDQueueFrame_SetType(dungeonID);
-	elseif ( event == "GOSSIP_CLOSED" ) then
-		if ( LFDParentFrame.fromGossip ) then
-			HideUIPanel(LFDParentFrame);
-		end
+	elseif ( event == "UPDATE_EXPANSION_LEVEL" ) then
+		EXPANSION_LEVEL = GetExpansionLevel();
 	end
-	--LFDQueueFrame_UpdatePortrait();
 end
 
 function LFDFrame_OnShow(self)
 	LFDFrame_UpdateBackfill(true);
-	LFDFrame_UpdateCapBar();
-end
-
-function LFDFrame_OnHide(self)
-	if ( self.fromGossip ) then
-		CloseGossip();
-		self.fromGossip = false;
-	end
-end
-
-function LFDQueueFrame_UpdatePortrait()
-	local mode, submode = GetLFGMode();
-	if ( mode == "queued" or mode == "rolecheck" or mode == "suspended" ) then
-		EyeTemplate_StartAnimating(LFDParentFrameEyeFrame);
-	else
-		EyeTemplate_StopAnimating(LFDParentFrameEyeFrame);
-	end
-end
-
---If we want to change the bar based on the current selection, just replace instances of VALOR_TIER1_LFG_ID with LFDQueueFrame.type
-local VALOR_TIER1_LFG_ID = 301;
-function LFDFrame_UpdateCapBar()
-	local capBar = LFDQueueFrameCapBar;
-	
-	local currencyID, tier1DungeonID, tier1Quantity, tier1Limit, overallQuantity, overallLimit, periodPurseQuantity, periodPurseLimit = GetLFGDungeonRewardCapBarInfo(VALOR_TIER1_LFG_ID);
-	if ( not currencyID ) then
-		return;	--We may not have any info yet. (If the player has 5 seconds of lag and opens the window right after login)
-	end
-	
-	local currencyName, currencyQuantity, currencyIcon, currencyEarnedThisWeek, currencyEarnablePerWeek, currencyCap, currencyIsDiscovered = GetCurrencyInfo(currencyID);
-	if ( currencyIsDiscovered ) then
-		capBar:Show();
-		LFDParentFrame:SetHeight(470);
-	else
-		capBar:Hide();
-		LFDParentFrame:SetHeight(428);
-		return;
-	end
-	
-	local hasNoSharedStats = false;
-	if ( periodPurseQuantity == 0 and periodPurseLimit == 0 ) then
-		--This is the case for reward counts not directly associated with currencies (e.g. non-heroics)
-		periodPurseQuantity, periodPurseLimit = overallQuantity, overallLimit;
-		hasNoSharedStats = true;
-	end
-	
-	CapProgressBar_Update(capBar, tier1Quantity, tier1Limit, overallQuantity, overallLimit, periodPurseQuantity, periodPurseLimit, hasNoSharedStats);
-	
-	if ( currencyID == 0 ) then
-		currencyName = REWARDS;
-	end
-	
-	capBar.label:SetFormattedText(CURRENCY_THIS_WEEK, currencyName);
-end
-
-function LFDQueueFrameCapBar_OnEnter(self)
-	local currencyID, tier1DungeonID, tier1Quantity, tier1Limit, overallQuantity, overallLimit, periodPurseQuantity, periodPurseLimit = GetLFGDungeonRewardCapBarInfo(VALOR_TIER1_LFG_ID);
-	local currencyName;
-	if ( currencyID == 0 ) then
-		currencyName = REWARDS;
-	else
-		currencyName = GetCurrencyInfo(currencyID);
-	end
-	local tier1Name = GetLFGDungeonInfo(tier1DungeonID);
-	local hasNoSharedStats = (periodPurseLimit == 0);
-	
-	GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-	GameTooltip:SetText(MAXIMUM_REWARD);
-	GameTooltip:AddLine(format(CURRENCY_RECEIVED_THIS_WEEK, currencyName), 1, 1, 1, true);
-	GameTooltip:AddLine(" ");
-	
-	local r, g, b = 1, 1, 1;
-	if ( hasNoSharedStats ) then
-		if ( tier1Quantity >= tier1Limit ) then
-			r, g, b = 0.5, 0.5, 0.5;
-		end
-		GameTooltip:AddDoubleLine(format(FROM_A_DUNGEON, tier1Name), format(CURRENCY_WEEKLY_CAP_FRACTION, tier1Quantity, tier1Limit), r, g, b, r, g, b);
-	else
-		if ( periodPurseQuantity >= periodPurseLimit ) then
-			r, g, b = 0.5, 0.5, 0.5;
-		end
-		GameTooltip:AddLine(format(CURRENCY_WEEKLY_CAP_FRACTION, periodPurseQuantity, periodPurseLimit), r, g, b);
-		--We once again have only a single cap, so removing this for now.
-		--[[GameTooltip:AddDoubleLine(FROM_ALL_SOURCES, format(CURRENCY_WEEKLY_CAP_FRACTION, periodPurseQuantity, periodPurseLimit), r, g, b, r, g, b);
-		GameTooltip:AddDoubleLine(" -"..FROM_RAID, format(CURRENCY_WEEKLY_CAP_FRACTION, periodPurseQuantity - overallQuantity, periodPurseLimit), r, g, b, r, g, b);
-		
-		if ( overallQuantity >= overallLimit ) then
-			r, g, b = 0.5, 0.5, 0.5;
-		end
-		GameTooltip:AddDoubleLine(" -"..FROM_DUNGEON_FINDER_SOURCES, format(CURRENCY_WEEKLY_CAP_FRACTION, overallQuantity, overallLimit), r, g, b, r, g, b);
-		GameTooltip:AddDoubleLine("   -"..FROM_TROLLPOCALYPSE, format(CURRENCY_WEEKLY_CAP_FRACTION, overallQuantity - tier1Quantity, overallLimit), r, g, b, r, g, b);
-		
-		if ( tier1Quantity >= tier1Limit ) then
-			r, g, b = 0.5, 0.5, 0.5;
-		end
-		GameTooltip:AddDoubleLine("   -"..format(FROM_A_DUNGEON, tier1Name), format(CURRENCY_WEEKLY_CAP_FRACTION, tier1Quantity, tier1Limit), r, g, b, r, g, b);
-		--]]
-	end
-	GameTooltip:Show();
-end
-
-function LFDQueueFrameCapBarCapMarker_OnEnter(self)
-	local isTier1 = self:GetID() == 1;
-	
-	local currencyID, tier1DungeonID, tier1Quantity, tier1Limit, overallQuantity, overallLimit, periodPurseQuantity, periodPurseLimit = GetLFGDungeonRewardCapBarInfo(VALOR_TIER1_LFG_ID);
-	if(not currencyID) then
-		return;
-	end
-
-	local currencyName;
-	if ( currencyID == 0 ) then
-		currencyName = REWARDS;
-	else
-		currencyName = GetCurrencyInfo(currencyID);
-	end
-	
-	GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-	if ( isTier1 ) then
-		local tier1Name = GetLFGDungeonInfo(tier1DungeonID);
-		GameTooltip:SetText(MAXIMUM_REWARD);
-		GameTooltip:AddLine(format(LFD_CURRENCY_CAP_SPECIFIC, currencyName, tier1Name), 1, 1, 1, true);
-		GameTooltip:AddLine(format(CURRENCY_THIS_WEEK_WITH_AMOUNT, currencyName, tier1Quantity, tier1Limit));
-	else
-		GameTooltip:SetText(MAXIMUM_REWARD);
-		GameTooltip:AddLine(format(LFD_CURRENCY_CAP_ALL, currencyName), 1, 1, 1, true);
-		GameTooltip:AddLine(format(CURRENCY_THIS_WEEK_WITH_AMOUNT, currencyName, overallQuantity, overallLimit));
-	end
-	GameTooltip:Show();
 end
 
 --Backfill option
 function LFDFrame_UpdateBackfill(forceUpdate)
 	if ( CanPartyLFGBackfill() ) then
 		local currentSubtypeID = select(LFG_RETURN_VALUES.subtypeID, GetLFGDungeonInfo(GetPartyLFGID()));
-		if ( currentSubtypeID ~= LFG_SUBTYPEID_RAID ) then
+		if ( currentSubtypeID ~= LFG_SUBTYPEID_RAID and currentSubtypeID ~= LFG_SUBTYPEID_SCENARIO ) then
 			local name, lfgID, typeID = GetPartyLFGBackfillInfo();
 			LFDQueueFramePartyBackfillDescription:SetFormattedText(LFG_OFFER_CONTINUE, HIGHLIGHT_FONT_COLOR_CODE..name.."|r");
-			local mode, subMode = GetLFGMode();
+			local mode, subMode = GetLFGMode(LE_LFG_CATEGORY_LFD);
 			if ( (forceUpdate or not LFDQueueFrame:IsVisible()) and mode ~= "queued" and mode ~= "suspended" ) then
 				LFDQueueFramePartyBackfill:Show();
 			end
@@ -304,7 +169,7 @@ end
 function LFDRoleCheckPopup_Update()
 	LFGDungeonList_Setup();
 	
-	LFG_UpdateRoleCheckboxes();
+	LFG_UpdateAllRoleCheckboxes();
 	
 	local inProgress, slots, members = GetLFGRoleUpdate();
 	
@@ -351,91 +216,6 @@ function LFDRoleCheckPopupDescription_OnEnter(self)
 end
 
 --List functions
-function LFDQueueFrameSpecificListButton_SetDungeon(button, dungeonID, mode, submode)
-	local name, typeID, subtypeID, minLevel, maxLevel, recLevel, minRecLevel, maxRecLevel, expansionLevel, groupID, textureFilename, difficulty, maxPlayers, description, isHoliday = GetLFGDungeonInfo(dungeonID);
-	button.id = dungeonID;
-	if ( LFGIsIDHeader(dungeonID) ) then
-		
-		button.instanceName:SetText(name);
-		button.instanceName:SetFontObject(QuestDifficulty_Header);
-		button.instanceName:SetPoint("RIGHT", button, "RIGHT", 0, 0);
-		button.level:Hide();
-		
-		if ( subtypeID == LFG_SUBTYPEID_HEROIC ) then
-			button.heroicIcon:Show();
-			button.instanceName:SetPoint("LEFT", button.heroicIcon, "RIGHT", 0, 1);
-		else
-			button.heroicIcon:Hide();
-			button.instanceName:SetPoint("LEFT", 40, 0);
-		end
-			
-		button.expandOrCollapseButton:Show();
-		local isCollapsed = LFGCollapseList[dungeonID];
-		button.isCollapsed = isCollapsed;
-		if ( isCollapsed ) then
-			button.expandOrCollapseButton:SetNormalTexture("Interface\\Buttons\\UI-PlusButton-UP");
-		else
-			button.expandOrCollapseButton:SetNormalTexture("Interface\\Buttons\\UI-MinusButton-UP");
-		end
-	else
-		button.instanceName:SetText(name);
-		button.instanceName:SetPoint("RIGHT", button.level, "LEFT", -10, 0);
-		
-		button.heroicIcon:Hide();
-		button.instanceName:SetPoint("LEFT", 40, 0);
-			
-		if ( minLevel == maxLevel ) then
-			button.level:SetText(format(LFD_LEVEL_FORMAT_SINGLE, minLevel));
-		else
-			button.level:SetText(format(LFD_LEVEL_FORMAT_RANGE, minLevel, maxLevel));
-		end
-		button.level:Show();
-		local difficultyColor = GetQuestDifficultyColor(recLevel);
-		button.level:SetFontObject(difficultyColor.font);
-		
-		if ( mode == "rolecheck" or mode == "queued" or mode == "listed" or mode == "suspended" or not LFD_IsEmpowered()) then
-			button.instanceName:SetFontObject(QuestDifficulty_Header);
-		else
-			button.instanceName:SetFontObject(difficultyColor.font);
-		end
-		
-		
-		button.expandOrCollapseButton:Hide();
-		
-		button.isCollapsed = false;
-	end
-	
-	if ( LFGLockList[dungeonID] ) then
-		button.enableButton:Hide();
-		button.lockedIndicator:Show();
-	else
-		button.enableButton:Show();
-		button.lockedIndicator:Hide();
-	end
-	
-	local enableState= LFGEnabledList;
-	if ( mode == "queued" or mode == "listed" or mode == "suspended" ) then
-		enableState = LFGQueuedForList[dungeonID];
-	else
-		enableState = LFGEnabledList[dungeonID];
-	end
-	
-	if ( enableState == 1 ) then	--Some are checked, some aren't.
-		button.enableButton:SetCheckedTexture("Interface\\Buttons\\UI-MultiCheck-Up");
-		button.enableButton:SetDisabledCheckedTexture("Interface\\Buttons\\UI-MultiCheck-Disabled");
-	else
-		button.enableButton:SetCheckedTexture("Interface\\Buttons\\UI-CheckBox-Check");
-		button.enableButton:SetDisabledCheckedTexture("Interface\\Buttons\\UI-CheckBox-Check-Disabled");
-	end
-	button.enableButton:SetChecked(enableState and enableState ~= 0);
-	
-	if ( mode == "rolecheck" or mode == "queued" or mode == "listed" or mode == "suspended" or not LFD_IsEmpowered() ) then
-		button.enableButton:Disable();
-	else
-		button.enableButton:Enable();
-	end
-end
-
 function LFDQueueFrameSpecificList_Update()
 	if ( LFGDungeonList_Setup() ) then
 		return;	--Setup will update the list.
@@ -446,8 +226,15 @@ function LFDQueueFrameSpecificList_Update()
 	
 	local areButtonsBig = not LFDQueueFrameSpecificListScrollFrame:IsShown();
 	
-	local mode, subMode = GetLFGMode();
+	local enabled, queued = LFGDungeonList_EvaluateListState(LE_LFG_CATEGORY_LFD);
 	
+	local checkedList;
+	if ( queued ) then
+		checkedList = LFGQueuedForList[LE_LFG_CATEGORY_LFD];
+	else
+		checkedList = LFGEnabledList;
+	end
+
 	for i = 1, NUM_LFD_CHOICE_BUTTONS do
 		local button = _G["LFDQueueFrameSpecificListButton"..i];
 		local dungeonID = LFDDungeonList[i+offset];
@@ -458,130 +245,35 @@ function LFDQueueFrameSpecificList_Update()
 			else
 				button:SetWidth(295);
 			end
-			LFDQueueFrameSpecificListButton_SetDungeon(button, dungeonID, mode, subMode);
+			LFGDungeonListButton_SetDungeon(button, dungeonID, enabled, checkedList);
 		else
 			button:Hide();
 		end
 	end
 end
 
-function LFDList_SetHeaderCollapsed(headerID, isCollapsed)
-	SetLFGHeaderCollapsed(headerID, isCollapsed);
-	LFGCollapseList[headerID] = isCollapsed;
-	for _, dungeonID in pairs(LFDDungeonList) do
-		if ( select(LFG_RETURN_VALUES.groupID, GetLFGDungeonInfo(dungeonID)) == headerID ) then
-			LFGCollapseList[dungeonID] = isCollapsed;
-		end
-	end
-	for _, dungeonID in pairs(LFDHiddenByCollapseList) do
-		if ( select(LFG_RETURN_VALUES.groupID, GetLFGDungeonInfo(dungeonID)) == headerID ) then
-			LFGCollapseList[dungeonID] = isCollapsed;
-		end
-	end
-	LFDQueueFrame_Update();
-end
-
-function LFDQueueFrame_QueueForInstanceIfEnabled(queueID)
-	if ( not LFGIsIDHeader(queueID) and LFGEnabledList[queueID] and not LFGLockList[queueID] ) then
-		SetLFGDungeon(queueID);
-		return true;
-	end
-	return false;
-end
-
 function LFDQueueFrame_Join()
-	if ( LFDQueueFrame.type == "specific" ) then	--Random queue
-		ClearAllLFGDungeons();
-		for _, queueID in pairs(LFDDungeonList) do
-			LFDQueueFrame_QueueForInstanceIfEnabled(queueID);
-		end
-		for _, queueID in pairs(LFDHiddenByCollapseList) do
-			LFDQueueFrame_QueueForInstanceIfEnabled(queueID);
-		end
-		JoinLFG();
-	elseif ( LFDQueueFrame.type ) then
-		ClearAllLFGDungeons();
-		SetLFGDungeon(LFDQueueFrame.type);
-		JoinLFG();
-	end
+	LFG_JoinDungeon(LE_LFG_CATEGORY_LFD, LFDQueueFrame.type, LFDDungeonList, LFDHiddenByCollapseList);
 end
 
 function LFDQueueFrameDungeonChoiceEnableButton_OnClick(self, button)
-	local parent = self:GetParent();
-	local dungeonID = parent.id;
-	local isChecked = self:GetChecked();
-	
-	PlaySound(isChecked and "igMainMenuOptionCheckBoxOff" or "igMainMenuOptionCheckBoxOff");
-	if ( LFGIsIDHeader(dungeonID) ) then
-		LFDList_SetHeaderEnabled(dungeonID, isChecked);
-	else
-		LFDList_SetDungeonEnabled(dungeonID, isChecked);
-		LFGListUpdateHeaderEnabledAndLockedStates(LFDDungeonList, LFGEnabledList, LFGLockList, LFDHiddenByCollapseList);
-	end
+	LFGDungeonListCheckButton_OnClick(self, LE_LFG_CATEGORY_LFD, LFDDungeonList, LFDHiddenByCollapseList);
 	LFDQueueFrameSpecificList_Update();
 end
 
-function LFDList_SetDungeonEnabled(dungeonID, isEnabled)
-	SetLFGDungeonEnabled(dungeonID, isEnabled);
-	LFGEnabledList[dungeonID] = not not isEnabled; --Change to true/false.
-end
-
-function LFDList_SetHeaderEnabled(headerID, isEnabled)
-	for _, dungeonID in pairs(LFDDungeonList) do
-		if ( select(LFG_RETURN_VALUES.groupID, GetLFGDungeonInfo(dungeonID)) == headerID ) then
-			LFDList_SetDungeonEnabled(dungeonID, isEnabled);
-		end
-	end
-	for _, dungeonID in pairs(LFDHiddenByCollapseList) do
-		if ( select(LFG_RETURN_VALUES.groupID, GetLFGDungeonInfo(dungeonID)) == headerID ) then
-			LFDList_SetDungeonEnabled(dungeonID, isEnabled);
-		end
-	end
-	LFGEnabledList[headerID] = not not isEnabled; --Change to true/false.
-end
-
 function LFDQueueFrameDungeonListButton_OnEnter(self)
-	local dungeonID = self.id;
-	if ( self.lockedIndicator:IsShown() ) then
-		if ( LFGIsIDHeader(dungeonID) ) then
-			--GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-			--GameTooltip:AddLine(YOU_MAY_NOT_QUEUE_FOR_CATEGORY, 1.0, 1.0, 1.0);
-			--GameTooltip:Show();
-		else
-			GameTooltip:SetOwner(self, "ANCHOR_TOP");
-			GameTooltip:AddLine(YOU_MAY_NOT_QUEUE_FOR_DUNGEON, 1.0, 1.0, 1.0);
-			for i=1, GetLFDLockPlayerCount() do
-				local playerName, lockedReason, subReason1, subReason2 = GetLFDLockInfo(dungeonID, i);
-				if ( lockedReason ~= 0 ) then
-					local who;
-					if ( i == 1 ) then
-						who = "SELF_";
-					else
-						who = "OTHER_";
-					end
-					GameTooltip:AddLine(format(_G["INSTANCE_UNAVAILABLE_"..who..(LFG_INSTANCE_INVALID_CODES[lockedReason] or "OTHER")], playerName, subReason1, subReason2));
-				end
-			end
-			GameTooltip:Show();
-		end
-	end
+	LFGDungeonListButton_OnEnter(self, YOU_MAY_NOT_QUEUE_FOR_DUNGEON);
 end
 
 function LFDQueueFrameExpandOrCollapseButton_OnClick(self, button)
-	local parent = self:GetParent();
-	LFDList_SetHeaderCollapsed(parent.id, not parent.isCollapsed);
+	LFGDungeonList_SetHeaderCollapsed(self:GetParent(), LFDDungeonList, LFDHiddenByCollapseList);
+	LFDQueueFrame_Update();
 end
 
 function LFDQueueFrameTypeDropDown_SetUp(self)
 	UIDropDownMenu_SetWidth(self, 180);
 	UIDropDownMenu_Initialize(self, LFDQueueFrameTypeDropDown_Initialize);
 	UIDropDownMenu_SetSelectedValue(LFDQueueFrameTypeDropDown, LFDQueueFrame.type);
-end
-
-local function isRandomDungeonDisplayable(id)
-	local name, typeID, subtypeID, minLevel, maxLevel, _, _, _, expansionLevel = GetLFGDungeonInfo(id);
-	local myLevel = UnitLevel("player");
-	return myLevel >= minLevel and myLevel <= maxLevel and EXPANSION_LEVEL >= expansionLevel;
 end
 
 function LFDQueueFrameTypeDropDown_Initialize()
@@ -595,7 +287,7 @@ function LFDQueueFrameTypeDropDown_Initialize()
 	
 	for i=1, GetNumRandomDungeons() do
 		local id, name = GetLFGRandomDungeonInfo(i);
-		if ( isRandomDungeonDisplayable(id) ) then
+		if ( LFG_IsRandomDungeonDisplayable(id) ) then
 			local isAvailable = IsLFGDungeonJoinable(id);
 			if ( isAvailable ) then		
 				info.text = name;
@@ -705,7 +397,7 @@ function LFDQueueFrameRandomCooldownFrame_OnLoad(self)
 	
 	self:RegisterEvent("PLAYER_ENTERING_WORLD");	--For logging in/reloading ui
 	self:RegisterEvent("UNIT_AURA");	--The cooldown is still technically a debuff
-	self:RegisterEvent("PARTY_MEMBERS_CHANGED");
+	self:RegisterEvent("GROUP_ROSTER_UPDATE");
 end
 
 function LFDQueueFrameRandomCooldownFrame_OnEvent(self, event, ...)
@@ -732,7 +424,7 @@ function LFDQueueFrameRandomCooldownFrame_Update()
 	
 	cooldownFrame.myExpirationTime = myExpireTime;
 	
-	for i = 1, GetNumPartyMembers() do
+	for i = 1, GetNumSubgroupMembers() do
 		local nameLabel = _G["LFDQueueFrameCooldownFrameName"..i];
 		local statusLabel = _G["LFDQueueFrameCooldownFrameStatus"..i];
 		nameLabel:Show();
@@ -755,14 +447,14 @@ function LFDQueueFrameRandomCooldownFrame_Update()
 			statusLabel:SetFormattedText(GREEN_FONT_COLOR_CODE.."%s|r", GetText("READY", gender));
 		end
 	end
-	for i = GetNumPartyMembers() + 1, MAX_PARTY_MEMBERS do
+	for i = GetNumSubgroupMembers() + 1, MAX_PARTY_MEMBERS do
 		local nameLabel = _G["LFDQueueFrameCooldownFrameName"..i];
 		local statusLabel = _G["LFDQueueFrameCooldownFrameStatus"..i];
 		nameLabel:Hide();
 		statusLabel:Hide();
 	end
 	
-	if ( GetNumPartyMembers() == 0 ) then
+	if ( GetNumSubgroupMembers() == 0 ) then
 		cooldownFrame.description:SetPoint("TOP", 0, -85);
 	else
 		cooldownFrame.description:SetPoint("TOP", 0, -30);
@@ -815,30 +507,18 @@ function LFDQueueFrameRandomCooldownFrame_OnUpdate(self, elapsed)
 end
 
 function LFDQueueFrameFindGroupButton_Update()
-	local mode, subMode = GetLFGMode();
-	local queueType = GetLFGModeType();
-	if ( queueType == "default" and ( mode == "queued" or mode == "rolecheck" or mode == "proposal" or mode == "suspended" ) ) then
+	local mode, subMode = GetLFGMode(LE_LFG_CATEGORY_LFD);
+	if ( mode == "queued" or mode == "rolecheck" or mode == "proposal" or mode == "suspended" ) then
 		LFDQueueFrameFindGroupButton:SetText(LEAVE_QUEUE);
 	else
-		if ( GetNumPartyMembers() > 0 or GetNumRaidMembers() > 0 ) then
+		if ( IsInGroup() and GetNumGroupMembers() > 1 ) then
 			LFDQueueFrameFindGroupButton:SetText(JOIN_AS_PARTY);
 		else
 			LFDQueueFrameFindGroupButton:SetText(FIND_A_GROUP);
 		end
 	end
 	
-	if ( queueType == "raid" and mode ) then	-- if queued for raid finder
-		if ( mode == "proposal" or mode == "queued" or mode == "rolecheck" or mode == "suspended" ) then
-			LFDQueueFrameFindGroupButton:Disable();
-			if ( LFD_IsEmpowered() ) then
-				LFRQueueFrameNoLFRWhileLFDLeaveQueueButton:Enable();
-			else
-				LFRQueueFrameNoLFRWhileLFDLeaveQueueButton:Disable();
-			end
-		else
-			LFDQueueFrameFindGroupButton:Enable();
-		end
-	elseif ( LFD_IsEmpowered() and mode ~= "proposal" and mode ~= "listed"  ) then --During the proposal, they must use the proposal buttons to leave the queue.
+	if ( LFD_IsEmpowered() and mode ~= "proposal" and mode ~= "listed"  ) then --During the proposal, they must use the proposal buttons to leave the queue.
 		if ( (mode == "queued" or mode == "rolecheck" or mode == "suspended")	--The players can dequeue even if one of the two cover panels is up.
 			or (not LFDQueueFramePartyBackfill:IsVisible() and not LFDQueueFrameCooldownFrame:IsVisible()) ) then
 			LFDQueueFrameFindGroupButton:Enable();
@@ -848,7 +528,6 @@ function LFDQueueFrameFindGroupButton_Update()
 		LFRQueueFrameNoLFRWhileLFDLeaveQueueButton:Enable();
 	else
 		LFDQueueFrameFindGroupButton:Disable();
-		LFRQueueFrameNoLFRWhileLFDLeaveQueueButton:Disable();
 	end
 	
 	if ( LFD_IsEmpowered() and mode ~= "proposal" and mode ~= "queued" and mode ~= "suspended" and mode ~= "rolecheck" ) then
@@ -860,32 +539,20 @@ end
 
 LFDHiddenByCollapseList = {};
 function LFDQueueFrame_Update()
-	local enableList;
+	local mode, submode = GetLFGMode(LE_LFG_CATEGORY_LFD);
 	
-	local mode, submode = GetLFGMode();
-	
+	local checkedList;
 	if ( LFD_IsEmpowered() and mode ~= "queued" and mode ~= "suspended") then
-		enableList = LFGEnabledList;
+		checkedList = LFGEnabledList;
 	else
-		enableList = LFGQueuedForList;
+		checkedList = LFGQueuedForList[LE_LFG_CATEGORY_LFD];
 	end
 	
 	LFDDungeonList = GetLFDChoiceOrder(LFDDungeonList);
-		
-	LFGQueueFrame_UpdateLFGDungeonList(LFDDungeonList, LFDHiddenByCollapseList, LFGLockList, enableList, LFGCollapseList, LFD_CURRENT_FILTER);
+	
+	LFGQueueFrame_UpdateLFGDungeonList(LFDDungeonList, LFDHiddenByCollapseList, checkedList, LFD_CURRENT_FILTER, LFD_MAX_SHOWN_LEVEL_DIFF);
 	
 	LFDQueueFrameSpecificList_Update();
-	LFDFrame_UpdateCapBar();
 end
 
-function LFDList_DefaultFilterFunction(dungeonID)
-	local name, typeID, subtypeID, minLevel, maxLevel, recLevel, minRecLevel, maxRecLevel, expansionLevel, groupID, textureFilename, difficulty, maxPlayers, description, isHoliday = GetLFGDungeonInfo(dungeonID);
-	local hasHeader = groupID ~= 0;
-	local sufficientExpansion = EXPANSION_LEVEL >= expansionLevel;
-	local level = UnitLevel("player");
-	local sufficientLevel = level >= minLevel and level <= maxLevel;
-	return (hasHeader and sufficientExpansion and sufficientLevel) and
-		( level - LFD_MAX_SHOWN_LEVEL_DIFF <= recLevel or (LFGLockList and not LFGLockList[dungeonID]));	--If the server tells us we can join, who are we to complain?
-end
-
-LFD_CURRENT_FILTER = LFDList_DefaultFilterFunction
+LFD_CURRENT_FILTER = LFGList_DefaultFilterFunction;

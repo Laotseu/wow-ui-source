@@ -1,14 +1,16 @@
 # Do not delete the following line!
-## Interface: 40300
+## Interface: 50001
 GlobalStrings.lua
 Constants.lua
 Fonts.xml
 FontStyles.xml
+FontStyleOverrides.xml
 Localization.xml
 
 ## add snippets independent of modules here
 Util.lua
 FlowContainer.lua
+FrameLocks.lua
 
 ## add new modules below here
 
@@ -57,15 +59,12 @@ CoinPickupFrame.xml
 StackSplitFrame.xml
 FadingFrame.xml
 ZoneText.xml
-MainMenuBar.xml
-MainMenuBarMicroButtons.xml
+UnitFrame.xml
+Cooldown.xml
+ActionBarController.xml
 TutorialFrame.xml
 Minimap.xml
 GameTime.xml
-Cooldown.xml
-ActionButtonTemplate.xml
-ActionBarFrame.xml
-MultiActionBars.xml
 ##ActionWindow.xml
 EquipmentFlyout.xml
 BuffFrame.xml
@@ -73,7 +72,6 @@ CombatFeedback.xml
 UnitPowerBarAlt.xml
 CastingBarFrame.xml
 UnitPopup.xml
-UnitFrame.xml
 BNet.xml
 HistoryKeeper.lua
 BNConversations.xml
@@ -111,7 +109,6 @@ RaidFrame.xml
 ChannelFrame.xml
 PetActionBarFrame.xml
 MultiCastActionBarFrame.xml
-BonusActionBarFrame.xml
 MainMenuBarBagButtons.xml
 WorldMapFrame.xml
 RaidWarning.xml
@@ -126,15 +123,18 @@ ColorPickerFrame.xml
 GossipFrame.xml
 MailFrame.xml
 PetStable.xml
+VehicleSeatIndicator.xml
 DurabilityFrame.xml
 WorldStateFrame.xml
 PVPFrameTemplates.xml
 PVPFrame.xml
 ArenaRegistrarFrame.xml
+PVEFrame.xml
 LFGFrame.xml
 LFDFrame.xml
 LFRFrame.xml
 RaidFinder.xml
+ScenarioFinder.xml
 MovieRecordingProgress.xml
 MacOptionsFrame.xml
 RatingMenuFrame.xml
@@ -146,7 +146,6 @@ EclipseBarFrame.xml
 EasyMenu.lua
 ChatConfigFrame.xml
 MovieFrame.xml
-VehicleMenuBar.xml
 AlternatePowerBar.xml
 LevelUpDisplay.xml
 AnimationSystem.lua
@@ -163,6 +162,14 @@ GhostFrame.xml
 StreamingFrame.xml
 IconIntroAnimation.xml
 Timer.xml
+MonkHarmonyBar.xml
+DestinyFrame.xml
+PriestBar.xml
+SharedPetBattleTemplates.xml
+LootHistory.xml
+FloatingPetBattleTooltip.xml
+QueueStatusFrame.xml
+BattlePetTooltip.xml
 
 ## add new modules above here
 LocalizationPost.xml

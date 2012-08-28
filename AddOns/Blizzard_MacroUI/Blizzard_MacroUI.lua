@@ -7,7 +7,7 @@ NUM_MACRO_ICONS_SHOWN = NUM_ICONS_PER_ROW * NUM_ICON_ROWS;
 MACRO_ICON_ROW_HEIGHT = 36;
 local MACRO_ICON_FILENAMES = {};
 
-UIPanelWindows["MacroFrame"] = { area = "left", pushable = 1, whileDead = 1, xoffset = -16, yoffset = 12, width = PANEL_DEFAULT_WIDTH };
+UIPanelWindows["MacroFrame"] = { area = "left", pushable = 1, whileDead = 1, width = PANEL_DEFAULT_WIDTH };
 
 function MacroFrame_Show()
 	ShowUIPanel(MacroFrame);
@@ -149,6 +149,7 @@ function MacroButton_OnClick(self, button)
 end
 
 function MacroFrameSaveButton_OnClick()
+	PlaySound("igMainMenuOptionCheckBoxOn");
 	MacroFrame_SaveMacro();
 	MacroFrame_Update();
 	MacroPopupFrame:Hide();
@@ -156,6 +157,7 @@ function MacroFrameSaveButton_OnClick()
 end
 
 function MacroFrameCancelButton_OnClick()
+	PlaySound("igMainMenuOptionCheckBoxOn");
 	MacroFrame_Update();
 	MacroPopupFrame:Hide();
 	MacroFrameText:ClearFocus();
@@ -287,9 +289,9 @@ function RefreshPlayerSpellIconInfo()
 	local numFlyouts = 0;
 
 	for i = 1, GetNumSpellTabs() do
-		tab, tabTex, offset, numSpells, _ = GetSpellTabInfo(i);
+		local tab, tabTex, offset, numSpells, _ = GetSpellTabInfo(i);
 		offset = offset + 1;
-		tabEnd = offset + numSpells;
+		local tabEnd = offset + numSpells;
 		for j = offset, tabEnd - 1 do
 			--to get spell info by slot, you have to pass in a pet argument
 			local spellType, ID = GetSpellBookItemInfo(j, "player"); 
@@ -304,7 +306,7 @@ function RefreshPlayerSpellIconInfo()
 				local _, _, numSlots, isKnown = GetFlyoutInfo(ID);
 				if (isKnown and numSlots > 0) then
 					for k = 1, numSlots do 
-						local spellID, isKnown = GetFlyoutSlotInfo(ID, k)
+						local spellID, overrideSpellID, isKnown = GetFlyoutSlotInfo(ID, k)
 						if (isKnown) then
 							MACRO_ICON_FILENAMES[index] = gsub( strupper(GetSpellTexture(spellID)), "INTERFACE\\ICONS\\", ""); 
 							index = index + 1;

@@ -95,7 +95,7 @@
 	</Button>
 	<Frame name="RaidParentFrame"  toplevel="true" parent="UIParent" movable="true" enableMouse="true" hidden="true" inherits="ButtonFrameTemplate">
 		<Frames>
-			<Button name="$parentTab1" inherits="CharacterFrameTabButtonTemplate" text="RAID_FINDER" id="1">
+			<Button name="$parentTab1" inherits="CharacterFrameTabButtonTemplate" text="RAID" id="1">
 				<Anchors>
 					<Anchor point="BOTTOMLEFT" relativeTo="$parent" relativePoint="BOTTOMLEFT">
 						<Offset x="19" y="-30"/>
@@ -108,24 +108,9 @@
 					</OnClick>
 				</Scripts>
 			</Button>
-			<Button name="$parentTab2" inherits="CharacterFrameTabButtonTemplate" text="RAID" id="2">
+			<Button name="$parentTab2" inherits="CharacterFrameTabButtonTemplate" text="LOOKING_FOR_RAID" id="2">
 				<Anchors>
-				   <Anchor point="LEFT" relativeTo="$parentTab1" relativePoint="RIGHT">
-					<Offset>
-					    <AbsDimension x="-16" y="0"/>
-					</Offset>
-				    </Anchor>
-				</Anchors>
-				<Scripts>
-					<OnClick>
-						PlaySound("igCharacterInfoTab");
-						RaidParentFrame_SetView(2);
-					</OnClick>
-				</Scripts>
-			</Button>
-			<Button name="$parentTab3" inherits="CharacterFrameTabButtonTemplate" text="LOOKING_FOR_RAID" id="3">
-				<Anchors>
-					<Anchor point="LEFT" relativeTo="$parentTab2" relativePoint="RIGHT">
+					<Anchor point="LEFT" relativeTo="$parentTab1" relativePoint="RIGHT">
 						<Offset>
 							<AbsDimension x="-16" y="0"/>
 						</Offset>
@@ -134,7 +119,7 @@
 				<Scripts>
 					<OnClick>
 						PlaySound("igCharacterInfoTab");
-						RaidParentFrame_SetView(3);
+						RaidParentFrame_SetView(2);
 					</OnClick>
 				</Scripts>
 			</Button>
@@ -154,8 +139,45 @@
 			</OnHide>
 		</Scripts>
 	</Frame>
-	<Frame name="RaidFrame" hidden="true"><!-- Parent set dynamically.   See ClaimRaidFrame()  -->
+	<Frame name="RaidFrame"><!-- Parent set dynamically.   See ClaimRaidFrame()  -->
 		<Frames>
+			<CheckButton name="RaidFrameAllAssistCheckButton" parent="RaidFrame" motionScriptsWhileDisabled="true" inherits="UICheckButtonTemplate">
+				<Size x="24" y="24"/>
+				<Anchors>
+					<Anchor point="TOPLEFT" x="58" y="-23"/>
+				</Anchors>
+				<HitRectInsets>
+					<AbsInset left="0" right="-30" top="0" bottom="0"/>
+				</HitRectInsets>
+				<Scripts>
+					<OnLoad>
+						_G[self:GetName().."Text"]:SetText(ALL_ASSIST_LABEL);
+						self:RegisterEvent("GROUP_ROSTER_UPDATE");
+						self:RegisterEvent("PARTY_LEADER_CHANGED");
+						RaidFrameAllAssistCheckButton_UpdateAvailable(self);
+					</OnLoad>
+					<OnEvent>
+						RaidFrameAllAssistCheckButton_UpdateAvailable(self);
+					</OnEvent>
+					<OnClick>
+						if (self.enabled) then 
+							PlaySound("igMainMenuOptionCheckBoxOn");
+						else
+							PlaySound("igMainMenuOptionCheckBoxOff");
+						end
+						SetEveryoneIsAssistant(self:GetChecked());	
+					</OnClick>
+					<OnEnter>
+						GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+						GameTooltip:SetText(ALL_ASSIST_DESCRIPTION, nil, nil, nil, nil, true);
+						if ( not self:IsEnabled() ) then
+							GameTooltip:AddLine(ALL_ASSIST_NOT_LEADER_ERROR, RED_FONT_COLOR.r, RED_FONT_COLOR.g, RED_FONT_COLOR.b, 1);
+						end
+						GameTooltip:Show();
+					</OnEnter>
+					<OnLeave function="GameTooltip_Hide"/>
+				</Scripts>
+			</CheckButton>
 			<Frame name="RaidFrameNotInRaid" setAllPoints="true">
 				<Layers>
 					<Layer level="ARTWORK">
@@ -171,7 +193,7 @@
 			<Button name="RaidFrameConvertToRaidButton" inherits="UIPanelButtonTemplate" text="CONVERT_TO_RAID">
 				<Size x="115" y="21"/>
 				<Anchors>
-					<Anchor point="TOPLEFT" x="58" y="-24"/>
+					<Anchor point="BOTTOMRIGHT" x="-7" y="5"/>
 				</Anchors>
 				<Scripts>
 					<OnClick function="ConvertToRaid"/>
@@ -180,10 +202,25 @@
 				<HighlightFont style="GameFontHighlightSmall"/>
 				<DisabledFont style="GameFontDisableSmall"/>
 			</Button>
-			<Button name="RaidFrameRaidInfoButton" inherits="UIPanelButtonTemplate" text="RAID_INFO">
+			<Button name="RaidFrameRaidBrowserButton" inherits="UIPanelButtonTemplate" text="LOOKING_FOR_RAID" >
+				<Size x="100" y="21"/>
+				<Anchors>
+					<Anchor point="TOPRIGHT" x="-100" y="-24"/>
+				</Anchors>
+				<Scripts>
+					<OnClick>
+						PlaySound("igMainMenuOptionCheckBoxOn");
+						ToggleRaidBrowser();
+					</OnClick>
+				</Scripts>
+				<NormalFont style="GameFontNormalSmall"/>
+				<HighlightFont style="GameFontHighlightSmall"/>
+				<DisabledFont style="GameFontDisableSmall"/>
+			</Button>
+			<Button name="RaidFrameRaidInfoButton" inherits="UIPanelButtonTemplate" text="RAID_INFO" >
 				<Size x="90" y="21"/>
 				<Anchors>
-					<Anchor point="LEFT" relativeTo="RaidFrameConvertToRaidButton" relativePoint="RIGHT" x="67" y="0"/>
+					<Anchor point="TOPRIGHT" x="-7" y="-24"/>
 				</Anchors>
 				<Scripts>
 					<OnClick>
@@ -320,7 +357,7 @@
 							</OnShow>
 						</Scripts>
 					</ScrollFrame>
-					<Button name="RaidInfoExtendButton" inherits="UIPanelButtonTemplate2" text="EXTEND_RAID_LOCK">
+					<Button name="RaidInfoExtendButton" inherits="UIPanelButtonTemplate" text="EXTEND_RAID_LOCK">
 						<Size x="200" y="20"/>
 						<Anchors>
 							<Anchor point="BOTTOMLEFT" x="14" y="13"/>
@@ -332,7 +369,7 @@
 						<HighlightFont style="GameFontHighlightSmall"/>
 						<DisabledFont style="GameFontDisableSmall"/>
 					</Button>
-					<Button name="RaidInfoCancelButton" inherits="UIPanelButtonTemplate2" text="CLOSE">
+					<Button name="RaidInfoCancelButton" inherits="UIPanelButtonTemplate" text="CLOSE">
 						<Size x="90" y="20"/>
 						<Anchors>
 							<Anchor point="BOTTOMRIGHT" x="-14" y="13"/>

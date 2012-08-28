@@ -70,7 +70,7 @@ function ArchaeologyFrame_OnLoad(self)
 	self:RegisterEvent("ARTIFACT_DIG_SITE_UPDATED");
 	self:RegisterEvent("CURRENCY_DISPLAY_UPDATE");
 	self:RegisterEvent("SKILL_LINES_CHANGED");
-	self:RegisterEvent("BAG_UPDATE");
+	self:RegisterEvent("BAG_UPDATE_DELAYED");
 	self:RegisterEvent("GET_ITEM_INFO_RECEIVED");
 	
 	
@@ -89,7 +89,7 @@ function ArchaeologyFrame_OnLoad(self)
 	end	
 	
 	local factionGroup = UnitFactionGroup("player");
-	if ( factionGroup ) then
+	if ( factionGroup and factionGroup ~= "Neutral" ) then
 		if ( factionGroup == "Alliance" ) then
 			self.tab1.factionIcon:SetTexCoord(0.31250000, 0.36914063, 0.79296875, 0.93359375);
 			self.factionIcon:SetTexCoord(0.41992188, 0.47265625, 0.45703125, 0.58593750);
@@ -170,7 +170,7 @@ function ArchaeologyFrame_OnEvent(self, event, ...)
 		end
 	elseif event == "ARTIFACT_HISTORY_READY" then
 		self.currentFrame:UpdateFrame();
-	elseif event == "BAG_UPDATE" then
+	elseif event == "BAG_UPDATE_DELAYED" then
 		if self:IsShown() and self.artifactPage:IsShown() then
 			ArchaeologyFrame_CurrentArtifactUpdate(ArchaeologyFrame.artifactPage);
 		end

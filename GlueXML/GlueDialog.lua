@@ -157,6 +157,23 @@ GlueDialogTypes["PARENTAL_CONTROL"] = {
 	end,
 }
 
+GlueDialogTypes["STREAMING_ERROR"] = {
+	text = DISCONNECTED,
+	button1 = DIALOG_HELP_MORE_INFO,
+	button2 = OKAY,
+	OnShow = function()
+		VirtualKeypadFrame:Hide();
+		SecurityMatrixLoginFrame:Hide();
+		StatusDialogClick();
+	end,
+	OnAccept = function()
+		LaunchURL(DISCONNECT_STREAMING_ERROR_URL);
+	end,
+	OnCancel = function()
+		StatusDialogClick();
+	end,
+}
+
 GlueDialogTypes["INVALID_NAME"] = {
 	text = CHAR_CREATE_INVALID_NAME,
 	button1 = OKAY,
@@ -249,7 +266,9 @@ GlueDialogTypes["CONFIRM_PAID_SERVICE"] = {
 	button1 = DONE,
 	button2 = CANCEL,
 	OnAccept = function()
-		CreateCharacter(CharacterCreateNameEdit:GetText());
+		-- need to get desired faction in case of pandaren doing faction change to another pandaren
+		-- this will be nil in any other case
+		CreateCharacter(CharacterCreateNameEdit:GetText(), PandarenFactionButtons_GetSelectedFaction());
 	end,
 	OnCancel = function()
 	end,
@@ -655,7 +674,7 @@ end
 
 function GlueDialog_OnUpdate(self, elapsed)
 	for i=1, MAX_NUM_GLUE_DIALOG_BUTTONS do
-		button = _G[ "GlueDialogButton"..i ];
+		local button = _G[ "GlueDialogButton"..i ];
 		if ( button and (CURRENT_GLUE_SCREEN == "login") or (CURRENT_GLUE_SCREEN == "realmwizard") or CURRENT_GLUE_SCREEN == "movie" ) then
 --			button:SetNormalTexture("Interface\\Glues\\Common\\Glue-Panel-Button-Up-Blue");
 --			button:SetPushedTexture("Interface\\Glues\\Common\\Glue-Panel-Button-Down-Blue");

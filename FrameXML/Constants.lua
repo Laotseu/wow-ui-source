@@ -16,6 +16,7 @@ YELLOW_FONT_COLOR_CODE		= "|cffffff00";
 LIGHTYELLOW_FONT_COLOR_CODE	= "|cffffff9a";
 ORANGE_FONT_COLOR_CODE		= "|cffff7f3f";
 ACHIEVEMENT_COLOR_CODE		= "|cffffff00";
+BATTLENET_FONT_COLOR_CODE	= "|cff82c5ff";
 FONT_COLOR_CODE_CLOSE		= "|r";
 
 NORMAL_FONT_COLOR			= {r=1.0, g=0.82, b=0.0};
@@ -28,6 +29,7 @@ YELLOW_FONT_COLOR			= {r=1.0, g=1.0, b=0.0};
 LIGHTYELLOW_FONT_COLOR		= {r=1.0, g=1.0, b=0.6};
 ORANGE_FONT_COLOR			= {r=1.0, g=0.5, b=0.25};
 PASSIVE_SPELL_FONT_COLOR	= {r=0.77, g=0.64, b=0.0};
+BATTLENET_FONT_COLOR 		= {r=0.510, g=0.773, b=1.0};
 
 CHAT_FONT_HEIGHTS = {
 	[1] = 12,
@@ -54,16 +56,17 @@ MATERIAL_TITLETEXT_COLOR_TABLE = {
 };
 
 RAID_CLASS_COLORS = {
-	["HUNTER"] = { r = 0.67, g = 0.83, b = 0.45 },
-	["WARLOCK"] = { r = 0.58, g = 0.51, b = 0.79 },
-	["PRIEST"] = { r = 1.0, g = 1.0, b = 1.0 },
-	["PALADIN"] = { r = 0.96, g = 0.55, b = 0.73 },
-	["MAGE"] = { r = 0.41, g = 0.8, b = 0.94 },
-	["ROGUE"] = { r = 1.0, g = 0.96, b = 0.41 },
-	["DRUID"] = { r = 1.0, g = 0.49, b = 0.04 },
-	["SHAMAN"] = { r = 0.0, g = 0.44, b = 0.87 },
-	["WARRIOR"] = { r = 0.78, g = 0.61, b = 0.43 },
-	["DEATHKNIGHT"] = { r = 0.77, g = 0.12 , b = 0.23 },
+	["HUNTER"] = { r = 0.67, g = 0.83, b = 0.45, colorStr = "ffabd473" },
+	["WARLOCK"] = { r = 0.58, g = 0.51, b = 0.79, colorStr = "ff9482c9" },
+	["PRIEST"] = { r = 1.0, g = 1.0, b = 1.0, colorStr = "ffffffff" },
+	["PALADIN"] = { r = 0.96, g = 0.55, b = 0.73, colorStr = "fff58cba" },
+	["MAGE"] = { r = 0.41, g = 0.8, b = 0.94, colorStr = "ff69ccf0" },
+	["ROGUE"] = { r = 1.0, g = 0.96, b = 0.41, colorStr = "fffff569" },
+	["DRUID"] = { r = 1.0, g = 0.49, b = 0.04, colorStr = "ffff7d0a" },
+	["SHAMAN"] = { r = 0.0, g = 0.44, b = 0.87, colorStr = "ff0070de" },
+	["WARRIOR"] = { r = 0.78, g = 0.61, b = 0.43, colorStr = "ffc79c6e" },
+	["DEATHKNIGHT"] = { r = 0.77, g = 0.12 , b = 0.23, colorStr = "ffc41f3b" },
+	["MONK"] = { r = 0.0, g = 1.00 , b = 0.59, colorStr = "ff00ff96" },
 };
 
 
@@ -74,6 +77,7 @@ CLASS_SORT_ORDER = {
 	"WARRIOR",
 	"DEATHKNIGHT",
 	"PALADIN",
+	"MONK",
 	"PRIEST",
 	"SHAMAN",
 	"DRUID",
@@ -101,25 +105,34 @@ CLASS_ICON_TCOORDS = {
 	["WARLOCK"]		= {0.7421875, 0.98828125, 0.25, 0.5},
 	["PALADIN"]		= {0, 0.25, 0.5, 0.75},
 	["DEATHKNIGHT"]	= {0.25, .5, 0.5, .75},
+	["MONK"]	= {0.5, 0.73828125, 0.5, .75},
 };
 
 --
 -- Spell
 --
 HUNTER_DISMISS_PET = 2641;
+WARLOCK_METAMORPHOSIS = 103958;
+WARLOCK_SOULBURN = 117198;
+WARLOCK_BURNING_EMBERS = 108647;
 
 -- Power Types
 SPELL_POWER_MANA = 0;
 SPELL_POWER_RAGE = 1;
 SPELL_POWER_FOCUS = 2;
 SPELL_POWER_ENERGY = 3;
-SPELL_POWER_UNUSED = 4;
+--SPELL_POWER_CHI = 4; This is obsolete now.
 SPELL_POWER_RUNES = 5;
 SPELL_POWER_RUNIC_POWER = 6;
 SPELL_POWER_SOUL_SHARDS = 7;
 SPELL_POWER_ECLIPSE = 8;
 SPELL_POWER_HOLY_POWER = 9;
 SPELL_POWER_ALTERNATE_POWER = 10;
+SPELL_POWER_DARK_FORCE = 11;
+SPELL_POWER_LIGHT_FORCE = 12;
+SPELL_POWER_SHADOW_ORBS = 13;
+SPELL_POWER_BURNING_EMBERS = 14;
+SPELL_POWER_DEMONIC_FURY = 15;
 
 SCHOOL_MASK_NONE	= 0x00;
 SCHOOL_MASK_PHYSICAL	= 0x01;
@@ -130,13 +143,29 @@ SCHOOL_MASK_FROST	= 0x10;
 SCHOOL_MASK_SHADOW	= 0x20;
 SCHOOL_MASK_ARCANE	= 0x40;
 
+MAX_POWER_PER_EMBER = 10;
+
 -- 
 -- Talent
 -- 
-SHOW_TALENT_LEVEL = 10;
+SHOW_TALENT_LEVEL = 15;
 SHOW_PVP_LEVEL = 10;
 SHOW_LFD_LEVEL = 15;
 SHOW_MASTERY_LEVEL = 80;
+CLASS_TALENT_LEVELS = {
+	["DEFAULT"]		= { 15, 30, 45, 60, 75, 90 };
+	["DEATHKNIGHT"]	= { 56, 57, 58, 60, 75, 90 };
+}
+
+--
+-- Specs
+--
+SHOW_SPEC_LEVEL = 10
+SPEC_WARLOCK_AFFLICTION = 1;
+SPEC_WARLOCK_DEMONOLOGY = 2;
+SPEC_WARLOCK_DESTRUCTION = 3;
+SPEC_PRIEST_SHADOW = 3;
+SPEC_MONK_MISTWEAVER = 2;
 
 TALENT_SORT_ORDER = {
 	"spec1",
@@ -151,29 +180,37 @@ TALENT_ACTIVATION_SPELLS = {
 --
 -- Glyph
 --
-NUM_GLYPH_SLOTS = 9;
+NUM_GLYPH_SLOTS = 6;
 
 GLYPH_TYPE_MAJOR = 1;
 GLYPH_TYPE_MINOR = 2;
-GLYPH_TYPE_PRIME = 3;
+--GLYPH_TYPE_PRIME = 3;
 
 SHOW_INSCRIPTION_LEVEL = 25;
 
-GLYPH_ID_MINOR_1 = 2;
-GLYPH_ID_MAJOR_1 = 1;
-GLYPH_ID_PRIME_1 = 7;
+GLYPH_ID_MINOR_1 = 1;
 GLYPH_ID_MINOR_2 = 3;
-GLYPH_ID_MAJOR_2 = 4;
-GLYPH_ID_PRIME_2 = 8;
 GLYPH_ID_MINOR_3 = 5;
+
+GLYPH_ID_MAJOR_1 = 2;
+GLYPH_ID_MAJOR_2 = 4;
 GLYPH_ID_MAJOR_3 = 6;
-GLYPH_ID_PRIME_3 = 9;
+
 --[[
-    7
-  4 2 1
-   3 5
-8   6   9
+    2
+  3   1
+4   5   6
 ]]--
+
+SLOT_ANIMATIONS = {};
+---local TOPLEFT, TOP, TOPRIGHT, BOTTOMRIGHT, BOTTOM, BOTTOMLEFT = 3, 1, 5, 4, 2, 6;
+SLOT_ANIMATIONS[1] = {  ["xStart"] = 0, ["xStop"] = -13, ["yStart"] = -12, ["yStop"] =  -124};
+SLOT_ANIMATIONS[2] = {  ["xStart"] = 0, ["xStop"] = -87, ["yStart"] = -12, ["yStop"] =  -27};
+SLOT_ANIMATIONS[3] = {  ["xStart"] = 0, ["xStop"] =  61, ["yStart"] = -12, ["yStop"] =  -27};
+SLOT_ANIMATIONS[4] = {  ["xStart"] = 0, ["xStop"] =  61, ["yStart"] = -12, ["yStop"] = -27};
+SLOT_ANIMATIONS[5] = {  ["xStart"] = 0, ["xStop"] =  61, ["yStart"] = -12, ["yStop"] = -27};
+SLOT_ANIMATIONS[6] = {  ["xStart"] = 0, ["xStop"] =  61, ["yStart"] = -6, ["yStop"] = -27};
+
 
 --
 -- Achievement
@@ -187,13 +224,13 @@ ACHIEVEMENT_FLAGS_HAS_PROGRESS_BAR 		= 0x00000080;
 ACHIEVEMENT_FLAGS_GUILD					= 0x00004000;
 ACHIEVEMENT_FLAGS_SHOW_GUILD_MEMBERS	= 0x00008000;
 ACHIEVEMENT_FLAGS_SHOW_CRITERIA_MEMBERS = 0x00010000;
-
+ACHIEVEMENT_FLAGS_ACCOUNT 				= 0x00020000;
 NUM_ACHIEVEMENT_FLAGS			= 3;
 
--- Criteria Flags
-ACHIEVEMENT_CRITERIA_PROGRESS_BAR		= 0x00000001;
-ACHIEVEMENT_CRITERIA_HIDDEN				= 0x00000002;
-NUM_ACHIEVEMENT_CRITERIA_FLAGS			= 2;
+-- Eval Tree Flags
+EVALUATION_TREE_FLAG_PROGRESS_BAR		= 0x00000001;
+EVALUATION_TREE_FLAG_DO_NOT_DISPLAY		= 0x00000002;
+NUM_EVALUATION_TREE_FLAGS				= 2;
 
 --
 -- Inventory
@@ -209,6 +246,20 @@ ITEM_QUALITY_COMMON = 1;
 ITEM_QUALITY_UNCOMMON = 2;
 ITEM_QUALITY_RARE = 3;
 ITEM_QUALITY_EPIC = 4;
+ITEM_QUALITY_LEGENDARY = 5;
+
+-- Loot
+LOOT_BORDER_QUALITY_COORDS = {
+	[ITEM_QUALITY_UNCOMMON] = {0.17968750, 0.23632813, 0.74218750, 0.96875000},
+	[ITEM_QUALITY_RARE] = {0.86718750, 0.92382813, 0.00390625, 0.23046875},
+	[ITEM_QUALITY_EPIC] = {0.92578125, 0.98242188, 0.00390625, 0.23046875},
+	[ITEM_QUALITY_LEGENDARY] = {0.80859375, 0.86523438, 0.00390625, 0.23046875},
+};
+
+LOOT_ROLL_TYPE_PASS = 0;
+LOOT_ROLL_TYPE_NEED = 1;
+LOOT_ROLL_TYPE_GREED = 2;
+LOOT_ROLL_TYPE_DISENCHANT = 3;
 
 -- Item location bitflags
 ITEM_INVENTORY_LOCATION_PLAYER	= 0x00100000;
@@ -533,8 +584,6 @@ INLINE_DAMAGER_ICON = "|TInterface\\LFGFrame\\UI-LFG-ICON-PORTRAITROLES.blp:16:1
 -- Guild
 MAX_GUILDBANK_TABS = 8;
 MAX_BUY_GUILDBANK_TABS = 6;
-MAX_GUILD_LEVEL = 25;
-UNCAPPED_GUILD_LEVEL = 20;	-- first uncapped guild level
 
 EXP_DEFAULT_WIDTH = 1024;
 
@@ -583,6 +632,70 @@ INSTANCE_TYPE_ARENA = 4;
 
 DEFAULT_READY_CHECK_STAY_TIME = 10;
 
+
+PET_TYPE_SUFFIX = {
+[1] = "Humanoid",
+[2] = "Dragon",
+[3] = "Flying",
+[4] = "Undead",
+[5] = "Critter",
+[6] = "Magical",
+[7] = "Elemental",
+[8] = "Beast",
+[9] = "Water",
+[10] = "Mechanical",
+};
+
+PET_BATTLE_PET_TYPE_PASSIVES = {
+	238,	--Humanoid - Recovery
+	245,	--Dragon - Execute
+	239,	--Flying - Swiftness
+	242,	--Undead - Damned
+	236,	--Critter - Elusive
+	243,	--Magical - Spellshield
+	241,	--Elemental - Weather Immune
+	237,	--Beast - Enrage
+	240,	--Aquatic - Purity
+	244,	--Mechanical - Failsafe
+};
+
+MAX_NUM_PET_BATTLE_ATTACK_MODIFIERS = 2;
+
+PET_BATTLE_STATE_ATTACK = 18;
+PET_BATTLE_STATE_SPEED = 20;
+
+PET_BATTLE_EVENT_ON_APPLY = 0;
+PET_BATTLE_EVENT_ON_DAMAGE_TAKEN = 1;
+PET_BATTLE_EVENT_ON_DAMAGE_DEALT = 2;
+PET_BATTLE_EVENT_ON_HEAL_TAKEN = 3;
+PET_BATTLE_EVENT_ON_HEAL_DEALT = 4;
+PET_BATTLE_EVENT_ON_AURA_REMOVED = 5;
+PET_BATTLE_EVENT_ON_ROUND_START = 6;
+PET_BATTLE_EVENT_ON_ROUND_END = 7;
+PET_BATTLE_EVENT_ON_TURN = 8;
+PET_BATTLE_EVENT_ON_ABILITY = 9;
+PET_BATTLE_EVENT_ON_SWAP_IN = 10;
+PET_BATTLE_EVENT_ON_SWAP_OUT = 11;
+
+PET_BATTLE_PAD_INDEX = 0;
+
+-- Challenge Mode
+CHALLENGE_MEDAL_NONE = 0;
+CHALLENGE_MEDAL_BRONZE = 1;
+CHALLENGE_MEDAL_SILVER = 2;
+CHALLENGE_MEDAL_GOLD = 3;
+NUM_CHALLENGE_MEDALS = 3;
+CHALLENGE_MEDAL_TEXTURES = {
+	[CHALLENGE_MEDAL_BRONZE] = "Interface\\Challenges\\challenges-bronze",
+	[CHALLENGE_MEDAL_SILVER] = "Interface\\Challenges\\challenges-silver",
+	[CHALLENGE_MEDAL_GOLD]   = "Interface\\Challenges\\challenges-gold",
+}
+CHALLENGE_MEDAL_TEXTURES_SMALL = {
+	[CHALLENGE_MEDAL_BRONZE] = "Interface\\Challenges\\challenges-bronze-sm",
+	[CHALLENGE_MEDAL_SILVER] = "Interface\\Challenges\\challenges-silver-sm",
+	[CHALLENGE_MEDAL_GOLD]   = "Interface\\Challenges\\challenges-gold-sm",
+}
+
 -- Player Reporting
 PLAYER_REPORT_TYPE_SPAM = "spam";
 PLAYER_REPORT_TYPE_LANGUAGE = "language";
@@ -590,3 +703,21 @@ PLAYER_REPORT_TYPE_BAD_PLAYER_NAME = "badplayername";
 PLAYER_REPORT_TYPE_BAD_GUILD_NAME = "badguildname";
 PLAYER_REPORT_TYPE_BAD_ARENA_TEAM_NAME = "badarenaname";
 PLAYER_REPORT_TYPE_CHEATING = "cheater";
+PLAYER_REPORT_TYPE_BAD_BATTLEPET_NAME = "badbattlepetname";
+PLAYER_REPORT_TYPE_BAD_PET_NAME = "badpetname";
+
+--Loot
+CONFIRMATION_PROMPT_BONUS_ROLL = 1;
+BONUS_ROLL_REQUIRED_CURRENCY = 697;
+
+-- Quest
+QUEST_TYPE_SCENARIO = 98;
+
+-- LFG
+LFG_CATEGORY_NAMES = {
+	[LE_LFG_CATEGORY_LFD] = LOOKING_FOR_DUNGEON,
+	[LE_LFG_CATEGORY_RF] = RAID_FINDER,
+	[LE_LFG_CATEGORY_SCENARIO] = SCENARIOS,
+	[LE_LFG_CATEGORY_LFR] = LOOKING_FOR_RAID,
+}
+

@@ -132,7 +132,7 @@ function SetItemRef(link, text, button, chatFrame)
 				end
 			else
 				if ( not BNIsSelf(presenceID) ) then
-					ChatFrame_SendTell(name, chatFrame);
+					ChatFrame_SendSmartTell(name, chatFrame);
 				end
 			end
 		end
@@ -158,6 +158,8 @@ function SetItemRef(link, text, button, chatFrame)
 				if ( BNGetConversationInfo(chatTarget) ) then
 					ChatFrame_OpenChat("/"..(chatTarget + MAX_WOW_CHAT_CHANNELS), chatFrame);
 				end
+			elseif ( strupper(chatType) == "PET_BATTLE_COMBAT_LOG" or strupper(chatType) == "PET_BATTLE_INFO" ) then
+				--Don't do anything
 			else
 				ChatFrame_OpenChat("/"..chatType, chatFrame);
 			end
@@ -189,9 +191,6 @@ function SetItemRef(link, text, button, chatFrame)
 	elseif ( strsub(link, 1, 10) == "talentpane" ) then
 		ToggleTalentFrame();
 		return;
-	elseif ( strsub(link, 1, 13) == "pettalentpane" ) then
-		TogglePetTalentFrame();
-		return;
 	elseif ( strsub(link, 1, 7) == "journal" ) then
 		if ( not HandleModifiedItemClick(GetFixedLink(text)) ) then
 			if ( not EncounterJournal ) then
@@ -203,6 +202,28 @@ function SetItemRef(link, text, button, chatFrame)
 	elseif ( strsub(link, 1, 8) == "urlIndex" ) then
 		local _, index = strsplit(":", link);
 		LoadURLIndex(tonumber(index));
+		return;
+	elseif ( strsub(link, 1, 11) == "lootHistory" ) then
+		local _, rollID = strsplit(":", link);
+		LootHistoryFrame_ToggleWithRoll(LootHistoryFrame, tonumber(rollID), chatFrame);
+		return;
+	elseif ( strsub(link, 1, 13) == "battlePetAbil" ) then
+		local _, abilityID, maxHealth, power, speed = strsplit(":", link);
+		if ( IsModifiedClick() ) then
+			local fixedLink = GetFixedLink(text);
+			HandleModifiedItemClick(fixedLink);
+		else
+			FloatingPetBattleAbility_Show(tonumber(abilityID), tonumber(maxHealth), tonumber(power), tonumber(speed));
+		end
+		return;
+	elseif ( strsub(link, 1, 9) == "battlepet" ) then
+		local _, speciesID, level, breedQuality, maxHealth, power, speed, battlePetID = strsplit(":", link);
+		if ( IsModifiedClick() ) then
+			local fixedLink = GetFixedLink(text);
+			HandleModifiedItemClick(fixedLink);
+		else
+			FloatingBattlePet_Toggle(tonumber(speciesID), tonumber(level), tonumber(breedQuality), tonumber(maxHealth), tonumber(power), tonumber(speed), string.gsub(string.gsub(text, "^(.*)%[", ""), "%](.*)$", ""), tonumber(battlePetID));
+		end
 		return;
 	end
     
@@ -235,9 +256,23 @@ function GetFixedLink(text)
 		elseif ( strsub(text, startLink + 2, startLink + 13) == "instancelock" ) then
 			return (gsub(text, "(|H.+|h.+|h)", "|cffff8000%1|r", 1));
 		elseif ( strsub(text, startLink + 2, startLink + 8) == "journal" ) then
-			return gsub(text, "(|H.+|h.+|h)", "|cff66bbff%1|r", 1);
+			return (gsub(text, "(|H.+|h.+|h)", "|cff66bbff%1|r", 1));
+		elseif ( strsub(text, startLink + 2, startLink + 14) == "battlePetAbil" ) then
+			return (gsub(text, "(|H.+|h.+|h)", "|cff4e96f7%1|r", 1));
+		elseif ( strsub(text, startLink + 2, startLink + 10) == "battlepet" ) then
+			return (gsub(text, "(|H.+|h.+|h)", "|cffffd200%1|r", 1)); -- s_defaultColorString (yellow)
 		end
 	end
 	--Nothing to change.
 	return text;
+end
+
+function GetBattlePetAbilityHyperlink(abilityID, maxHealth, power, speed)
+	local id, name = C_PetBattles.GetAbilityInfoByID(abilityID);
+	if ( name ) then
+		return format("|cff4e96f7|HbattlePetAbil:%d:%d:%d:%d|h[%s]|h|r", abilityID, maxHealth or 100, power or 0, speed or 0, name);
+	else
+		GMError("Attempt to link ability when we don't have record.");
+		return "";
+	end
 end

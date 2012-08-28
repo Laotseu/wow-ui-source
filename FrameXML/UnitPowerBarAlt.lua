@@ -7,6 +7,8 @@ ALT_POWER_TYPE_PILL				= 3;
 --Counter bar uses a different frame
 ALT_POWER_TYPE_COUNTER			= 4;
 
+DOUBLE_SIZE_FIST_BAR = 199;
+
 local altPowerBarTextures = {
 	frame = 0,
 	background = 1,
@@ -26,7 +28,8 @@ ALT_POWER_BAR_PLAYER_SIZES = {	--Everything else is scaled off of this
 	[ALT_POWER_TYPE_VERTICAL]		= {x = 64, y = 128},
 	[ALT_POWER_TYPE_CIRCULAR]		= {x = 128, y = 128},
 	[ALT_POWER_TYPE_PILL]			= {x = 32, y = 64},	--This is the size of a single pill.
-	[ALT_POWER_TYPE_COUNTER]			= {x = 32, y = 32},
+	[ALT_POWER_TYPE_COUNTER]		= {x = 32, y = 32},
+	doubleCircular					= {x = 256, y = 256}, --Override for task 55676
 }
 
 function UnitPowerBarAlt_Initialize(self, unit, scale, updateAllEvent)
@@ -108,18 +111,22 @@ end
 
 local maxPerSecond = 0.7;
 local minPerSecond = 0.3;
+function GetSmoothProgressChange(value, displayedValue, range, elapsed)
+	local minPerSecond = max(minPerSecond, 1/range);	--Make sure we're moving at least 1 unit/second (will only matter if our maximum power is 3 or less);
+	
+	local diff = displayedValue - value;
+	local diffRatio = diff / range;
+	local change = range * ((minPerSecond/abs(diffRatio) + maxPerSecond - minPerSecond) * diffRatio) * elapsed;
+	if ( abs(change) > abs(diff) or abs(diffRatio) < 0.01 ) then
+		return value;
+	else
+		return displayedValue - change;
+	end
+end
+
 function UnitPowerBarAlt_OnUpdate(self, elapsed)
 	if ( self.smooth and  self.value and self.displayedValue and self.value ~= self.displayedValue ) then
-		local minPerSecond = max(minPerSecond, 1/self.range);	--Make sure we're moving at least 1 unit/second (will only matter if our maximum power is 3 or less);
-		
-		local diff = self.displayedValue - self.value;
-		local diffRatio = diff / self.range;
-		local change = self.range * ((minPerSecond/abs(diffRatio) + maxPerSecond - minPerSecond) * diffRatio) * elapsed;
-		if ( abs(change) > abs(diff) or abs(diffRatio) < 0.01 ) then
-			UnitPowerBarAlt_SetDisplayedPower(self, self.value);
-		else
-			UnitPowerBarAlt_SetDisplayedPower(self, self.displayedValue - change);
-		end
+		UnitPowerBarAlt_SetDisplayedPower(self, GetSmoothProgressChange(self.value, self.displayedValue, self.range, elapsed));
 	end
 end
 
@@ -151,11 +158,11 @@ function UnitPowerBarAlt_HidePills(self)
 end
 
 function UnitPowerBarAlt_SetUp(self, barID)
-	local barType, minPower, startInset, endInset, smooth, hideFromOthers, showOnRaid, opaqueSpark, opaqueFlash, powerName, powerTooltip;
+	local barType, minPower, startInset, endInset, smooth, hideFromOthers, showOnRaid, opaqueSpark, opaqueFlash, powerName, powerTooltip, costString;
 	if ( barID ) then
-		barType, minPower, startInset, endInset, smooth, hideFromOthers, showOnRaid, opaqueSpark, opaqueFlash, powerName, powerTooltip = GetAlternatePowerInfoByID(barID);
+		barType, minPower, startInset, endInset, smooth, hideFromOthers, showOnRaid, opaqueSpark, opaqueFlash, powerName, powerTooltip, costString = GetAlternatePowerInfoByID(barID);
 	else
-		barType, minPower, startInset, endInset, smooth, hideFromOthers, showOnRaid, opaqueSpark, opaqueFlash, powerName, powerTooltip = UnitAlternatePowerInfo(self.unit);
+		barType, minPower, startInset, endInset, smooth, hideFromOthers, showOnRaid, opaqueSpark, opaqueFlash, powerName, powerTooltip, costString, barID = UnitAlternatePowerInfo(self.unit);
 	end
 	
 	self.startInset = startInset;
@@ -165,12 +172,15 @@ function UnitPowerBarAlt_SetUp(self, barID)
 	self.powerTooltip = powerTooltip;
 	
 	local sizeInfo = ALT_POWER_BAR_PLAYER_SIZES[barType];
+	if ( barID == DOUBLE_SIZE_FIST_BAR and self.scale == 1 ) then --Double the player's own power bar for task 55676
+		sizeInfo = ALT_POWER_BAR_PLAYER_SIZES.doubleCircular;
+	end
 	self:SetSize(sizeInfo.x * self.scale, sizeInfo.y * self.scale);
 	
 	UnitPowerBarAlt_HideTextures(self);	--It's up to the SetUp functions to show textures they need.
 	UnitPowerBarAlt_HidePills(self);
 
-	if ( barType == ALT_POWER_TYPE_PILL ) then
+	if ( barType == ALT_POWER_TYPE_PILL or barType == ALT_POWER_TYPE_COUNTER ) then
 		self.statusFrame:Hide();
 		self.statusFrame.enabled = false;
 	else
@@ -205,8 +215,8 @@ function UnitPowerBarAlt_SetUp(self, barID)
 		self.flash:SetBlendMode("ADD");
 	end
 	
-	self:RegisterEvent("UNIT_POWER");
-	self:RegisterEvent("UNIT_MAXPOWER");
+	self:RegisterUnitEvent("UNIT_POWER", self.unit);
+	self:RegisterUnitEvent("UNIT_MAXPOWER", self.unit);
 end
 
 
@@ -224,7 +234,7 @@ function UnitPowerBarAlt_UpdateAll(self)
 	if ( barType and (not hideFromOthers or self.isPlayerBar) ) then
 		UnitPowerBarAlt_TearDown(self);
 		UnitPowerBarAlt_SetUp(self);
-		
+
 		local currentPower = UnitPower(self.unit, ALTERNATE_POWER_INDEX);
 		if ( barType ~= ALT_POWER_TYPE_COUNTER ) then
 			local maxPower = UnitPowerMax(self.unit, ALTERNATE_POWER_INDEX);
@@ -567,7 +577,7 @@ function CounterBar_SetStyle(self, useFactional, animNumbers, maxValue)
 			if digit == COUNTERBAR_LEADING_ZERO_INDEX then
 				digit = COUNTERBAR_SLASH_INDEX;
 			end
-			l,r,t,b = CounterBar_GetNumberCoord(digit);
+			local l,r,t,b = CounterBar_GetNumberCoord(digit);
 			digitFrame.number:SetTexCoord(l,r,t,b);
 			digitFrame.numberMask:Hide();
 		end
@@ -598,6 +608,7 @@ end
 
 
 function CounterBar_GetDigit(count, isFirstDigit)
+	local digit;
 	if count > 0 or isFirstDigit then
 		digit = mod(count, 10);
 	else

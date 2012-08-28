@@ -3,11 +3,9 @@ NUM_PET_STATS = 5;
 
 PETPAPERDOLL_STATCATEGORY_DEFAULTORDER = {
 	"GENERAL",
-	--"ATTRIBUTES",  --Not shown as Pet Attributes are now meaningless
 	"MELEE",
 	"SPELL",
 	"DEFENSE",
-	"RESISTANCE",
 };
 
 function PetPaperDollFrame_OnLoad (self)
@@ -52,8 +50,8 @@ end
 
 -- This makes sure the update only happens once at the end of the frame
 function PetPaperDollFrame_QueuedUpdate(self)
-	PetPaperDollFrame_Update();
 	self:SetScript("OnUpdate", nil);
+	PetPaperDollFrame_Update();
 end
 
 function PetPaperDollFrame_OnEvent (self, event, ...)
@@ -80,6 +78,7 @@ function PetPaperDollFrame_OnEvent (self, event, ...)
 			end
 			PaperDoll_InitStatCategories(PETPAPERDOLL_STATCATEGORY_DEFAULTORDER, "petStatCategoryOrder", "petStatCategoriesCollapsed", "pet");
 		end
+		PetPaperDollFrame_UpdateIsAvailable();
 	elseif ( arg1 == "pet" ) then
 		if (self:IsVisible()) then
 			self:SetScript("OnUpdate", PetPaperDollFrame_QueuedUpdate);

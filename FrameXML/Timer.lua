@@ -1,8 +1,11 @@
 TIMER_MINUTES_DISPLAY = "%d:%02d"
+TIMER_TYPE_PVP = 1;
+TIMER_TYPE_CHALLENGE_MODE = 2;
 
-TIMER_MEDIUM_MARKER = 11;
-TIMER_LARGE_MARKER = 6;
-TIMER_UPDATE_INTERVAL = 10;
+local TIMER_DATA = {
+	[1] = { mediumMarker = 11, largeMarker = 6, updateInterval = 10 },
+	[2] = { mediumMarker = 100, largeMarker = 100, updateInterval = 100 },
+};
 
 TIMER_NUMBERS_SETS = {};
 TIMER_NUMBERS_SETS["BigGold"]  = {	texture = "Interface\\Timer\\BigTimerNumbers", 
@@ -43,33 +46,24 @@ function GetPlayerFactionGroup()
 end
 
 function TimerTracker_OnEvent(self, event, ...)
-	
 	if event == "START_TIMER" then
 		local timerType, timeSeconds, totalTime  = ...;
 		local timer;
 		local numTimers = 0;
-		local isTimerRuning = false;
+		local isTimerRunning = false;
 		
 		for a,b in pairs(self.timerList) do
 			if b.type == timerType and not b.isFree then
 				timer = b;
-				isTimerRuning = true;
+				isTimerRunning = true;
 				break;
 			end
 		end
 
-		if isTimerRuning then
+		if isTimerRunning then
 			-- don't interupt the final count down
 			if not timer.startNumbers:IsPlaying() then
 				timer.time = timeSeconds;
-			end
-			
-			local factionGroup = GetPlayerFactionGroup();
-
-			if ( not timer.factionGroup or (timer.factionGroup ~= factionGroup) ) then
-				timer.faction:SetTexture("Interface\\Timer\\"..factionGroup.."-Logo");
-				timer.factionGlow:SetTexture("Interface\\Timer\\"..factionGroup.."Glow-Logo");
-				timer.factionGroup = factionGroup;
 			end
 		else
 			for a,b in pairs(self.timerList) do
@@ -80,12 +74,10 @@ function TimerTracker_OnEvent(self, event, ...)
 				end
 			end
 			
-			
 			if not timer then
 				timer = CreateFrame("FRAME", self:GetName().."Timer"..(#self.timerList+1), UIParent, "StartTimerBar");
 				self.timerList[#self.timerList+1] = timer;
 			end
-			
 			
 			timer:ClearAllPoints();
 			timer:SetPoint("TOP", 0, -155 - (24*numTimers));
@@ -109,16 +101,11 @@ function TimerTracker_OnEvent(self, event, ...)
 			timer.glow1:SetTexture(timer.style.texture.."Glow");
 			timer.glow2:SetTexture(timer.style.texture.."Glow");
 			
-			local factionGroup = GetPlayerFactionGroup();
-			if ( factionGroup ) then
-				timer.faction:SetTexture("Interface\\Timer\\"..factionGroup.."-Logo");
-				timer.factionGlow:SetTexture("Interface\\Timer\\"..factionGroup.."Glow-Logo");
-			end
-			timer.factionGroup = factionGroup;
-			timer.updateTime = TIMER_UPDATE_INTERVAL;
+			timer.updateTime = TIMER_DATA[timer.type].updateInterval;
 			timer:SetScript("OnUpdate", StartTimer_BigNumberOnUpdate);
 			timer:Show();
 		end
+		StartTimer_SetGoTexture(timer);
 	elseif event == "PLAYER_ENTERING_WORLD" then
 		for a,timer in pairs(self.timerList) do
 			timer.time = nil;
@@ -128,30 +115,36 @@ function TimerTracker_OnEvent(self, event, ...)
 			timer.fadeBarOut:Stop();
 			timer.fadeBarIn:Stop();
 			timer.startNumbers:Stop();
-			timer.factionAnim:Stop();
+			timer.GoTextureAnim:Stop();
 			timer.bar:SetAlpha(0);
 		end
 	end
 end
 
 
-function StartTimer_BigNumberOnUpdate(self, elasped)
+function StartTimer_BigNumberOnUpdate(self, elapsed)
 	self.time = self.endTime - GetTime();
-	self.updateTime = self.updateTime - elasped;
+	self.updateTime = self.updateTime - elapsed;
 	local minutes, seconds = floor(self.time/60), floor(mod(self.time, 60)); 
 
-	
-	if self.time < TIMER_MEDIUM_MARKER then
-		self.fadeBarOut:Play();
-		self.barShowing = false;
+	if ( self.time < TIMER_DATA[self.type].mediumMarker ) then
 		self.anchorCenter = false;
+		if self.time < TIMER_DATA[self.type].largeMarker then
+			StartTimer_SwitchToLargeDisplay(self);
+		end
 		self:SetScript("OnUpdate", nil);
+		if ( self.barShowing ) then
+			self.barShowing = false;
+			self.fadeBarOut:Play();
+		else
+			self.startNumbers:Play();
+		end
 	elseif not self.barShowing then
 		self.fadeBarIn:Play();
 		self.barShowing = true;
 	elseif self.updateTime <= 0 then
-		ValidateTimer(self.type);
-		self.updateTime = TIMER_UPDATE_INTERVAL;
+		QueryWorldCountdownTimer(self.type);
+		self.updateTime = TIMER_DATA[self.type].updateInterval;
 	end
 
 	self.bar:SetValue(self.time);
@@ -159,7 +152,7 @@ function StartTimer_BigNumberOnUpdate(self, elasped)
 end
 
 
-function StartTimer_BarOnlyOnUpdate(self, elasped)
+function StartTimer_BarOnlyOnUpdate(self, elapsed)
 	self.time = self.endTime - GetTime();
 	local minutes, seconds = floor(self.time/60), mod(self.time, 60); 
 
@@ -193,7 +186,7 @@ function StartTimer_SetTexNumbers(self, ...)
 	local columns = floor(style.texW/style.w);
 	local numberOffset = 0;
 	local numShown = 0;
-	
+
 	while digits[i] do -- THIS WILL DISPLAY SECOND AS A NUMBER 2:34 would be 154
 		if timeDigits > 0 then
 			digit = mod(timeDigits, 10);
@@ -217,7 +210,6 @@ function StartTimer_SetTexNumbers(self, ...)
 		i = i + 1;
 	end
 	
-	
 	if numberOffset > 0 then
 		PlaySoundKitID(25477, "SFX", false);
 		digits[1]:ClearAllPoints();
@@ -235,25 +227,40 @@ function StartTimer_SetTexNumbers(self, ...)
 	end
 end
 
-
+function StartTimer_SetGoTexture(timer)
+	if ( timer.type == TIMER_TYPE_PVP ) then
+		local factionGroup = GetPlayerFactionGroup();
+		if ( factionGroup and factionGroup ~= "Neutral" ) then
+			timer.GoTexture:SetTexture("Interface\\Timer\\"..factionGroup.."-Logo");
+			timer.GoTextureGlow:SetTexture("Interface\\Timer\\"..factionGroup.."Glow-Logo");
+		end
+	elseif ( timer.type == TIMER_TYPE_CHALLENGE_MODE ) then
+		timer.GoTexture:SetTexture("Interface\\Timer\\Challenges-Logo");
+		timer.GoTextureGlow:SetTexture("Interface\\Timer\\ChallengesGlow-Logo");
+	end
+end
 
 function StartTimer_NumberAnimOnFinished(self)
 	self.time = self.time - 1;
 	if self.time > 0 then
-		if self.time < TIMER_LARGE_MARKER then
-			if not self.anchorCenter then
-				self.anchorCenter = true;
-				--This is to compensate texture size not affecting GetWidth() right away.
-				self.digit1.width, self.digit2.width = self.style.w, self.style.w;
-				self.digit1:SetSize(self.style.w, self.style.h);
-				self.digit2:SetSize(self.style.w, self.style.h);
-			end
-		end
-	
+		if self.time < TIMER_DATA[self.type].largeMarker then
+			StartTimer_SwitchToLargeDisplay(self);
+		end	
 		self.startNumbers:Play();
 	else
+		self.anchorCenter = false;
 		self.isFree = true;
 		PlaySoundKitID(25478);
-		self.factionAnim:Play();
+		self.GoTextureAnim:Play();
+	end
+end
+
+function StartTimer_SwitchToLargeDisplay(self)
+	if not self.anchorCenter then
+		self.anchorCenter = true;
+		--This is to compensate texture size not affecting GetWidth() right away.
+		self.digit1.width, self.digit2.width = self.style.w, self.style.w;
+		self.digit1:SetSize(self.style.w, self.style.h);
+		self.digit2:SetSize(self.style.w, self.style.h);
 	end
 end

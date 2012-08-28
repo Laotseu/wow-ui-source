@@ -10,21 +10,14 @@ function CompactUnitFrame_OnLoad(self)
 	end
 	
 	self:RegisterEvent("PLAYER_ENTERING_WORLD");
-	self:RegisterEvent("UNIT_HEALTH");
-	self:RegisterEvent("UNIT_MAXHEALTH");
-	self:RegisterEvent("UNIT_POWER");
-	self:RegisterEvent("UNIT_MAXPOWER");
 	self:RegisterEvent("UNIT_DISPLAYPOWER");
 	self:RegisterEvent("UNIT_POWER_BAR_SHOW");
 	self:RegisterEvent("UNIT_POWER_BAR_HIDE");
 	self:RegisterEvent("UNIT_NAME_UPDATE");
-	self:RegisterEvent("UNIT_AURA");
 	self:RegisterEvent("PLAYER_TARGET_CHANGED");
-	self:RegisterEvent("UNIT_THREAT_SITUATION_UPDATE");
 	self:RegisterEvent("PLAYER_REGEN_ENABLED");
 	self:RegisterEvent("PLAYER_REGEN_DISABLED");
 	self:RegisterEvent("UNIT_CONNECTION");
-	self:RegisterEvent("UNIT_HEAL_PREDICTION");
 	self:RegisterEvent("PLAYER_ROLES_ASSIGNED");
 	self:RegisterEvent("UNIT_ENTERED_VEHICLE");
 	self:RegisterEvent("UNIT_EXITED_VEHICLE");
@@ -34,8 +27,9 @@ function CompactUnitFrame_OnLoad(self)
 	self:RegisterEvent("READY_CHECK_CONFIRM");
 	self:RegisterEvent("PARTY_MEMBER_DISABLE");
 	self:RegisterEvent("PARTY_MEMBER_ENABLE");
-	self:RegisterEvent("UNIT_HEALTH_FREQUENT");
 	self:RegisterEvent("INCOMING_RESURRECT_CHANGED");
+	self:RegisterEvent("UNIT_OTHER_PARTY_CHANGED");
+	-- also see CompactUnitFrame_UpdateUnitEvents for more events
 	
 	self.maxBuffs = 0;
 	self.maxDebuffs = 0;
@@ -75,9 +69,6 @@ function CompactUnitFrame_OnEvent(self, event, ...)
 			CompactUnitFrame_UpdateHealth(self);
 			CompactUnitFrame_UpdateStatusText(self);
 			CompactUnitFrame_UpdateHealPrediction(self);
-			if ( event == "UNIT_HEALTH" ) then	--To make sure we fix 283903 (some sort of race condition). Try removing later.
-				CompactUnitFrame_UpdateHealthColor(self);
-			end
 		elseif ( event == "UNIT_MAXPOWER" ) then
 			CompactUnitFrame_UpdateMaxPower(self);
 			CompactUnitFrame_UpdatePower(self);
@@ -106,7 +97,9 @@ function CompactUnitFrame_OnEvent(self, event, ...)
 		elseif ( event == "READY_CHECK_CONFIRM" ) then
 			CompactUnitFrame_UpdateReadyCheck(self);
 		elseif ( event == "INCOMING_RESURRECT_CHANGED" ) then
-			CompactUnitFrame_UpdateIncomingResurrectIcon(self);
+			CompactUnitFrame_UpdateCenterStatusIcon(self);
+		elseif ( event == "UNIT_OTHER_PARTY_CHANGED" ) then
+			CompactUnitFrame_UpdateCenterStatusIcon(self);
 		end
 	end
 end
@@ -172,7 +165,24 @@ end
 
 function CompactUnitFrame_RegisterEvents(frame)
 	frame:SetScript("OnEvent", CompactUnitFrame_OnEvent);
+	CompactUnitFrame_UpdateUnitEvents(frame);
 	frame:SetScript("OnUpdate", CompactUnitFrame_OnUpdate);
+end
+
+function CompactUnitFrame_UpdateUnitEvents(frame)
+	local unit = frame.unit;
+	local displayedUnit;
+	if ( unit ~= frame.displayedUnit ) then
+		displayedUnit = frame.displayedUnit;
+	end
+	frame:RegisterUnitEvent("UNIT_MAXHEALTH", unit, displayedUnit);
+	frame:RegisterUnitEvent("UNIT_HEALTH", unit, displayedUnit);
+	frame:RegisterUnitEvent("UNIT_HEALTH_FREQUENT", unit, displayedUnit);
+	frame:RegisterUnitEvent("UNIT_MAXPOWER", unit, displayedUnit);
+	frame:RegisterUnitEvent("UNIT_POWER", unit, displayedUnit);
+	frame:RegisterUnitEvent("UNIT_AURA", unit, displayedUnit);
+	frame:RegisterUnitEvent("UNIT_THREAT_SITUATION_UPDATE", unit, displayedUnit);
+	frame:RegisterUnitEvent("UNIT_HEAL_PREDICTION", unit, displayedUnit);
 end
 
 function CompactUnitFrame_UnregisterEvents(frame)
@@ -221,7 +231,7 @@ end
 --Update Functions
 function CompactUnitFrame_UpdateAll(frame)
 	CompactUnitFrame_UpdateInVehicle(frame);
-	CompactUnitFrame_UpateVisible(frame);
+	CompactUnitFrame_UpdateVisible(frame);
 	if ( UnitExists(frame.displayedUnit) ) then
 		CompactUnitFrame_UpdateMaxHealth(frame);
 		CompactUnitFrame_UpdateHealth(frame);
@@ -238,7 +248,7 @@ function CompactUnitFrame_UpdateAll(frame)
 		CompactUnitFrame_UpdateRoleIcon(frame);
 		CompactUnitFrame_UpdateReadyCheck(frame);
 		CompactUnitFrame_UpdateAuras(frame);
-		CompactUnitFrame_UpdateIncomingResurrectIcon(frame);
+		CompactUnitFrame_UpdateCenterStatusIcon(frame);
 	end
 end
 
@@ -249,17 +259,19 @@ function CompactUnitFrame_UpdateInVehicle(frame)
 			local prefix, id, suffix = string.match(frame.unit, "([^%d]+)([%d]*)(.*)")
 			frame.displayedUnit = prefix.."pet"..id..suffix;
 			frame:SetAttribute("unit", frame.displayedUnit);
+			CompactUnitFrame_UpdateUnitEvents(frame);
 		end
 	else
 		if ( frame.inVehicle ) then
 			frame.inVehicle = false;
 			frame.displayedUnit = frame.unit;
 			frame:SetAttribute("unit", frame.displayedUnit);
+			CompactUnitFrame_UpdateUnitEvents(frame);
 		end
 	end
 end
 
-function CompactUnitFrame_UpateVisible(frame)
+function CompactUnitFrame_UpdateVisible(frame)
 	if ( UnitExists(frame.unit) or UnitExists(frame.displayedUnit) ) then
 		frame:Show();
 	else
@@ -548,13 +560,20 @@ function CompactUnitFrame_CheckReadyCheckDecay(frame, elapsed)
 	end
 end
 
-function CompactUnitFrame_UpdateIncomingResurrectIcon(frame)
-	local incomingResurrect = UnitHasIncomingResurrection(frame.unit);
-	
-	if ( frame.optionTable.displayIncomingResurrect and incomingResurrect ) then
-		frame.incomingResurrectIcon:Show();
+function CompactUnitFrame_UpdateCenterStatusIcon(frame)
+	local inOtherGroup, canInteract = UnitInOtherParty(frame.unit);
+	if ( frame.optionTable.displayInOtherGroup and not canInteract ) then
+		frame.centerStatusIcon.texture:SetTexture("Interface\\PlayerFrame\\whisper-only");
+		frame.centerStatusIcon.texture:SetTexCoord(0.15625, 0.84375, 0.15625, 0.84375);
+		frame.centerStatusIcon.tooltip = PARTY_IN_PUBLIC_GROUP_MESSAGE;
+		frame.centerStatusIcon:Show();
+	elseif ( frame.optionTable.displayIncomingResurrect and UnitHasIncomingResurrection(frame.unit) ) then
+		frame.centerStatusIcon.texture:SetTexture("Interface\\RaidFrame\\Raid-Icon-Rez");
+		frame.centerStatusIcon.texture:SetTexCoord(0, 1, 0, 1);
+		frame.centerStatusIcon.tooltip = nil;
+		frame.centerStatusIcon:Show();
 	else
-		frame.incomingResurrectIcon:Hide();
+		frame.centerStatusIcon:Hide();
 	end
 end
 
@@ -571,7 +590,7 @@ function CompactUnitFrame_UpdateBuffs(frame)
 	while ( frameNum <= frame.maxBuffs ) do
 		local buffName = UnitBuff(frame.displayedUnit, index, filter);
 		if ( buffName ) then
-			if ( CompactUnitFrame_UtilShouldDisplayBuff(frame.displayedUnit, index, filter) ) then
+			if ( CompactUnitFrame_UtilShouldDisplayBuff(frame.displayedUnit, index, filter) and not CompactUnitFrame_UtilIsBossAura(frame.displayedUnit, index, filter, true) ) then
 				local buffFrame = frame.buffFrames[frameNum];
 				CompactUnitFrame_UtilSetBuff(buffFrame, frame.displayedUnit, index, filter);
 				frameNum = frameNum + 1;
@@ -597,14 +616,32 @@ function CompactUnitFrame_UpdateDebuffs(frame)
 	local frameNum = 1;
 	local filter = nil;
 	local maxDebuffs = frame.maxDebuffs;
-	--First, we go through displaying boss debuffs.
+	--Show both Boss buffs & debuffs in the debuff location
+	--First, we go through all the debuffs looking for any boss flagged ones.
 	while ( frameNum <= maxDebuffs ) do
 		local debuffName = UnitDebuff(frame.displayedUnit, index, filter);
 		if ( debuffName ) then
-			if ( CompactUnitFrame_UtilShouldDisplayDebuff(frame.displayedUnit, index, filter) and CompactUnitFrame_UtilIsBossDebuff(frame.displayedUnit, index, filter) ) then
+			if ( CompactUnitFrame_UtilIsBossAura(frame.displayedUnit, index, filter, false) ) then
 				local debuffFrame = frame.debuffFrames[frameNum];
-				CompactUnitFrame_UtilSetDebuff(debuffFrame, frame.displayedUnit, index, filter);
-				CompactUnitFrame_UtilSetDebuffBossDebuff(debuffFrame, true);
+				CompactUnitFrame_UtilSetDebuff(debuffFrame, frame.displayedUnit, index, filter, true, false);
+				frameNum = frameNum + 1;
+				--Boss debuffs are about twice as big as normal debuffs, so display one less.
+				local bossDebuffScale = (debuffFrame.baseSize + BOSS_DEBUFF_SIZE_INCREASE)/debuffFrame.baseSize
+				maxDebuffs = maxDebuffs - (bossDebuffScale - 1);
+			end
+		else
+			break;
+		end
+		index = index + 1;
+	end
+	--Then we go through all the buffs looking for any boss flagged ones.
+	index = 1;
+	while ( frameNum <= maxDebuffs ) do
+		local debuffName = UnitBuff(frame.displayedUnit, index, filter);
+		if ( debuffName ) then
+			if ( CompactUnitFrame_UtilIsBossAura(frame.displayedUnit, index, filter, true) ) then
+				local debuffFrame = frame.debuffFrames[frameNum];
+				CompactUnitFrame_UtilSetDebuff(debuffFrame, frame.displayedUnit, index, filter, true, true);
 				frameNum = frameNum + 1;
 				--Boss debuffs are about twice as big as normal debuffs, so display one less.
 				local bossDebuffScale = (debuffFrame.baseSize + BOSS_DEBUFF_SIZE_INCREASE)/debuffFrame.baseSize
@@ -623,8 +660,7 @@ function CompactUnitFrame_UpdateDebuffs(frame)
 		if ( debuffName ) then
 			if ( CompactUnitFrame_UtilIsPriorityDebuff(frame.displayedUnit, index, filter) ) then
 				local debuffFrame = frame.debuffFrames[frameNum];
-				CompactUnitFrame_UtilSetDebuff(debuffFrame, frame.displayedUnit, index, filter);
-				CompactUnitFrame_UtilSetDebuffBossDebuff(debuffFrame, false);
+				CompactUnitFrame_UtilSetDebuff(debuffFrame, frame.displayedUnit, index, filter, false, false);
 				frameNum = frameNum + 1;
 			end
 		else
@@ -640,21 +676,20 @@ function CompactUnitFrame_UpdateDebuffs(frame)
 	index = 1;
 	--Now, we display all normal debuffs.
 	if ( frame.optionTable.displayNonBossDebuffs ) then
-		while ( frameNum <= maxDebuffs ) do
-			local debuffName = UnitDebuff(frame.displayedUnit, index, filter);
-			if ( debuffName ) then
-				if ( CompactUnitFrame_UtilShouldDisplayDebuff(frame.displayedUnit, index, filter) and not CompactUnitFrame_UtilIsBossDebuff(frame.displayedUnit, index, filter) and
-					not CompactUnitFrame_UtilIsPriorityDebuff(frame.displayedUnit, index, filter)) then
-					local debuffFrame = frame.debuffFrames[frameNum];
-					CompactUnitFrame_UtilSetDebuff(debuffFrame, frame.displayedUnit, index, filter);
-					CompactUnitFrame_UtilSetDebuffBossDebuff(debuffFrame, false);
-					frameNum = frameNum + 1;
-				end
-			else
-				break;
+	while ( frameNum <= maxDebuffs ) do
+		local debuffName = UnitDebuff(frame.displayedUnit, index, filter);
+		if ( debuffName ) then
+			if ( CompactUnitFrame_UtilShouldDisplayDebuff(frame.displayedUnit, index, filter) and not CompactUnitFrame_UtilIsBossAura(frame.displayedUnit, index, filter, false) and
+				not CompactUnitFrame_UtilIsPriorityDebuff(frame.displayedUnit, index, filter)) then
+				local debuffFrame = frame.debuffFrames[frameNum];
+				CompactUnitFrame_UtilSetDebuff(debuffFrame, frame.displayedUnit, index, filter, false, false);
+				frameNum = frameNum + 1;
 			end
-			index = index + 1;
+		else
+			break;
 		end
+		index = index + 1;
+	end
 	end
 	
 	for i=frameNum, frame.maxDebuffs do
@@ -742,7 +777,7 @@ function CompactUnitFrame_UtilSetBuff(buffFrame, unit, index, filter)
 end
 
 function CompactUnitFrame_UtilShouldDisplayDebuff(unit, index, filter)
-	local name, rank, icon, count, debuffType, duration, expirationTime, unitCaster, canStealOrPurge, shouldConsolidate, spellId, canApplyAura, isBossDebuff = UnitDebuff(unit, index, filter);
+	local name, rank, icon, count, debuffType, duration, expirationTime, unitCaster, canStealOrPurge, shouldConsolidate, spellId, canApplyAura, isBossAura = UnitDebuff(unit, index, filter);
 	
 	local hasCustom, alwaysShowMine, showForMySpec = SpellGetVisibilityInfo(spellId, UnitAffectingCombat("player") and "RAID_INCOMBAT" or "RAID_OUTOFCOMBAT");
 	if ( hasCustom ) then
@@ -752,13 +787,19 @@ function CompactUnitFrame_UtilShouldDisplayDebuff(unit, index, filter)
 	end
 end
 
-function CompactUnitFrame_UtilIsBossDebuff(unit, index, filter)
-	local name, rank, icon, count, debuffType, duration, expirationTime, unitCaster, canStealOrPurge, shouldConsolidate, spellId, canApplyAura, isBossDebuff = UnitDebuff(unit, index, filter);
-	return isBossDebuff;
+function CompactUnitFrame_UtilIsBossAura(unit, index, filter, checkAsBuff)
+	-- make sure you are using the correct index here!	allAurasIndex ~= debuffIndex
+	local name, rank, icon, count, debuffType, duration, expirationTime, unitCaster, canStealOrPurge, shouldConsolidate, spellId, canApplyAura, isBossAura;
+	if (checkAsBuff) then
+		name, rank, icon, count, debuffType, duration, expirationTime, unitCaster, canStealOrPurge, shouldConsolidate, spellId, canApplyAura, isBossAura = UnitBuff(unit, index, filter);
+	else
+		name, rank, icon, count, debuffType, duration, expirationTime, unitCaster, canStealOrPurge, shouldConsolidate, spellId, canApplyAura, isBossAura = UnitDebuff(unit, index, filter);
+	end
+	return isBossAura;
 end
 
 function CompactUnitFrame_UtilIsPriorityDebuff(unit, index, filter)
-	local name, rank, icon, count, debuffType, duration, expirationTime, unitCaster, canStealOrPurge, shouldConsolidate, spellId, canApplyAura, isBossDebuff = UnitDebuff(unit, index, filter);
+	local name, rank, icon, count, debuffType, duration, expirationTime, unitCaster, canStealOrPurge, shouldConsolidate, spellId, canApplyAura, isBossAura = UnitDebuff(unit, index, filter);
 	
 	local _, classFilename = UnitClass("player");
 	if ( classFilename == "PALADIN" ) then
@@ -780,16 +821,16 @@ function CompactUnitFrame_HideAllDebuffs(frame)
 	end
 end
 
-function CompactUnitFrame_UtilSetDebuffBossDebuff(debuffFrame, isBossDebuff)
-	if ( isBossDebuff ) then
-		debuffFrame:SetSize(debuffFrame.baseSize + BOSS_DEBUFF_SIZE_INCREASE, debuffFrame.baseSize + BOSS_DEBUFF_SIZE_INCREASE);
+function CompactUnitFrame_UtilSetDebuff(debuffFrame, unit, index, filter, isBossAura, isBossBuff)
+	-- make sure you are using the correct index here!
+	--isBossAura says make this look large.
+	--isBossBuff looks in HELPFULL auras otherwise it looks in HARMFULL ones
+	local name, rank, icon, count, debuffType, duration, expirationTime, unitCaster, canStealOrPurge, shouldConsolidate, spellId;
+	if (isBossBuff) then
+		name, rank, icon, count, debuffType, duration, expirationTime, unitCaster, canStealOrPurge, shouldConsolidate, spellId = UnitBuff(unit, index, filter);
 	else
-		debuffFrame:SetSize(debuffFrame.baseSize, debuffFrame.baseSize);
+		name, rank, icon, count, debuffType, duration, expirationTime, unitCaster, canStealOrPurge, shouldConsolidate, spellId = UnitDebuff(unit, index, filter);
 	end
-end
-
-function CompactUnitFrame_UtilSetDebuff(debuffFrame, unit, index, filter)
-	local name, rank, icon, count, debuffType, duration, expirationTime, unitCaster, canStealOrPurge, shouldConsolidate, spellId = UnitDebuff(unit, index, filter);
 	debuffFrame.filter = filter;
 	debuffFrame.icon:SetTexture(icon);
 	if ( count > 1 ) then
@@ -813,6 +854,13 @@ function CompactUnitFrame_UtilSetDebuff(debuffFrame, unit, index, filter)
 	
 	local color = DebuffTypeColor[debuffType] or DebuffTypeColor["none"];
 	debuffFrame.border:SetVertexColor(color.r, color.g, color.b);
+
+	debuffFrame.isBossBuff = isBossBuff;
+	if ( isBossAura ) then
+		debuffFrame:SetSize(debuffFrame.baseSize + BOSS_DEBUFF_SIZE_INCREASE, debuffFrame.baseSize + BOSS_DEBUFF_SIZE_INCREASE);
+	else
+		debuffFrame:SetSize(debuffFrame.baseSize, debuffFrame.baseSize);
+	end
 	
 	debuffFrame:Show();
 end
@@ -888,6 +936,7 @@ DefaultCompactUnitFrameOptions = {
 	displayNonBossDebuffs = true,
 	healthText = "none",
 	displayIncomingResurrect = true,
+	displayInOtherGroup = true,
 }
 
 local NATIVE_UNIT_FRAME_HEIGHT = 36;
@@ -1017,10 +1066,9 @@ function DefaultCompactUnitFrameSetup(frame)
 	frame.aggroHighlight:SetTexCoord(unpack(texCoords["Raid-AggroFrame"]));
 	frame.aggroHighlight:SetAllPoints(frame);
 	
-	frame.incomingResurrectIcon:ClearAllPoints();
-	frame.incomingResurrectIcon:SetPoint("CENTER", frame, "BOTTOM", 0, options.height / 3 + 2);
-	frame.incomingResurrectIcon:SetSize(buffSize * 2, buffSize * 2);
-	frame.incomingResurrectIcon:SetTexture("Interface\\RaidFrame\\Raid-Icon-Rez");
+	frame.centerStatusIcon:ClearAllPoints();
+	frame.centerStatusIcon:SetPoint("CENTER", frame, "BOTTOM", 0, options.height / 3 + 2);
+	frame.centerStatusIcon:SetSize(buffSize * 2, buffSize * 2);
 	
 	if ( options.displayBorder ) then
 		frame.horizTopBorder:ClearAllPoints();

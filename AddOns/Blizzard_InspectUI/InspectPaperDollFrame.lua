@@ -15,7 +15,7 @@ function InspectPaperDollFrame_OnEvent(self, event, unit)
 			end
 			return;
 		end
-		if (event == "INSPECT_READY") then
+		if (event == "INSPECT_READY" and InspectFrame.unit and (UnitGUID(InspectFrame.unit) == unit)) then
 			InspectPaperDollFrame_SetLevel();
 			InspectPaperDollFrame_UpdateButtons();
 		end
@@ -28,15 +28,14 @@ function InspectPaperDollFrame_SetLevel()
 	end
 
 	local unit, level = InspectFrame.unit, UnitLevel(InspectFrame.unit);
-	local primaryTalentTree = GetPrimaryTalentTree(true);
+	local primaryTalentTree = GetSpecialization(true);
 	
 	local classDisplayName, class = UnitClass(InspectFrame.unit); 
-	local classColor = RAID_CLASS_COLORS[class];
-	local classColorString = format("ff%.2x%.2x%.2x", classColor.r * 255, classColor.g * 255, classColor.b * 255);
+	local classColorString = RAID_CLASS_COLORS[class].colorStr;
 	local specName, _;
 	
 	if (primaryTalentTree) then
-		_, specName = GetTalentTabInfo(primaryTalentTree, true);
+		_, specName = GetSpecializationInfo(primaryTalentTree, true);
 	end
 	
 	if ( level == -1 ) then
@@ -69,14 +68,34 @@ function InspectPaperDollFrame_UpdateButtons()
 	InspectPaperDollItemSlotButton_Update(InspectTrinket1Slot);
 	InspectPaperDollItemSlotButton_Update(InspectMainHandSlot);
 	InspectPaperDollItemSlotButton_Update(InspectSecondaryHandSlot);
-	InspectPaperDollItemSlotButton_Update(InspectRangedSlot);
 end
 
+local factionLogoTextures = {
+	["Alliance"]	= "Interface\\Timer\\Alliance-Logo",
+	["Horde"]		= "Interface\\Timer\\Horde-Logo",
+	["Neutral"]		= "Interface\\Timer\\Panda-Logo",
+};
+
 function InspectPaperDollFrame_OnShow()
+	InspectModelFrame:Show();
 	ButtonFrameTemplate_HideButtonBar(InspectFrame);
-	InspectModelFrame:SetUnit(InspectFrame.unit);
+	local modelCanDraw = InspectModelFrame:SetUnit(InspectFrame.unit);
 	InspectPaperDollFrame_SetLevel();
 	InspectPaperDollFrame_UpdateButtons();
+	
+	-- If the paperdoll model is not available to draw (out of range), then draw the faction logo
+	if(modelCanDraw ~= true) then
+		local factionGroup = UnitFactionGroup(InspectFrame.unit);
+		if ( factionGroup ) then
+			InspectFaction:SetTexture(factionLogoTextures[factionGroup]);
+			InspectFaction:Show();
+			InspectModelFrame:Hide();
+		else
+			InspectFaction:Hide();
+		end
+	else
+		InspectFaction:Hide();
+	end
 	
 	SetPaperDollBackground(InspectModelFrame, InspectFrame.unit);
 	InspectModelFrameBackgroundTopLeft:SetDesaturated(1);

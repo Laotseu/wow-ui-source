@@ -180,7 +180,6 @@ function RaidGroupFrame_OnEvent(self, event, ...)
 	elseif ( event == "UNIT_PET" or event == "UNIT_NAME_UPDATE" ) then
 		RaidClassButton_Update();
 	elseif ( event == "PLAYER_ENTERING_WORLD" ) then
-		RaidFrameReadyCheckButton_Update();
 		RaidPullout_RenewFrames();
 	elseif ( event == "VARIABLES_LOADED" ) then
 		RaidFrame.showRange = GetCVarBool("showRaidRange");
@@ -229,14 +228,13 @@ function RaidGroupFrame_Update()
 	end
 	
 	
-	if ( GetNumRaidMembers() == 0 ) then
+	if ( not IsInRaid() ) then
 		for i=1, NUM_RAID_GROUPS do
 			raid_groupFrames[i]:Hide()
 		end
 		for i=1, MAX_RAID_CLASS_BUTTONS do
 			classes[i]:Hide();
 		end
-		RaidFrameReadyCheckButton:Hide();
 	else
 		for i=1, NUM_RAID_GROUPS do
 			raid_groupFrames[i]:Show();
@@ -244,11 +242,6 @@ function RaidGroupFrame_Update()
 		for i=1, MAX_RAID_CLASS_BUTTONS do
 			--classes[i]:Show();
 		end
-	end
-
-	RaidFrameReadyCheckButton_Update();
-	if ( RaidFrameReadyCheckButton:IsShown() ) then
-		RaidFrameRaidInfoButton:SetPoint("LEFT", "RaidFrameReadyCheckButton", "RIGHT", 2, 0);
 	end
 
 
@@ -286,7 +279,8 @@ function RaidGroupFrame_Update()
 	end
 
 	-- Fill out buttons
-	local numRaidMembers = GetNumRaidMembers();
+	local isRaid = IsInRaid();
+	local numRaidMembers = GetNumGroupMembers();
 	local raidGroup, color;
 	local buttonFrameName, buttonName, buttonLevel, buttonClass, buttonRank;
 	local name, rank, subgroup, level, class, fileName, zone, online, isDead, role, loot, muted, unit;
@@ -303,7 +297,7 @@ function RaidGroupFrame_Update()
 	
 	for i=1, MAX_RAID_MEMBERS do
 		button = raid_buttons[i];
-		if ( i <= numRaidMembers ) then
+		if ( isRaid and i <= numRaidMembers ) then
 			name, rank, subgroup, level, class, fileName, zone, online, isDead, role, loot = GetRaidRosterInfo(i);
 			unit = "raid"..i;
 			muted = GetMuteStatus(unit, "raid");
@@ -522,7 +516,7 @@ function RaidGroupFrame_Update()
 		end
 	end
 	
-	if ( numRaidMembers > 0 ) then
+	if ( isRaid ) then
 		RaidFrameAllAssistCheckButton:Show();
 	else
 		RaidFrameAllAssistCheckButton:Hide();
@@ -585,10 +579,10 @@ function RaidGroupFrame_OnUpdate(elapsed)
 end
 
 function RaidGroupFrame_ReadyCheckFinished()
-	local numRaidMembers = GetNumRaidMembers();
-	local readyCheckFrame;
-	for i=1, numRaidMembers do
-		ReadyCheck_Finish(_G["RaidGroupButton"..i.."ReadyCheck"], DEFAULT_READY_CHECK_STAY_TIME, 1.5, RaidGroupFrame_Update);
+	if ( IsInRaid() ) then
+		for i=1, GetNumGroupMembers() do
+			ReadyCheck_Finish(_G["RaidGroupButton"..i.."ReadyCheck"], DEFAULT_READY_CHECK_STAY_TIME, 1.5, RaidGroupFrame_Update);
+		end
 	end
 end
 
@@ -615,7 +609,7 @@ function RaidGroupButton_OnLoad(self)
 end
 
 function RaidGroupButton_OnDragStart(raidButton)
-	if ( not IsRaidLeader() and not IsRaidOfficer() ) then
+	if ( not UnitIsGroupLeader("player") and not UnitIsGroupAssistant("player") ) then
 		return;
 	end
 	local cursorX, cursorY = GetCursorPosition();
@@ -624,11 +618,10 @@ function RaidGroupButton_OnDragStart(raidButton)
 	raidButton:ClearAllPoints();
 	raidButton:SetPoint("CENTER", UIPARENT, "BOTTOMLEFT", cursorX / uiScale, cursorY / uiScale);
 	MOVING_RAID_MEMBER = raidButton;
-	SetRaidRosterSelection(raidButton.id);
 end
 
 function RaidGroupButton_OnDragStop(raidButton)
-	if ( not IsRaidLeader() and not IsRaidOfficer() ) then
+	if ( not UnitIsGroupLeader("player") and not UnitIsGroupAssistant("player") ) then
 		return;
 	end
 	
@@ -666,14 +659,13 @@ function RaidFrameDropDown_Initialize(self)
 end
 
 function RaidButton_OnClick(self, button)
-	SetRaidRosterSelection(self.index);
 	RaidFrame_Update();
 end
 
 -------------------- Pullout Button Functions --------------------
 function RaidPullout_OnEvent(self, event, ...)
 	if ( self:IsShown() ) then
-		if ( event == "RAID_ROSTER_UPDATE" or event == "UNIT_PET" or event == "UNIT_NAME_UPDATE" or
+		if ( event == "GROUP_ROSTER_UPDATE" or event == "UNIT_PET" or event == "UNIT_NAME_UPDATE" or
 			 event == "READY_CHECK" or event == "READY_CHECK_CONFIRM" ) then
 			RaidPullout_Update(self);
 		elseif ( event == "READY_CHECK_FINISHED" ) then
@@ -1285,8 +1277,8 @@ function RaidPullout_RenewFrames()
 end
 
 function RaidPullout_MatchName(name)
-	if ( name ) then
-		for i=1, GetNumRaidMembers(), 1 do
+	if ( name and IsInRaid() ) then
+		for i=1, GetNumGroupMembers(), 1 do
 			if ( name == GetRaidRosterInfo(i) ) then
 				return i;
 			end			
@@ -1351,7 +1343,7 @@ function RaidPulloutDropDown_Initialize()
 		end
 		if ( voice ) then
 			-- Set a name header
-			if ( not UnitIsUnit(unit, "player") or IsRaidOfficer() ) then
+			if ( not UnitIsUnit(unit, "player") or UnitIsGroupAssistant("player") ) then
 				info = UIDropDownMenu_CreateInfo();
 				info.text = UnitName(unit);
 				info.isTitle = 1;
@@ -1377,7 +1369,7 @@ function RaidPulloutDropDown_Initialize()
 			end
 			
 			-- Display the option to silence voice chat if RaidLeader.	
-			if ( IsRaidOfficer() ) then
+			if ( UnitIsGroupAssistant("player") ) then
 				silenced = UnitIsSilenced(UnitName(unit), "raid");	
 				if ( not silenced ) then
 					info.text = RAID_SILENCE;
@@ -1395,7 +1387,7 @@ function RaidPulloutDropDown_Initialize()
 				info.disabled = nil;
 				UIDropDownMenu_AddButton(info);
 			end
-			if ( not UnitIsUnit(unit, "player") or IsRaidOfficer() ) then
+			if ( not UnitIsUnit(unit, "player") or UnitIsGroupAssistant("player") ) then
 				-- spacer
 				info = UIDropDownMenu_CreateInfo();
 				info.isTitle = 1;
@@ -1503,11 +1495,4 @@ function RaidPulloutDropDown_Initialize()
 	UIDropDownMenu_AddButton(info);
 end
 
-function RaidFrameReadyCheckButton_Update()
-	if ( GetNumRaidMembers() > 0 and (IsRaidLeader() or IsRaidOfficer()) ) then
-		RaidFrameReadyCheckButton:Show();
-	else
-		RaidFrameReadyCheckButton:Hide();
-	end
-end
 

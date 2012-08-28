@@ -1,6 +1,5 @@
 UIPanelWindows["VoidStorageFrame"] = { area = "doublewide", pushable = 0, width = 726 };
 
-local VOID_STORAGE_UNLOCK_COST = 100 * 100 * 100;	-- 100 gold
 local BUTTON_TYPE_DEPOSIT = 1;
 local BUTTON_TYPE_WITHDRAW = 2;
 local BUTTON_TYPE_STORAGE = 3;
@@ -27,9 +26,9 @@ end
 function VoidStorageFrame_OnLoad(self)
 	-- The close button comes from the BasicFrameTemplate but VoidStorageBorderFrame is not the main
 	-- frame, so click function must change to close the proper frame
-	VoidStorageBorderFrameCloseButton:SetScript("OnClick", function () VoidStorageFrame_Hide(); end);
-	VoidStorageBorderFrameTopTileStreaks:Hide();
-	VoidStorageBorderFrameBg:SetTexture(nil);
+	VoidStorageBorderFrame.CloseButton:SetScript("OnClick", function () VoidStorageFrame_Hide(); end);
+	VoidStorageBorderFrame.TopTileStreaks:Hide();
+	VoidStorageBorderFrame.Bg:SetTexture(nil);
 	local button, lastButton, texture;
 	-- create deposit buttons
 	VoidStorageDepositFrame.Bg:SetTexture(0.1451, 0.0941, 0.1373, 0.8);
@@ -130,44 +129,47 @@ end
 function VoidStorageFrame_Update()
 	if ( CanUseVoidStorage() ) then
 		local lastTutorial = tonumber(GetCVar("lastVoidStorageTutorial"));
-		if ( lastTutorial >= #voidStorageTutorials ) then
-			-- hide blocking frame if necessary
-			if ( VoidStorageBorderFrameMouseBlockFrame:IsShown() ) then
-				VoidStorageBorderFrameMouseBlockFrame:Hide();
-				VoidStoragePurchaseFrame:Hide();
-				VoidStorageBorderFrameBg:Hide();
-				VoidStorageHelpBox:Hide();
-			end
-			IsVoidStorageReady();
-			VoidStorage_ItemsUpdate(true, true);
-		else
-			local tutorial = voidStorageTutorials[lastTutorial + 1];
-			local height = 58;	-- button height + top and bottom padding + spacing between text and button
-			VoidStorageHelpBoxBigText:SetText(tutorial.text1);
-			height = height + VoidStorageHelpBoxBigText:GetHeight();
-			if ( tutorial.text2 ) then
-				VoidStorageHelpBoxSmallText:SetText(tutorial.text2);
-				height = height + 12 + VoidStorageHelpBoxSmallText:GetHeight();
-				VoidStorageHelpBoxSmallText:Show();
+		if ( lastTutorial ) then
+			if ( lastTutorial >= #voidStorageTutorials ) then
+				-- hide blocking frame if necessary
+				if ( VoidStorageBorderFrameMouseBlockFrame:IsShown() ) then
+					VoidStorageBorderFrameMouseBlockFrame:Hide();
+					VoidStoragePurchaseFrame:Hide();
+					VoidStorageBorderFrame.Bg:Hide();
+					VoidStorageHelpBox:Hide();
+				end
 			else
-				VoidStorageHelpBoxSmallText:Hide();
+				local tutorial = voidStorageTutorials[lastTutorial + 1];
+				local height = 58;	-- button height + top and bottom padding + spacing between text and button
+				VoidStorageHelpBoxBigText:SetText(tutorial.text1);
+				height = height + VoidStorageHelpBoxBigText:GetHeight();
+				if ( tutorial.text2 ) then
+					VoidStorageHelpBoxSmallText:SetText(tutorial.text2);
+					height = height + 12 + VoidStorageHelpBoxSmallText:GetHeight();
+					VoidStorageHelpBoxSmallText:Show();
+				else
+					VoidStorageHelpBoxSmallText:Hide();
+				end
+				VoidStorageHelpBox:SetHeight(height);
+				VoidStorageHelpBox:SetPoint("BOTTOMLEFT", 12, tutorial.yOffset);
+				VoidStorageHelpBoxButton.currentTutorial = lastTutorial + 1;
+				VoidStorageFrame_SetUpBlockingFrame();
+				VoidStoragePurchaseFrame:Hide();
+				VoidStorageHelpBox:Show();
 			end
-			VoidStorageHelpBox:SetHeight(height);
-			VoidStorageHelpBox:SetPoint("BOTTOMLEFT", 12, tutorial.yOffset);
-			VoidStorageHelpBoxButton.currentTutorial = lastTutorial + 1;
-			VoidStorageFrame_SetUpBlockingFrame();
-			VoidStoragePurchaseFrame:Hide();
-			VoidStorageHelpBox:Show();
 		end
+		IsVoidStorageReady();
+		VoidStorage_ItemsUpdate(true, true);
 	else
-		if ( VOID_STORAGE_UNLOCK_COST > GetMoney() ) then
+		local voidStorageUnlockCost = GetVoidUnlockCost();
+		if ( voidStorageUnlockCost > GetMoney() ) then
 			SetMoneyFrameColor("VoidStoragePurchaseMoneyFrame", "red");
 			VoidStoragePurchaseButton:Disable();
 		else
 			SetMoneyFrameColor("VoidStoragePurchaseMoneyFrame");
 			VoidStoragePurchaseButton:Enable();
 		end
-		MoneyFrame_Update("VoidStoragePurchaseMoneyFrame", VOID_STORAGE_UNLOCK_COST);
+		MoneyFrame_Update("VoidStoragePurchaseMoneyFrame", voidStorageUnlockCost);
 		VoidStoragePurchaseFrame:SetHeight(VoidStoragePurchaseFrameDescription:GetHeight() + 156);
 		local width = max(VoidStoragePurchaseFrameLabel:GetWidth(), VoidStoragePurchaseFrameDescription:GetWidth());
 		VoidStoragePurchaseFrame:SetWidth(min(550, width + 164));
@@ -185,8 +187,8 @@ end
 
 function VoidStorageFrame_SetUpBlockingFrame(frame)
 	if ( not VoidStorageBorderFrameMouseBlockFrame:IsShown() ) then
-		VoidStorageBorderFrameBg:Show();
-		VoidStorageBorderFrameBg:SetTexture(0, 0, 0, 0.5);
+		VoidStorageBorderFrame.Bg:Show();
+		VoidStorageBorderFrame.Bg:SetTexture(0, 0, 0, 0.5);
 		VoidStorageBorderFrame:SetFrameLevel(100);
 		VoidStorageBorderFrameMouseBlockFrame:Show();
 	end
@@ -203,7 +205,7 @@ function VoidStorage_ItemsUpdate(doDeposit, doContents)
 	local button;
 	if ( doDeposit ) then
 		for i = 1, VOID_DEPOSIT_MAX do
-			itemID, textureName = GetVoidTransferDepositInfo(i);
+			local itemID, textureName = GetVoidTransferDepositInfo(i);
 			button = _G["VoidStorageDepositButton"..i];
 			button.icon:SetTexture(textureName);
 			if ( itemID ) then
@@ -216,7 +218,7 @@ function VoidStorage_ItemsUpdate(doDeposit, doContents)
 	if ( doContents ) then
 		-- withdrawal
 		for i = 1, VOID_WITHDRAW_MAX do
-			itemID, textureName = GetVoidTransferWithdrawalInfo(i);
+			local itemID, textureName = GetVoidTransferWithdrawalInfo(i);
 			button = _G["VoidStorageWithdrawButton"..i];
 			button.icon:SetTexture(textureName);
 			if ( itemID ) then
@@ -228,7 +230,7 @@ function VoidStorage_ItemsUpdate(doDeposit, doContents)
 		
 		-- storage
 		for i = 1, VOID_STORAGE_MAX do
-			itemID, textureName, locked, recentDeposit, isFiltered = GetVoidItemInfo(i);
+			local itemID, textureName, locked, recentDeposit, isFiltered = GetVoidItemInfo(i);
 			button = _G["VoidStorageStorageButton"..i];
 			button.icon:SetTexture(textureName);
 			if ( itemID ) then

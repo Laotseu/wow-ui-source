@@ -643,7 +643,7 @@ local CALENDAR_EVENTTYPE_TCOORDS = {
 do
 	-- set the pvp icon to the player's faction
 	local factionGroup = UnitFactionGroup("player");
-	if ( factionGroup ) then
+	if ( factionGroup and factionGroup ~= "Neutral" ) then
 		-- need new texcoords too?
 		if ( factionGroup == "Alliance" ) then
 			CALENDAR_EVENTTYPE_TEXTURES[CALENDAR_EVENTTYPE_PVP] = "Interface\\Calendar\\UI-Calendar-Event-PVP02";
@@ -958,7 +958,7 @@ local function _CalendarFrame_InviteToRaid(maxInviteCount)
 			 (inviteStatus == CALENDAR_INVITESTATUS_ACCEPTED or
 			 inviteStatus == CALENDAR_INVITESTATUS_CONFIRMED or
 			 inviteStatus == CALENDAR_INVITESTATUS_SIGNEDUP) ) then
-			InviteUnit(name);
+			InviteToGroup(name);
 			inviteCount = inviteCount + 1;
 		end
 		i = i + 1;
@@ -2975,7 +2975,7 @@ function CalendarViewEventFrame_OnLoad(self)
 	self:RegisterEvent("CALENDAR_CLOSE_EVENT");
 	self:RegisterEvent("GUILD_ROSTER_UPDATE");
 	self:RegisterEvent("PLAYER_GUILD_UPDATE");
---	self:RegisterEvent("PARTY_MEMBERS_CHANGED");
+--	self:RegisterEvent("GROUP_ROSTER_UPDATE");
 
 	self.update = CalendarViewEventFrame_Update;
 	self.selectedInvite = nil;
@@ -3017,7 +3017,7 @@ function CalendarViewEventFrame_OnEvent(self, event, ...)
 				CalendarCreateEventFrame.mode = "edit";
 				CalendarFrame_ShowEventFrame(CalendarCreateEventFrame);
 			end
---		elseif ( event == "PARTY_MEMBERS_CHANGED" ) then
+--		elseif ( event == "GROUP_ROSTER_UPDATE" ) then
 --			CalendarViewEventInviteList_Update();
 		end
 	end
@@ -3113,6 +3113,7 @@ function CalendarViewEventFrame_Update()
 		CalendarViewEventFrame:SetHeight(CalendarViewEventFrame.defaultHeight);
 		if ( locked ) then
 			-- event locked...you cannot respond to the event
+			CalendarViewEvent_SetEventButtons(inviteType, calendarType);
 			CalendarViewEventAcceptButton:Disable();
 			CalendarViewEventTentativeButton:Disable();
 			CalendarViewEventDeclineButton:Disable();
@@ -3123,7 +3124,6 @@ function CalendarViewEventFrame_Update()
 		else
 			CalendarViewEventRSVP_Update(month, day, year, pendingInvite, inviteStatus, inviteType, calendarType);
 		end
-
 		CalendarViewEventInviteList_Update(inviteType, calendarType);
 	end
 	CalendarEventFrameBlocker_Update();
@@ -3199,21 +3199,10 @@ function CalendarViewEventRSVP_Update(month, day, year, pendingInvite, inviteSta
 	CalendarViewEventFrame.inviteType = inviteType;
 
 	local isTodayOrLater = _CalendarFrame_IsTodayOrLater(month, day, year);
+
+	CalendarViewEvent_SetEventButtons(inviteType, calendarType);
+
 	if ( _CalendarFrame_IsSignUpEvent(calendarType, inviteType) ) then
-		-- set buttons to sign up mode
-		CalendarViewEventAcceptButton:SetText(CALENDAR_SIGNUP);
-		CalendarViewEventAcceptButton:ClearAllPoints();
-		CalendarViewEventAcceptButton:SetPoint("TOPLEFT", CalendarViewEventTentativeButton:GetParent(), "TOPLEFT", 14, 0);
-		CalendarViewEventAcceptButton:SetWidth(CALENDAR_VIEWEVENTFRAME_GUILDEVENT_RSVPBUTTON_WIDTH);
-		CalendarViewEventAcceptButtonFlashTexture:Hide();
-		CalendarViewEventTentativeButton:ClearAllPoints();
-		CalendarViewEventTentativeButton:SetPoint("TOP", CalendarViewEventTentativeButton:GetParent(), "TOP", 0, 0);
-		CalendarViewEventTentativeButton:SetWidth(CALENDAR_VIEWEVENTFRAME_GUILDEVENT_RSVPBUTTON_WIDTH);
-		CalendarViewEventTentativeButtonFlashTexture:Hide();
-		CalendarViewEventRemoveButton:ClearAllPoints();
-		CalendarViewEventRemoveButton:SetWidth(CALENDAR_VIEWEVENTFRAME_GUILDEVENT_RSVPBUTTON_WIDTH);
-		CalendarViewEventRemoveButton:SetPoint("TOPRIGHT", CalendarViewEventRemoveButton:GetParent(), "TOPRIGHT", -14, 0);
-		CalendarViewEventDeclineButton:Hide();
 		-- update shown buttons
 		if ( isTodayOrLater ) then
 			if ( inviteStatus == CALENDAR_INVITESTATUS_NOT_SIGNEDUP ) then
@@ -3232,18 +3221,6 @@ function CalendarViewEventRSVP_Update(month, day, year, pendingInvite, inviteSta
 		end
 		CalendarViewEventFrame:SetScript("OnUpdate", nil);
 	else
-		-- set buttons to normal mode
-		CalendarViewEventAcceptButton:ClearAllPoints();
-		CalendarViewEventAcceptButton:SetPoint("TOPRIGHT", CalendarViewEventTentativeButton:GetParent(), "TOP", -10, 4);
-		CalendarViewEventAcceptButton:SetWidth(CALENDAR_VIEWEVENTFRAME_EVENT_RSVPBUTTON_WIDTH);
-		CalendarViewEventAcceptButton:SetText(ACCEPT);
-		CalendarViewEventTentativeButton:ClearAllPoints();
-		CalendarViewEventTentativeButton:SetPoint("TOPLEFT", CalendarViewEventTentativeButton:GetParent(), "TOP", 10, 4);
-		CalendarViewEventTentativeButton:SetWidth(CALENDAR_VIEWEVENTFRAME_EVENT_RSVPBUTTON_WIDTH);
-		CalendarViewEventDeclineButton:Show();
-		CalendarViewEventRemoveButton:ClearAllPoints();
-		CalendarViewEventRemoveButton:SetPoint("TOPLEFT", CalendarViewEventRemoveButton:GetParent(), "TOP", 10, -26);
-		CalendarViewEventRemoveButton:SetWidth(CALENDAR_VIEWEVENTFRAME_EVENT_RSVPBUTTON_WIDTH);
 		-- update shown buttons
 		local canRSVP = _CalendarFrame_CanInviteeRSVP(inviteStatus);
 		if ( isTodayOrLater and canRSVP ) then
@@ -3284,8 +3261,40 @@ function CalendarViewEventRSVP_Update(month, day, year, pendingInvite, inviteSta
 	end
 end
 
+function CalendarViewEvent_SetEventButtons(inviteType, calendarType)
+	if ( _CalendarFrame_IsSignUpEvent(calendarType, inviteType) ) then
+		-- signup mode
+		CalendarViewEventAcceptButton:SetText(CALENDAR_SIGNUP);
+		CalendarViewEventAcceptButton:ClearAllPoints();
+		CalendarViewEventAcceptButton:SetPoint("TOPLEFT", CalendarViewEventTentativeButton:GetParent(), "TOPLEFT", 14, 0);
+		CalendarViewEventAcceptButton:SetWidth(CALENDAR_VIEWEVENTFRAME_GUILDEVENT_RSVPBUTTON_WIDTH);
+		CalendarViewEventAcceptButtonFlashTexture:Hide();
+		CalendarViewEventTentativeButton:ClearAllPoints();
+		CalendarViewEventTentativeButton:SetPoint("TOP", CalendarViewEventTentativeButton:GetParent(), "TOP", 0, 0);
+		CalendarViewEventTentativeButton:SetWidth(CALENDAR_VIEWEVENTFRAME_GUILDEVENT_RSVPBUTTON_WIDTH);
+		CalendarViewEventTentativeButtonFlashTexture:Hide();
+		CalendarViewEventRemoveButton:ClearAllPoints();
+		CalendarViewEventRemoveButton:SetWidth(CALENDAR_VIEWEVENTFRAME_GUILDEVENT_RSVPBUTTON_WIDTH);
+		CalendarViewEventRemoveButton:SetPoint("TOPRIGHT", CalendarViewEventRemoveButton:GetParent(), "TOPRIGHT", -14, 0);
+		CalendarViewEventDeclineButton:Hide();
+	else
+		-- normal mode
+		CalendarViewEventAcceptButton:ClearAllPoints();
+		CalendarViewEventAcceptButton:SetPoint("TOPRIGHT", CalendarViewEventTentativeButton:GetParent(), "TOP", -10, 4);
+		CalendarViewEventAcceptButton:SetWidth(CALENDAR_VIEWEVENTFRAME_EVENT_RSVPBUTTON_WIDTH);
+		CalendarViewEventAcceptButton:SetText(ACCEPT);
+		CalendarViewEventTentativeButton:ClearAllPoints();
+		CalendarViewEventTentativeButton:SetPoint("TOPLEFT", CalendarViewEventTentativeButton:GetParent(), "TOP", 10, 4);
+		CalendarViewEventTentativeButton:SetWidth(CALENDAR_VIEWEVENTFRAME_EVENT_RSVPBUTTON_WIDTH);
+		CalendarViewEventDeclineButton:Show();
+		CalendarViewEventRemoveButton:ClearAllPoints();
+		CalendarViewEventRemoveButton:SetPoint("TOPLEFT", CalendarViewEventRemoveButton:GetParent(), "TOP", 10, -26);
+		CalendarViewEventRemoveButton:SetWidth(CALENDAR_VIEWEVENTFRAME_EVENT_RSVPBUTTON_WIDTH);
+	end
+end
+
 function CalendarViewEventInviteList_Update(inviteType, calendarType)
---	CalendarViewEventInviteList.partyMode = GetRealNumPartyMembers() > 0 or GetRealNumRaidMembers() > 0;
+--	CalendarViewEventInviteList.partyMode = IsInGroup(LE_PARTY_CATEGORY_HOME);
 	CalendarViewEventInviteList.partyMode = false;
 
 	if ( _CalendarFrame_IsSignUpEvent(calendarType, inviteType) ) then
@@ -3468,7 +3477,7 @@ function CalendarCreateEventFrame_OnLoad(self)
 --	self:RegisterEvent("CALENDAR_ACTION_PENDING");
 	self:RegisterEvent("GUILD_ROSTER_UPDATE");
 	self:RegisterEvent("PLAYER_GUILD_UPDATE");
---	self:RegisterEvent("PARTY_MEMBERS_CHANGED");
+--	self:RegisterEvent("GROUP_ROSTER_UPDATE");
 
 	-- used to update the frame when it is shown via CalendarFrame_ShowEventFrame
 	self.update = CalendarCreateEventFrame_Update;
@@ -3546,7 +3555,7 @@ function CalendarCreateEventFrame_OnEvent(self, event, ...)
 			else
 				CalendarFrame_ShowEventFrame(CalendarViewEventFrame);
 			end
---		elseif ( event == "PARTY_MEMBERS_CHANGED" ) then
+--		elseif ( event == "GROUP_ROSTER_UPDATE" ) then
 --			CalendarCreateEventInviteList_Update();
 		end
 	end
@@ -4060,7 +4069,7 @@ function CalendarCreateEvent_SetLockEvent()
 end
 
 function CalendarCreateEventInviteList_Update()
---	CalendarCreateEventInviteList.partyMode = CalendarCreateEventFrame.mode == "edit" and GetRealNumPartyMembers() > 0 and GetRealNumRaidMembers() > 0;
+--	CalendarCreateEventInviteList.partyMode = CalendarCreateEventFrame.mode == "edit" and IsInRaid(LE_PARTY_CATEGORY_HOME);
 	CalendarCreateEventInviteList.partyMode = false;
 
 	CalendarCreateEventInviteListScrollFrame_Update();
@@ -4300,7 +4309,7 @@ function CalendarInviteContextMenu_ClearModerator()
 end
 
 function CalendarInviteContextMenu_InviteToGroup(self)
-	InviteUnit(self.value);
+	InviteToGroup(self.value);
 end
 
 function CalendarInviteStatusContextMenu_OnLoad(self)
@@ -4414,7 +4423,7 @@ function CalendarCreateEventMassInviteButton_Update()
 end
 
 function CalendarCreateEventRaidInviteButton_OnLoad(self)
-	self:RegisterEvent("PARTY_MEMBERS_CHANGED");
+	self:RegisterEvent("GROUP_ROSTER_UPDATE");
 	self:RegisterEvent("PARTY_CONVERTED_TO_RAID");
 
 	self:SetWidth(self:GetTextWidth() + 40);
@@ -4422,9 +4431,9 @@ end
 
 function CalendarCreateEventRaidInviteButton_OnEvent(self, event, ...)
 	if ( self:IsShown() and self:GetParent():IsShown() ) then
-		if ( event == "PARTY_MEMBERS_CHANGED" ) then
+		if ( event == "GROUP_ROSTER_UPDATE" ) then
 			CalendarCreateEventRaidInviteButton_Update();
-			if ( GetRealNumRaidMembers() == 0 and GetRealNumPartyMembers() >= 1 and self.inviteLostMembers ) then
+			if ( IsInGroup(LE_PARTY_CATEGORY_HOME) and not IsInRaid(LE_PARTY_CATEGORY_HOME) and self.inviteLostMembers ) then
 				-- in case we weren't able to convert to a raid when the player clicked the raid invite button
 				-- (which means the player was not in a party), we want to convert to a raid now since he has a party
 				ConvertToRaid();
@@ -4433,7 +4442,7 @@ function CalendarCreateEventRaidInviteButton_OnEvent(self, event, ...)
 			CalendarCreateEventRaidInviteButton_Update();
 			if ( self.inviteLostMembers ) then
 				-- should already be in a raid at this point, invite members who were not invited due to the party to raid conversion
-				local maxInviteCount = MAX_RAID_MEMBERS - GetRealNumRaidMembers();
+				local maxInviteCount = MAX_RAID_MEMBERS - GetNumGroupMembers(LE_PARTY_CATEGORY_HOME);
 				local inviteCount = _CalendarFrame_InviteToRaid(maxInviteCount);
 				self.inviteLostMembers = false;
 			end
@@ -4444,13 +4453,12 @@ end
 function CalendarCreateEventRaidInviteButton_OnClick(self)
 	-- compute the max number of players that we should invite
 	local maxInviteCount;
-	local realNumRaidMembers = GetRealNumRaidMembers();
-	local realNumPartyMembers = GetRealNumPartyMembers();
-	if ( realNumRaidMembers == 0 ) then
-		if ( realNumPartyMembers + self.inviteCount > MAX_PARTY_MEMBERS ) then
+	local realNumGroupMembers = GetNumGroupMembers(LE_PARTY_CATEGORY_HOME);
+	if ( not IsInRaid(LE_PARTY_CATEGORY_HOME) ) then
+		if ( realNumGroupMembers + self.inviteCount > MAX_PARTY_MEMBERS + 1 ) then
 			-- if I can't invite the number of people that I'm supposed to...
 			self.inviteLostMembers = true;
-			if ( realNumPartyMembers > 0 ) then
+			if ( realNumGroupMembers > 0 ) then
 				--...and I'm already in a party, then I need to form a raid first to fit everyone
 				ConvertToRaid();
 				return;
@@ -4458,9 +4466,9 @@ function CalendarCreateEventRaidInviteButton_OnClick(self)
 			--...and I'm NOT already in a party, then I need to form a party first (happens below),
 			-- then form a raid to fit everyone (happens in response to the PARTY_CONVERTED_TO_RAID event)
 		end
-		maxInviteCount = MAX_PARTY_MEMBERS - realNumPartyMembers;
+		maxInviteCount = MAX_PARTY_MEMBERS + 1 - realNumGroupMembers;
 	else
-		maxInviteCount = MAX_RAID_MEMBERS - realNumRaidMembers;
+		maxInviteCount = MAX_RAID_MEMBERS - realNumGroupMembers;
 	end
 
 	_CalendarFrame_InviteToRaid(maxInviteCount);
@@ -4468,7 +4476,7 @@ end
 
 function CalendarCreateEventRaidInviteButton_OnEnter(self)
 	GameTooltip:SetOwner(self, "ANCHOR_LEFT");
-	if ( GetRealNumRaidMembers() > 0 or GetRealNumPartyMembers() + self.inviteCount > MAX_PARTY_MEMBERS ) then
+	if ( IsInRaid(LE_PARTY_CATEGORY_HOME) or GetNumGroupMembers(LE_PARTY_CATEGORY_HOME) + self.inviteCount > MAX_PARTY_MEMBERS + 1) then
 		GameTooltip:SetText(CALENDAR_TOOLTIP_INVITEMEMBERS_BUTTON_RAID, nil, nil, nil, nil, 1);
 	else
 		GameTooltip:SetText(CALENDAR_TOOLTIP_INVITEMEMBERS_BUTTON_PARTY, nil, nil, nil, nil, 1);
@@ -4482,7 +4490,7 @@ function CalendarCreateEventRaidInviteButton_Update()
 	-- and once to do the actual inviting (that's in the OnClick), but I thought it would be better to
 	-- go through the list twice than to take up extra space in memory and potentially cause a lot of
 	-- garbage collection due to constantly rebuilding a saved table
-	local maxInviteCount = MAX_RAID_MEMBERS - GetRealNumRaidMembers();
+	local maxInviteCount = MAX_RAID_MEMBERS - GetNumGroupMembers(LE_PARTY_CATEGORY_HOME);
 	local inviteCount = _CalendarFrame_GetInviteToRaidCount(maxInviteCount);
 	if ( inviteCount > 0 ) then
 		CalendarCreateEventRaidInviteButton:Enable();
@@ -5330,11 +5338,11 @@ function CalendarClassButton_OnEnter(self)
 end
 --[[
 function CalendarClassTotalsButton_OnLoad(self)
-	self:RegisterEvent("PARTY_MEMBERS_CHANGED");
+	self:RegisterEvent("GROUP_ROSTER_UPDATE");
 end
 
 function CalendarClassTotalsButton_OnEvent(self, event, ...)
-	if ( self:IsShown() and event == "PARTY_MEMBERS_CHANGED" ) then
+	if ( self:IsShown() and event == "GROUP_ROSTER_UPDATE" ) then
 		if ( CalendarEventGetNumInvites() > MAX_PARTY_MEMBERS + 1 and GetRealNumPartyMembers() >= 1 and GetRealNumRaidMembers() == 0 ) then
 			-- we don't have a good way of knowing in advance whether or not we need a raid to accomodate all our invites
 			-- so we're going to create a raid as soon as possible
@@ -5410,7 +5418,7 @@ function CalendarInviteToGroupDropDown_Confirmed_OnClick(self)
 		name, level, className, classFilename, inviteStatus, modStatus = CalendarEventGetInvite(i);
 		if ( not UnitInParty(name) and not UnitInRaid(name) and
 			 (inviteStatus == CALENDAR_INVITESTATUS_ACCEPTED or inviteStatus == CALENDAR_INVITESTATUS_CONFIRMED) ) then
-			InviteUnit(name);
+			InviteToGroup(name);
 		end
 	end
 end
@@ -5420,7 +5428,7 @@ function CalendarInviteToGroupDropDown_All_OnClick(self)
 	for i = 1, inviteCount do
 		local name = CalendarEventGetInvite(i);
 		if ( not UnitInParty(name) and not UnitInRaid(name) ) then
-			InviteUnit(name);
+			InviteToGroup(name);
 		end
 	end
 end

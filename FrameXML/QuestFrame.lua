@@ -12,6 +12,7 @@ function QuestFrame_OnLoad(self)
 	self:RegisterEvent("QUEST_COMPLETE");
 	self:RegisterEvent("QUEST_FINISHED");
 	self:RegisterEvent("QUEST_ITEM_UPDATE");
+	self:RegisterEvent("QUEST_LOG_UPDATE");
 end
 
 function QuestFrame_OnEvent(self, event, ...)
@@ -58,6 +59,12 @@ function QuestFrame_OnEvent(self, event, ...)
 			QuestInfo_ShowRewards();		
 			QuestRewardScrollFrameScrollBar:SetValue(0);
 		end
+	elseif ( event == "QUEST_LOG_UPDATE" ) then
+		-- just update if at greeting panel
+		if ( QuestFrameGreetingPanel:IsShown() ) then
+			QuestFrameGreetingPanel_OnShow(QuestFrameGreetingPanel);
+		end
+		return;
 	end
 	
 	QuestFrame_SetPortrait();
@@ -88,23 +95,25 @@ function QuestFrameRewardPanel_OnShow()
 	QuestFrameProgressPanel:Hide();
 	local material = QuestFrame_GetMaterial();
 	QuestFrame_SetMaterial(QuestFrameRewardPanel, material);
-	QuestFrameRewardPanelBotRight:SetTexture("Interface\\QuestFrame\\UI-QuestGreeting-BotRight-blank");
 	QuestInfo_Display(QUEST_TEMPLATE_REWARD, QuestRewardScrollChildFrame, QuestFrameCompleteQuestButton, material);
 	QuestRewardScrollFrameScrollBar:SetValue(0);
 	local questPortrait, questPortraitText, questPortraitName = GetQuestPortraitTurnIn();
 	if (questPortrait ~= 0) then
-		QuestFrame_ShowQuestPortrait(QuestFrame, questPortrait, questPortraitText, questPortraitName, -33, -62);
+		QuestFrame_ShowQuestPortrait(QuestFrame, questPortrait, questPortraitText, questPortraitName, -3, -42);
 	else
 		QuestFrame_HideQuestPortrait();
 	end
 end
 
 function QuestRewardCancelButton_OnClick()
-	DeclineQuest();
+	HideUIPanel(QuestFrame);
 	PlaySound("igQuestCancel");
 end
 
 function QuestRewardCompleteButton_OnClick()
+	if ( GetNumQuestChoices() == 1 ) then
+		QuestInfoFrame.itemChoice = 1;
+	end
 	if ( QuestInfoFrame.itemChoice == 0 and GetNumQuestChoices() > 0 ) then
 		QuestChooseRewardError();
 	else
@@ -126,7 +135,7 @@ function QuestProgressCompleteButton_OnClick()
 end
 
 function QuestGoodbyeButton_OnClick()
-	DeclineQuest();
+	HideUIPanel(QuestFrame);
 	PlaySound("igQuestCancel");
 end
 
@@ -258,7 +267,11 @@ function QuestFrameGreetingPanel_OnShow()
 				questTitleButtonIcon:SetVertexColor(1,1,1);
 			end
 			if ( isComplete ) then
-				questTitleButtonIcon:SetTexture("Interface\\GossipFrame\\ActiveQuestIcon");
+				if ( IsActiveQuestLegendary(i) ) then
+					questTitleButtonIcon:SetTexture("Interface\\GossipFrame\\ActiveLegendaryQuestIcon");
+				else
+					questTitleButtonIcon:SetTexture("Interface\\GossipFrame\\ActiveQuestIcon");
+				end
 			else
 				questTitleButtonIcon:SetTexture("Interface\\GossipFrame\\IncompleteQuestIcon");
 			end
@@ -287,8 +300,10 @@ function QuestFrameGreetingPanel_OnShow()
 		for i=(numActiveQuests + 1), (numActiveQuests + numAvailableQuests), 1 do
 			local questTitleButton = _G["QuestTitleButton"..i];
 			local questTitleButtonIcon = _G[questTitleButton:GetName() .. "QuestIcon"];
-			local isTrivial, isDaily, isRepeatable = GetAvailableQuestInfo(i - numActiveQuests);
-			if ( isDaily ) then
+			local isTrivial, isDaily, isRepeatable, isLegendary = GetAvailableQuestInfo(i - numActiveQuests);
+			if ( isLegendary ) then
+				questTitleButtonIcon:SetTexture("Interface\\GossipFrame\\AvailableLegendaryQuestIcon");
+			elseif ( isDaily ) then
 				questTitleButtonIcon:SetTexture("Interface\\GossipFrame\\DailyQuestIcon");
 			elseif ( isRepeatable ) then
 				questTitleButtonIcon:SetTexture("Interface\\GossipFrame\\DailyActiveQuestIcon");
@@ -321,6 +336,7 @@ function QuestFrame_OnShow()
 	if (TutorialFrame.id == 1 or TutorialFrame.id == 55 or TutorialFrame.id == 57) then
 		TutorialFrame_Hide();
 	end
+	NPCFriendshipStatusBar_Update(QuestFrame);
 end
 
 function QuestFrame_OnHide()
@@ -333,7 +349,6 @@ function QuestFrame_OnHide()
 		QuestFrame.dialog:Hide();
 		QuestFrame.dialog = nil;
 	end
-	QuestFrameDetailPanelBotRight:SetTexture("Interface\\QuestFrame\\UI-QuestGreeting-BotRight");
 	if ( QuestFrame.autoQuest ) then
 		QuestFrameDeclineButton:Show();
 		QuestFrameCloseButton:Enable();
@@ -343,7 +358,10 @@ function QuestFrame_OnHide()
 	CloseQuest();
 	if (TUTORIAL_QUEST_ACCEPTED) then
 		if (not IsTutorialFlagged(2)) then
-			TriggerTutorial(2);
+			local _, raceName  = UnitRace("player");
+			if ( strupper(raceName) ~= "PANDAREN" ) then
+				TriggerTutorial(2);
+			end
 		end
 		if (not IsTutorialFlagged(10) and (TUTORIAL_QUEST_ACCEPTED == TUTORIAL_QUEST_TO_WATCH)) then
 			TriggerTutorial(10);
@@ -412,7 +430,6 @@ function QuestFrameDetailPanel_OnShow()
 	QuestFrameProgressPanel:Hide();
 	QuestFrameGreetingPanel:Hide();
 	if ( QuestGetAutoAccept() ) then
-		QuestFrameDetailPanelBotRight:SetTexture("Interface\\QuestFrame\\UI-QuestGreeting-BotRight-blank");
 		QuestFrameDeclineButton:Hide();
 		QuestFrameCloseButton:Disable();
 		QuestFrame.autoQuest = true;
@@ -424,7 +441,7 @@ function QuestFrameDetailPanel_OnShow()
 	QuestDetailScrollFrameScrollBar:SetValue(0);
 	local questPortrait, questPortraitText, questPortraitName = GetQuestPortraitGiver();
 	if (questPortrait ~= 0) then
-		QuestFrame_ShowQuestPortrait(QuestFrame, questPortrait, questPortraitText, questPortraitName, -33, -62);
+		QuestFrame_ShowQuestPortrait(QuestFrame, questPortrait, questPortraitText, questPortraitName, -3, -42);
 	else
 		QuestFrame_HideQuestPortrait();
 	end
@@ -435,7 +452,7 @@ function QuestDetailAcceptButton_OnClick()
 		QuestFrame.dialog = StaticPopup_Show("CONFIRM_ACCEPT_PVP_QUEST");
 	else
 		if ( QuestFrame.autoQuest ) then
-			HideUIPanel(QuestFrame);
+			AcknowledgeAutoAcceptQuest();
 		else
 			AcceptQuest();
 		end
@@ -443,7 +460,7 @@ function QuestDetailAcceptButton_OnClick()
 end
 
 function QuestDetailDeclineButton_OnClick()
-	DeclineQuest();
+	HideUIPanel(QuestFrame);
 	PlaySound("igQuestCancel");
 end
 

@@ -1,5 +1,11 @@
 MAX_RAID_FINDER_COOLDOWN_NAMES = 8;
 
+local function isRaidFinderDungeonDisplayable(id)
+	local name, typeID, subtypeID, minLevel, maxLevel, _, _, _, expansionLevel = GetLFGDungeonInfo(id);
+	local myLevel = UnitLevel("player");
+	return myLevel >= minLevel and myLevel <= maxLevel and EXPANSION_LEVEL >= expansionLevel;
+end
+
 function RaidFinderFrame_OnLoad(self)
 	self:RegisterEvent("LFG_LOCK_INFO_RECEIVED");
 end
@@ -11,23 +17,47 @@ function RaidFinderFrame_OnEvent(self, event, ...)
 			--RaidFinderQueueFrame.raid = GetBestRFChoice();
 			--UIDropDownMenu_SetSelectedValue(RaidFinderQueueFrameSelectionDropDown, RaidFinderQueueFrame.raid);
 		end
-		RaidFinderFrame_UpdateTab();
+		RaidFinderFrame_UpdateAvailability();
 	end
 end
 
 function RaidFinderFrame_OnShow(self)
 	RequestLFDPlayerLockInfo();
 	RequestLFDPartyLockInfo();
-	ButtonFrameTemplate_HideAttic(self:GetParent());
-	self:GetParent().TitleText:SetText(RAID_FINDER);
 	RaidFinderFrameFindRaidButton_Update();
 	RaidFinderFrame_UpdateBackfill(true);
-	self:GetParent().Inset:SetPoint("TOPLEFT", self:GetParent(), "BOTTOMLEFT", 2, 284);
-	self:GetParent().Inset:SetPoint("BOTTOMRIGHT", self:GetParent(), "BOTTOMRIGHT", -2, 26);
-	RaidFinderFrame_UpdateTab();
+	RaidFinderFrame_UpdateAvailability();
+	PlaySound("igCharacterInfoOpen");
 end
 
-function RaidFinderFrame_UpdateTab()
+-- unused now, might need this logic for Group Finder
+function RaidFinderFrame_UpdateAvailability()
+	--Update the cover panel (specifically for when you hit level 86 and can no longer queue
+	--for any RF raids until you hit level 90).
+	local available = false;
+	local nextLevel = nil;
+	local level = UnitLevel("player");
+	for i=1, GetNumRFDungeons() do
+		local id, name, typeID, subtype, minLevel, maxLevel = GetRFDungeonInfo(i);
+		if ( level >= minLevel and level <= maxLevel ) then
+			available = true;
+			nextLevel = nil;
+			break;
+		elseif ( level < minLevel and (not nextLevel or minLevel < nextLevel ) ) then
+			nextLevel = minLevel;
+		end
+	end
+	if ( available ) then
+		RaidFinderFrame.NoRaidsCover:Hide();
+	else
+		RaidFinderFrame.NoRaidsCover:Show();
+		if ( nextLevel ) then
+			RaidFinderFrame.NoRaidsCover.Label:SetFormattedText(NO_RF_AVAILABLE_WITH_NEXT_LEVEL, nextLevel);
+		else
+			RaidFinderFrame.NoRaidsCover.Label:SetText(NO_RF_AVAILABLE);
+		end
+	end
+	--[[
 	local enableTab = false;
 	local isPlayerEligible = false;
 	for i = 1, GetNumRFDungeons() do
@@ -61,6 +91,7 @@ function RaidFinderFrame_UpdateTab()
 			RaidParentFrame_SetView(2);
 		end
 	end
+	]]--
 end
 
 -- returns true if the inelibile frame is shown
@@ -99,7 +130,7 @@ function RaidFinderQueueFrameIneligibleFrame_UpdateFrame(self)
 			end
 		else
 			self.description:SetText(NO_RF_WHILE_LFR);
-			if ( GetNumPartyMembers() > 0 or GetNumRaidMembers() > 0 ) then
+			if ( IsInGroup() ) then
 				self.leaveQueueButton:SetText(UNLIST_MY_GROUP);
 			else
 				self.leaveQueueButton:SetText(UNLIST_ME);
@@ -140,7 +171,7 @@ end
 function RaidFinderQueueFrameSelectionDropDown_Initialize(self)
 	local info = UIDropDownMenu_CreateInfo();
 	
-	-- If we ever change this logic, we also need to change the logic in RaidFinderFrame_UpdateTab
+	-- If we ever change this logic, we also need to change the logic in RaidFinderFrame_UpdateAvailability
 	for i=1, GetNumRFDungeons() do
 		local id, name = GetRFDungeonInfo(i);
 		local isAvailable, isAvailableToPlayer = IsLFGDungeonJoinable(id);
@@ -192,16 +223,10 @@ end
 
 function RaidFinderQueueFrame_Join()
 	if ( RaidFinderQueueFrame.raid ) then
-		ClearAllLFGDungeons();
-		SetLFGDungeon(RaidFinderQueueFrame.raid);
-		JoinLFG();
+		ClearAllLFGDungeons(LE_LFG_CATEGORY_RF);
+		SetLFGDungeon(LE_LFG_CATEGORY_RF, RaidFinderQueueFrame.raid);
+		JoinLFG(LE_LFG_CATEGORY_RF);
 	end
-end
-
-function isRaidFinderDungeonDisplayable(id)
-	local name, typeID, subtypeID, minLevel, maxLevel, _, _, _, expansionLevel = GetLFGDungeonInfo(id);
-	local myLevel = UnitLevel("player");
-	return myLevel >= minLevel and myLevel <= maxLevel and EXPANSION_LEVEL >= expansionLevel;
 end
 
 function RaidFinderFrameRoleCheckButton_OnClick(self)
@@ -220,29 +245,18 @@ function RaidFinderQueueFrameRewards_UpdateFrame()
 end
 
 function RaidFinderFrameFindRaidButton_Update()
-	local mode, subMode = GetLFGMode();
-	local queueType = GetLFGModeType();
-	if ( queueType == "raid" and ( mode == "queued" or mode == "rolecheck" or mode == "proposal" or mode == "suspended" ) ) then
+	local mode, subMode = GetLFGMode(LE_LFG_CATEGORY_RF);
+	if ( mode == "queued" or mode == "rolecheck" or mode == "proposal" or mode == "suspended" ) then
 		RaidFinderFrameFindRaidButton:SetText(LEAVE_QUEUE);
 	else
-		if ( GetNumPartyMembers() > 0 or GetNumRaidMembers() > 0 ) then
+		if ( IsInGroup() and GetNumGroupMembers() > 1 ) then
 			RaidFinderFrameFindRaidButton:SetText(JOIN_AS_PARTY);
 		else
 			RaidFinderFrameFindRaidButton:SetText(FIND_A_GROUP);
 		end
 	end
 	
-	local otherQueue = false;
-	if ( queueType ~= "raid" and ( mode == "listed" or mode == "queued" or mode == "rolecheck" or mode == "proposal" or mode == "suspended" ) ) then
-		if ( mode == "listed" ) then
-			otherQueue = "lfr";
-		else
-			otherQueue = "lfd";
-		end
-	end
-	if ( RaidFinderQueueFrameIneligibleFrame_SetQueueRestriction(otherQueue) ) then
-		RaidFinderFrameFindRaidButton:Disable();
-	elseif ( LFD_IsEmpowered() and mode ~= "proposal" and mode ~= "listed"  ) then --During the proposal, they must use the proposal buttons to leave the queue.
+	if ( LFD_IsEmpowered() and mode ~= "proposal" and mode ~= "listed"  ) then --During the proposal, they must use the proposal buttons to leave the queue.
 		if ( (mode == "queued" or mode == "rolecheck" or mode == "suspended")	--The players can dequeue even if one of the two cover panels is up.
 			or (not RaidFinderQueueFramePartyBackfill:IsVisible() and not LFDQueueFrameCooldownFrame:IsVisible()) ) then
 			RaidFinderFrameFindRaidButton:Enable();
@@ -267,7 +281,7 @@ function RaidFinderFrame_UpdateBackfill(forceUpdate)
 		if ( currentSubtypeID == LFG_SUBTYPEID_RAID ) then
 			local name, lfgID, typeID = GetPartyLFGBackfillInfo();
 			RaidFinderQueueFramePartyBackfillDescription:SetFormattedText(LFG_OFFER_CONTINUE, HIGHLIGHT_FONT_COLOR_CODE..name.."|r");
-			local mode, subMode = GetLFGMode();
+			local mode, subMode = GetLFGMode(LE_LFG_CATEGORY_RF);
 			if ( (forceUpdate or not RaidFinderQueueFrame:IsVisible()) and mode ~= "queued" and mode ~= "suspended" ) then
 				RaidFinderQueueFramePartyBackfill:Show();
 			end
@@ -286,7 +300,7 @@ function RaidFinderQueueFrameCooldownFrame_OnLoad(self)
 	
 	self:RegisterEvent("PLAYER_ENTERING_WORLD");	--For logging in/reloading ui
 	self:RegisterEvent("UNIT_AURA");	--The cooldown is still technically a debuff
-	self:RegisterEvent("PARTY_MEMBERS_CHANGED");
+	self:RegisterEvent("GROUP_ROSTER_UPDATE");
 end
 
 function RaidFinderQueueFrameCooldownFrame_OnEvent(self, event, ...)
@@ -313,11 +327,14 @@ function RaidFinderQueueFrameCooldownFrame_Update()
 	
 	cooldownFrame.myExpirationTime = cooldownExpiration;
 
-	local tokenPrefix = "raid";
-	local numMembers = GetNumRaidMembers();
-	if ( numMembers == 0 ) then
+	local tokenPrefix;
+	local numMembers;
+	if ( IsInRaid() ) then
+		tokenPrefix = "raid";
+		numMembers = GetNumGroupMembers();
+	else
 		tokenPrefix = "party";
-		numMembers = GetNumPartyMembers();
+		numMembers = GetNumSubgroupMembers();
 	end
 	
 	local numCooldowns = 0;
@@ -411,9 +428,11 @@ end
 function RaidFinderQueueFrameCooldownAdditionalPlayers_OnEnter(self)
 	GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
 	GameTooltip:SetText(DESERTER);
-	for i=1, GetNumRaidMembers() do
-		if ( UnitHasLFGDeserter("raid"..i) ) then
-			GameTooltip:AddLine(UnitName("raid"..i), 1, 1, 1);
+	if ( IsInRaid() ) then
+		for i=1, GetNumGroupMembers() do
+			if ( UnitHasLFGDeserter("raid"..i) ) then
+				GameTooltip:AddLine(UnitName("raid"..i), 1, 1, 1);
+			end
 		end
 	end
 	GameTooltip:Show();

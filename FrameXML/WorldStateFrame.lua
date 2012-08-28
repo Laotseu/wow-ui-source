@@ -42,6 +42,7 @@ CLASS_BUTTONS = {
 	["WARLOCK"]	= {0.7421875, 0.98828125, 0.25, 0.5},
 	["PALADIN"]		= {0, 0.25, 0.5, 0.75},
 	["DEATHKNIGHT"]	= {0.25, 0.49609375, 0.5, 0.75},
+	["MONK"]	= {0.49609375, 0.7421875, 0.5, 0.75},
 };
 
 
@@ -60,7 +61,10 @@ function WorldStateAlwaysUpFrame_OnLoad(self)
 	self:RegisterEvent("PLAYER_ENTERING_BATTLEGROUND");
 
 	self:RegisterEvent("WORLD_STATE_UI_TIMER_UPDATE");
-		
+
+	self:RegisterEvent("WORLD_STATE_TIMER_START");
+	self:RegisterEvent("WORLD_STATE_TIMER_STOP");
+
 	FILTERED_BG_CHAT_ADD = {};
 	FILTERED_BG_CHAT_SUBTRACT = {};
 	FILTERED_BG_CHAT_END = {};
@@ -102,9 +106,16 @@ end
 function WorldStateAlwaysUpFrame_OnEvent(self, event, ...)
 	if ( event == "PLAYER_ENTERING_WORLD" ) then
 		WorldStateFrame_ToggleBattlefieldMinimap();
-		WorldStateAlwaysUpFrame_StopBGChatFilter(self);	
+		WorldStateAlwaysUpFrame_StopBGChatFilter(self);
+		WorldStateChallengeMode_CheckTimers(GetWorldElapsedTimers());
 	elseif ( event == "PLAYER_ENTERING_BATTLEGROUND" ) then
 		WorldStateAlwaysUpFrame_StartBGChatFilter(self);
+	elseif ( event == "WORLD_STATE_TIMER_START" ) then
+		local timerID = ...;
+		WorldStateChallengeMode_CheckTimers(timerID);
+	elseif ( event == "WORLD_STATE_TIMER_STOP" ) then
+		local timerID = ...;
+		WorldStateChallengeMode_HideTimer(timerID);
 	else
 		WorldStateAlwaysUpFrame_Update();
 	end
@@ -968,7 +979,17 @@ function ToggleWorldStateScoreFrame()
 	if ( WorldStateScoreFrame:IsShown() ) then
 		HideUIPanel(WorldStateScoreFrame);
 	else
-		if ( ( not IsActiveBattlefieldArena() or GetBattlefieldWinner() ) and MiniMapBattlefieldFrame.status == "active" ) then
+		--Make sure we're in an active BG
+		local inBattlefield = false;
+		for i=1, GetMaxBattlefieldID() do
+			local status = GetBattlefieldStatus(i);
+			if ( status == "active" ) then
+				inBattlefield = true;
+				break;
+			end
+		end
+
+		if ( ( not IsActiveBattlefieldArena() or GetBattlefieldWinner() ) and inBattlefield ) then
 			ShowUIPanel(WorldStateScoreFrame);
 		end
 	end
@@ -1009,4 +1030,140 @@ function ScorePlayerDropDown_Initialize()
 	info.text = CANCEL;
 	info.func = ScorePlayerDropDown_Cancel;
 	UIDropDownMenu_AddButton(info);
+end
+
+--
+-- Challenge Mode - only 1 timer for now, needs some work for multiple timers
+--
+
+-- WatchFrame handler function
+function WorldStateChallengeMode_DisplayTimers(lineFrame, nextAnchor, maxHeight, frameWidth)
+	local self = WorldStateChallengeModeFrame;
+	if ( self.timerID ) then
+		self:SetParent(lineFrame);
+		if (nextAnchor) then
+			self:SetPoint("TOPLEFT", nextAnchor, "BOTTOMLEFT", 0, -WATCHFRAME_TYPE_OFFSET);
+		else
+			self:SetPoint("TOPLEFT", lineFrame, "TOPLEFT", 0, -WATCHFRAME_INITIAL_OFFSET)
+		end
+		local _, elapsedTime = GetWorldElapsedTime(self.timerID);
+		WorldStateChallengeModeTimer.baseTime = elapsedTime;
+		WorldStateChallengeModeTimer.timeSinceBase = 0;
+		WorldStateChallengeModeTimer.frame = self;
+		self:Show();
+		return self, 198, 0, 1;
+	else
+		-- handler should have been removed before this...
+		self:Hide();
+		return nextAnchor, 0, 0, 0;
+	end
+end
+
+function WorldStateChallengeMode_CheckTimers(...)
+	for i = 1, select("#", ...) do
+		local timerID = select(i, ...);
+		local _, elapsedTime, isChallengeModeTimer = GetWorldElapsedTime(timerID);
+		if ( isChallengeModeTimer ) then
+			local _, _, _, _, _, _, _, mapID = GetInstanceInfo();
+			if ( mapID ) then
+				WorldStateChallengeMode_ShowTimer(timerID, elapsedTime, GetChallengeModeMapTimes(mapID));
+				return;
+			end
+		end	
+	end
+	WorldStateChallengeMode_HideTimer();
+end
+
+function WorldStateChallengeMode_ShowTimer(timerID, elapsedTime, ...)
+	local self = WorldStateChallengeModeFrame;
+	if not ( self.medalTimes ) then
+		self.medalTimes = { };
+	end
+	for i = 1, select("#", ...) do
+		self.medalTimes[i] = select(i, ...);
+	end
+	-- not currently being displayed, set up handler
+	if ( not self.timerID ) then
+		WatchFrame_AddObjectiveHandler(WorldStateChallengeMode_DisplayTimers, 1);
+		if ( WatchFrame_RemoveObjectiveHandler(WatchFrame_DisplayTrackedQuests) ) then
+			self.hidWatchedQuests = true;
+		end
+	end
+	self.timerID = timerID;
+	WorldStateChallengeModeFrame_UpdateMedal(self, elapsedTime);
+	WorldStateChallengeModeFrame_UpdateValues(self, elapsedTime);
+	WatchFrame_ClearDisplay();
+	WatchFrame_Expand(WatchFrame);	-- will automatically do a watchframe update
+	WorldStateChallengeModeTimer:Show();
+end
+
+function WorldStateChallengeMode_HideTimer(timerID)
+	local self = WorldStateChallengeModeFrame;
+	if ( not timerID or self.timerID == timerID ) then
+		self.timerID = nil;
+		if ( self.hidWatchedQuests ) then
+			WatchFrame_AddObjectiveHandler(WatchFrame_DisplayTrackedQuests);
+		end
+		self:Hide();
+		WorldStateChallengeModeTimer:Hide();
+		self.lastMedalShown = nil;
+		WatchFrame_RemoveObjectiveHandler(WorldStateChallengeMode_DisplayTimers);
+		WatchFrame_ClearDisplay();
+		WatchFrame_Update(WatchFrame);
+	end
+end
+
+function WorldStateChallengeModeFrame_UpdateMedal(self, elapsedTime)
+	-- find best medal for current time
+	local prevMedalTime = 0;
+	for i = #self.medalTimes, 1, -1 do
+		local currentMedalTime = self.medalTimes[i];
+		if ( elapsedTime < currentMedalTime ) then
+			self.statusBar:SetMinMaxValues(0, currentMedalTime - prevMedalTime);
+			self.statusBar.medalTime = currentMedalTime;
+			if ( CHALLENGE_MEDAL_TEXTURES[i] ) then
+				self.medalIcon:SetTexture(CHALLENGE_MEDAL_TEXTURES[i]);
+				self.medalIcon:Show();
+			end
+			self.noMedal:Hide();
+			-- play sound if medal changed
+			if ( self.lastMedalShown and self.lastMedalShown ~= i ) then
+				PlaySound("UI_Challenges_MedalExpires");
+			end
+			self.lastMedalShown = i;
+			return;
+		else
+			prevMedalTime = currentMedalTime;
+		end
+	end
+	-- no medal
+	self.statusBar.timeLeft:SetText(CHALLENGES_TIMER_NO_MEDAL);
+	self.statusBar:SetValue(0);
+	self.statusBar.medalTime = nil;
+	self.noMedal:Show();
+	self.medalIcon:Hide();
+	-- play sound if medal changed
+	if ( self.lastMedalShown and self.lastMedalShown ~= 0 ) then
+		PlaySound("UI_Challenges_MedalExpires");
+	end
+	self.lastMedalShown = 0;
+end
+
+function WorldStateChallengeModeFrame_UpdateValues(self, elapsedTime)
+	local statusBar = self.statusBar;
+	if ( statusBar.medalTime ) then
+		local timeLeft = statusBar.medalTime - elapsedTime;
+		if ( timeLeft < 0 ) then
+			WorldStateChallengeModeFrame_UpdateMedal(self, elapsedTime);
+		else
+			statusBar:SetValue(statusBar.medalTime - elapsedTime);
+			statusBar.timeLeft:SetText(GetTimeStringFromSeconds(statusBar.medalTime - elapsedTime));
+		end
+	end
+end
+
+local floor = floor;
+function WorldStateChallengeModeTimer_OnUpdate(self, elapsed)
+	self.timeSinceBase = self.timeSinceBase + elapsed;
+	WorldStateChallengeModeFrame_UpdateValues(self.frame, floor(self.baseTime + self.timeSinceBase));
 end

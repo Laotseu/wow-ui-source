@@ -215,24 +215,26 @@
 					<OnShow function="CompactUnitFrameProfilesProfileSelector_SetUp"/>
 				</Scripts>
 			</Frame>
-			<Button name="$parentSaveButton" inherits="UIPanelButtonTemplate2" text="SAVE">
+			<Button name="$parentSaveButton" inherits="UIPanelButtonTemplate" text="SAVE">
 				<Size x="115" y="21"/>
 				<Anchors>
 					<Anchor point="TOPLEFT" relativeTo="$parentProfileSelector" relativePoint="BOTTOMLEFT" x="18" y="5"/>
 				</Anchors>
 				<Scripts>
 					<OnClick>
+						PlaySound("igMainMenuOptionCheckBoxOn");
 						CompactUnitFrameProfiles_SaveChanges(CompactUnitFrameProfiles);
 					</OnClick>
 				</Scripts>
 			</Button>
-			<Button name="$parentDeleteButton" inherits="UIPanelButtonTemplate2" text="DELETE">
+			<Button name="$parentDeleteButton" inherits="UIPanelButtonTemplate" text="DELETE">
 				<Anchors>
 					<Anchor point="TOPRIGHT" relativeTo="$parentProfileSelector" relativePoint="BOTTOMRIGHT" x="-15" y="5"/>
 					<Anchor point="BOTTOMLEFT" relativeTo="$parentSaveButton" relativePoint="BOTTOMRIGHT" x="3" y="0"/>
 				</Anchors>
 				<Scripts>
 					<OnClick>
+						PlaySound("igMainMenuOptionCheckBoxOn");
 						CompactUnitFrameProfiles_ConfirmProfileDeletion(GetActiveRaidProfile());
 					</OnClick>
 				</Scripts>
@@ -353,7 +355,7 @@
 							<OnShow function="CompactUnitFrameProfilesNewProfileDialogBaseProfileSelector_SetUp"/>
 						</Scripts>
 					</Frame>
-					<Button name="$parentCreateButton" inherits="UIPanelButtonTemplate2" text="CREATE_COMPACT_UNIT_FRAME_PROFILE" parentKey="createButton">
+					<Button name="$parentCreateButton" inherits="UIPanelButtonTemplate" text="CREATE_COMPACT_UNIT_FRAME_PROFILE" parentKey="createButton">
 						<Size x="115" y="21"/>
 						<Anchors>
 							<Anchor point="BOTTOMRIGHT" relativePoint="BOTTOM" x="-5" y="15"/>
@@ -361,18 +363,20 @@
 						<Scripts>
 							<OnClick>
 								--Also clicked via the OnEnterPressed script in the EditBox.
+								PlaySound("igMainMenuOptionCheckBoxOn");
 								CompactUnitFrameProfiles_CreateProfile(strtrim(self:GetParent().editBox:GetText()));
 								CompactUnitFrameProfiles_HideNewProfileDialog();
 							</OnClick>
 						</Scripts>
 					</Button>
-					<Button name="$parentCancelButton" inherits="UIPanelButtonTemplate2" text="CANCEL">
+					<Button name="$parentCancelButton" inherits="UIPanelButtonTemplate" text="CANCEL">
 						<Size x="115" y="21"/>
 						<Anchors>
 							<Anchor point="BOTTOMLEFT" relativePoint="BOTTOM" x="5" y="15"/>
 						</Anchors>
 						<Scripts>
 							<OnClick>
+								PlaySound("igMainMenuOptionCheckBoxOn");
 								CompactUnitFrameProfiles_HideNewProfileDialog();
 							</OnClick>
 						</Scripts>
@@ -392,13 +396,14 @@
 					</Layer>
 				</Layers>
 				<Frames>
-					<Button name="$parentDeleteButton" inherits="UIPanelButtonTemplate2" text="DELETE">
+					<Button name="$parentDeleteButton" inherits="UIPanelButtonTemplate" text="DELETE">
 						<Size x="115" y="21"/>
 						<Anchors>
 							<Anchor point="BOTTOMRIGHT" relativePoint="BOTTOM" x="-5" y="15"/>
 						</Anchors>
 						<Scripts>
 							<OnClick>
+								PlaySound("igMainMenuOptionCheckBoxOn");
 								local newProfile = GetRaidProfileName(1);
 								if ( newProfile == self:GetParent().profile ) then
 									newProfile = GetRaidProfileName(2);
@@ -410,13 +415,14 @@
 							</OnClick>
 						</Scripts>
 					</Button>
-					<Button name="$parentCancelButton" inherits="UIPanelButtonTemplate2" text="CANCEL">
+					<Button name="$parentCancelButton" inherits="UIPanelButtonTemplate" text="CANCEL">
 						<Size x="115" y="21"/>
 						<Anchors>
 							<Anchor point="BOTTOMLEFT" relativePoint="BOTTOM" x="5" y="15"/>
 						</Anchors>
 						<Scripts>
 							<OnClick>
+								PlaySound("igMainMenuOptionCheckBoxOn");
 								self:GetParent():Hide();
 							</OnClick>
 						</Scripts>
@@ -436,39 +442,42 @@
 					</Layer>
 				</Layers>
 				<Frames>
-					<Button name="$parentDontSaveButton" inherits="UIPanelButtonTemplate2" text="DONT_SAVE">
+					<Button name="$parentDontSaveButton" inherits="UIPanelButtonTemplate" text="DONT_SAVE">
 						<Size x="115" y="21"/>
 						<Anchors>
 							<Anchor point="BOTTOM" relativePoint="BOTTOM" x="0" y="15"/>
 						</Anchors>
 						<Scripts>
 							<OnClick>
+								PlaySound("igMainMenuOptionCheckBoxOn");
 								CompactUnitFrameProfiles_CancelChanges(CompactUnitFrameProfiles);
 								CompactUnitFrameProfiles_AfterConfirmUnsavedChanges();
 								self:GetParent():Hide();
 							</OnClick>
 						</Scripts>
 					</Button>
-					<Button name="$parentSaveButton" inherits="UIPanelButtonTemplate2" text="SAVE">
+					<Button name="$parentSaveButton" inherits="UIPanelButtonTemplate" text="SAVE">
 						<Size x="115" y="21"/>
 						<Anchors>
 							<Anchor point="BOTTOMRIGHT" relativeTo="$parentDontSaveButton" relativePoint="BOTTOMLEFT" x="-5" y="0"/>
 						</Anchors>
 						<Scripts>
 							<OnClick>
+								PlaySound("igMainMenuOptionCheckBoxOn");
 								CompactUnitFrameProfiles_SaveChanges(CompactUnitFrameProfiles);
 								CompactUnitFrameProfiles_AfterConfirmUnsavedChanges();
 								self:GetParent():Hide();
 							</OnClick>
 						</Scripts>
 					</Button>
-					<Button name="$parentCancelButton" inherits="UIPanelButtonTemplate2" text="CANCEL">
+					<Button name="$parentCancelButton" inherits="UIPanelButtonTemplate" text="CANCEL">
 						<Size x="115" y="21"/>
 						<Anchors>
 							<Anchor point="BOTTOMLEFT" relativeTo="$parentDontSaveButton" relativePoint="BOTTOMRIGHT" x="5" y="0"/>
 						</Anchors>
 						<Scripts>
 							<OnClick>
+								PlaySound("igMainMenuOptionCheckBoxOn");
 								self:GetParent():Hide();
 							</OnClick>
 						</Scripts>
@@ -790,13 +799,14 @@
 						</Scripts>
 					</CheckButton>
 					
-					<Button name="$parentResetPositionButton" inherits="UIPanelButtonTemplate2" text="RESET_POSITION">
+					<Button name="$parentResetPositionButton" inherits="UIPanelButtonTemplate" text="RESET_POSITION">
 						<Size x="160" y="21"/>
 						<Anchors>
 							<Anchor point="BOTTOMRIGHT" x="-5" y="5"/>
 						</Anchors>
 						<Scripts>
 							<OnClick>
+								PlaySound("igMainMenuOptionCheckBoxOn");
 								CompactRaidFrameManager_ResetContainerPosition();
 							</OnClick>
 						</Scripts>

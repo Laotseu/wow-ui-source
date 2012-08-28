@@ -413,7 +413,9 @@ function BrowseButton_OnClick(button)
 	assert(button);
 	
 	if ( GetCVarBool("auctionDisplayOnCharacter") ) then
-		DressUpItemLink(GetAuctionItemLink("list", button:GetID() + FauxScrollFrame_GetOffset(BrowseScrollFrame)));
+		if ( not DressUpItemLink(GetAuctionItemLink("list", button:GetID() + FauxScrollFrame_GetOffset(BrowseScrollFrame))) ) then
+			DressUpBattlePet(GetAuctionItemBattlePetInfo("list", button:GetID() + FauxScrollFrame_GetOffset(BrowseScrollFrame)));
+		end
 	end
 	SetSelectedAuctionItem("list", button:GetID() + FauxScrollFrame_GetOffset(BrowseScrollFrame));
 	-- Close any auction related popups
@@ -768,7 +770,7 @@ function AuctionFrameBrowse_Update()
 	local offset = FauxScrollFrame_GetOffset(BrowseScrollFrame);
 	local index;
 	local isLastSlotEmpty;
-	local name, texture, count, quality, canUse, level, levelColHeader, minBid, minIncrement, buyoutPrice, duration, bidAmount, highBidder, owner;
+	local name, texture, count, quality, canUse, level, levelColHeader, minBid, minIncrement, buyoutPrice, duration, bidAmount, highBidder, owner, saleStatus, itemId, hasAllInfo;
 	local displayedPrice, requiredBid;
 	BrowseBidButton:Disable();
 	BrowseBuyoutButton:Disable();
@@ -1117,7 +1119,9 @@ function BidButton_OnClick(button)
 	assert(button)
 	
 	if ( GetCVarBool("auctionDisplayOnCharacter") ) then
-		DressUpItemLink(GetAuctionItemLink("bidder", button:GetID() + FauxScrollFrame_GetOffset(BidScrollFrame)));
+		if ( not DressUpItemLink(GetAuctionItemLink("bidder", button:GetID() + FauxScrollFrame_GetOffset(BidScrollFrame))) ) then
+			DressUpBattlePet(GetAuctionItemBattlePetInfo("bidder", button:GetID() + FauxScrollFrame_GetOffset(BidScrollFrame)));
+		end
 	end
 	SetSelectedAuctionItem("bidder", button:GetID() + FauxScrollFrame_GetOffset(BidScrollFrame));
 	-- Close any auction related popups
@@ -1386,7 +1390,9 @@ function AuctionsButton_OnClick(button)
 	assert(button);
 	
 	if ( GetCVarBool("auctionDisplayOnCharacter") ) then
-		DressUpItemLink(GetAuctionItemLink("owner", button:GetID() + FauxScrollFrame_GetOffset(AuctionsScrollFrame)));
+		if ( not DressUpItemLink(GetAuctionItemLink("owner", button:GetID() + FauxScrollFrame_GetOffset(AuctionsScrollFrame))) ) then
+			DressUpBattlePet(GetAuctionItemBattlePetInfo("owner", button:GetID() + FauxScrollFrame_GetOffset(AuctionsScrollFrame)));
+		end
 	end
 	SetSelectedAuctionItem("owner", button:GetID() + FauxScrollFrame_GetOffset(AuctionsScrollFrame));
 	-- Close any auction related popups
@@ -1601,7 +1607,12 @@ end
 
 function AuctionFrameItem_OnEnter(self, type, index)
 	GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-	GameTooltip:SetAuctionItem(type, index);
+
+	local hasCooldown, speciesID, level, breedQuality, maxHealth, power, speed, name = GameTooltip:SetAuctionItem(type, index);
+	if(speciesID and speciesID > 0) then
+		BattlePetToolTip_Show(speciesID, level, breedQuality, maxHealth, power, speed, name);
+		return;
+	end
 
 	-- add price per unit info
 	local button;

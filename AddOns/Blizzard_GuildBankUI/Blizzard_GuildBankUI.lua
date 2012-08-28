@@ -111,6 +111,8 @@ function GuildBankFrame_OnLoad(self)
 	GuildBankFrame.maxTabWidth = 128;
 	GuildBankFrame_UpdateTabs();
 	GuildBankFrame_UpdateTabard();
+	GuildBankFrame.TopTileStreaks:Hide();
+	GuildBankFrame.Bg:Hide();
 end
 
 function GuildBankFrame_OnEvent(self, event, ...)
@@ -300,6 +302,16 @@ function GuildBankFrame_UpdateFiltered()
 	end
 end
 
+function GuildBankFrameTab_UpdateFiltered(self)
+	if ( self:IsVisible()) then
+		local _,_,_,_,_,_, filtered = GetGuildBankTabInfo(self:GetParent():GetID());
+		if ( filtered ) then
+			self.searchOverlay:Show();
+		else
+			self.searchOverlay:Hide();
+		end
+	end
+end
 
 function GuildBankFrameTab_OnClick(tab, id, doNotUpdate)
 	PanelTemplates_SetTab(GuildBankFrame, id);
@@ -520,7 +532,7 @@ function GuildBankFrame_UpdateTabs()
 			GuildBankTabLimitBackground:SetPoint("RIGHT", GuildBankFrameWithdrawButton, "LEFT", -14, -1);
 		else
 			GuildBankTabLimitBackground:ClearAllPoints();
-			GuildBankTabLimitBackground:SetPoint("TOP", "GuildBankFrame", "TOP", 6, -388);
+			GuildBankTabLimitBackground:SetPoint("TOP", "GuildBankFrame", "TOP", 6, -378);
 		end
 
 		GuildBankLimitLabel:Show();
@@ -556,7 +568,7 @@ function GuildBankFrame_UpdateCashFlowMoney()
 		GuildBankTabLimitBackground:SetPoint("RIGHT", GuildBankFrameWithdrawButton, "LEFT", -14, -1);
 	else
 		GuildBankTabLimitBackground:ClearAllPoints();
-		GuildBankTabLimitBackground:SetPoint("TOP", "GuildBankFrame", "TOP", 6, -388);
+		GuildBankTabLimitBackground:SetPoint("TOP", "GuildBankFrame", "TOP", 6, -378);
 	end
 end
 
@@ -626,7 +638,10 @@ end
 
 function GuildBankItemButton_OnEnter(self)
 	GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-	GameTooltip:SetGuildBankItem(GetCurrentGuildBankTab(), self:GetID());
+	local hasUpdate, speciesID, level, breedQuality, maxHealth, power, speed, name = GameTooltip:SetGuildBankItem(GetCurrentGuildBankTab(), self:GetID());
+	if(speciesID and speciesID > 0) then
+		BattlePetToolTip_Show(speciesID, level, breedQuality, maxHealth, power, speed, name);
+	end
 end
 
 function GuildBankFrame_UpdateLog()

@@ -48,7 +48,7 @@
 			</OnMouseUp>
 		</Scripts>
 	</Button>
-	<Frame name="MinimapCluster" frameStrata="BACKGROUND" enableMouse="true" parent="UIParent">
+	<Frame name="MinimapCluster" frameStrata="BACKGROUND" toplevel="true" enableMouse="true" parent="UIParent">
 		<Size>
 			<AbsDimension x="192" y="192"/>
 		</Size>
@@ -184,116 +184,6 @@
 							<OnLeave function="GameTooltip_Hide"/>
 						</Scripts>
 					</Frame>
-					<Button name="MiniMapBattlefieldFrame" hidden="true">
-						<Size>
-							<AbsDimension x="33" y="33"/>
-						</Size>
-						<Anchors>
-							<Anchor point="BOTTOMLEFT">
-								<Offset>
-									<AbsDimension x="13" y="-19"/>
-								</Offset>
-							</Anchor>
-						</Anchors>
-						<Layers>
-							<Layer level="BACKGROUND">
-								<Texture name="MiniMapBattlefieldIcon" file="Interface\BattlefieldFrame\UI-Battlefield-Icon">
-									<Size>
-										<AbsDimension x="32" y="32"/>
-									</Size>
-									<Anchors>
-										<Anchor point="CENTER">
-											<Offset>
-												<AbsDimension x="-1" y="0"/>
-											</Offset>
-										</Anchor>
-									</Anchors>
-								</Texture>
-
-								<FontString name="BattlefieldIconText" inherits="GameFontNormal" nonspacewrap="true">
-									<Size>
-										<AbsDimension x="32" y="32"/>
-									</Size>
-									<Anchors>
-										<Anchor point="CENTER" relativePoint="CENTER">
-											<Offset>
-												<AbsDimension x="0" y="3"/>
-											</Offset>
-										</Anchor>
-									</Anchors>
-								</FontString>
-
-							</Layer>
-							<Layer level="ARTWORK">
-								<Texture name="MiniMapBattlefieldBorder" file="Interface\Minimap\MiniMap-TrackingBorder">
-									<Size>
-										<AbsDimension x="52" y="52"/>
-									</Size>
-									<Anchors>
-										<Anchor point="TOPLEFT"/>
-									</Anchors>
-								</Texture>
-							</Layer>
-							<Layer level="BORDER">
-								<Texture name="BattlegroundShine" file="Interface\ComboFrame\ComboPoint" alphaMode="ADD">
-									<Size>
-										<AbsDimension x="32" y="32"/>
-									</Size>
-									<Anchors>
-										<Anchor point="CENTER">
-											<Offset>
-												<AbsDimension x="3" y="3"/>
-											</Offset>
-										</Anchor>
-									</Anchors>
-									<TexCoords left="0.5625" right="1" top="0" bottom="1"/>
-									<Color r="1" g="1" b="1" a="0"/>
-								</Texture>
-							</Layer>
-						</Layers>
-						<Frames>
-							<Frame name="MiniMapBattlefieldDropDown" inherits="UIDropDownMenuTemplate" clampedToScreen="true" id="1" hidden="true">
-							</Frame>
-						</Frames>
-						<Scripts>
-							<OnLoad>
-								self:RegisterForClicks("LeftButtonUp", "RightButtonUp");
-								self:SetFrameLevel(self:GetFrameLevel()+1);
-								MiniMapBattlefieldFrame.timeInQueue = 0;
-								MiniMapBattlefieldIcon:SetTexture("Interface\\BattlefieldFrame\\Battleground-"..UnitFactionGroup("player"));
-								MiniMapBattlefieldIcon:SetTexCoord(0, 1, 0, 1);
-								MiniMapBattlefieldIcon:SetWidth(32);
-								MiniMapBattlefieldIcon:SetHeight(32);
-								MiniMapBattlefieldIcon:SetPoint("CENTER", "MiniMapBattlefieldFrame", "CENTER", -1, 0);
-							</OnLoad>
-							<OnEnter>
-								GameTooltip:SetOwner(self, "ANCHOR_LEFT");
-								if (self.tooltip) then
-									GameTooltip:SetText(self.tooltip);
-								end
-								self:SetScript("OnUpdate", MiniMapBattlefieldFrame_OnUpdate);
-							</OnEnter>
-							<OnLeave>
-								GameTooltip:Hide();
-								self:SetScript("OnUpdate", nil);
-							</OnLeave>
-							<OnClick>
-								-- Hide tooltip
-								GameTooltip:Hide();
-								if ( MiniMapBattlefieldFrame.status == "active") then
-									if ( button == "RightButton" ) then
-										ToggleDropDownMenu(1, nil, MiniMapBattlefieldDropDown, "MiniMapBattlefieldFrame", 0, -5);
-									elseif ( IsShiftKeyDown() ) then
-										ToggleBattlefieldMinimap();
-									else
-										ToggleWorldStateScoreFrame();
-									end
-								elseif ( button == "RightButton" ) then
-									ToggleDropDownMenu(1, nil, MiniMapBattlefieldDropDown, "MiniMapBattlefieldFrame", 0, -5);
-								end
-							</OnClick>
-						</Scripts>
-					</Button>
 					<Frame name="MinimapBackdrop">
 						<Size>
 							<AbsDimension x="192" y="192"/>
@@ -478,75 +368,6 @@
 									</Button>
 								</Frames>
 							</Frame>
-							<Button name="MiniMapLFGFrame" hidden="true" inherits="MiniMapButtonTemplate">
-								<Size>
-									<AbsDimension x="33" y="33"/>
-								</Size>
-								<Anchors>
-									<Anchor point="TOPLEFT">
-										<Offset>
-											<AbsDimension x="22" y="-100"/>
-										</Offset>
-									</Anchor>
-								</Anchors>
-								<Layers>
-									<Layer level="OVERLAY">
-										<Texture name="$parentBorder" file="Interface\Minimap\MiniMap-TrackingBorder">
-											<Size>
-												<AbsDimension x="52" y="52"/>
-											</Size>
-											<Anchors>
-												<Anchor point="TOPLEFT">
-													<Offset>
-														<AbsDimension x="1" y="-1"/>
-													</Offset>
-												</Anchor>
-											</Anchors>
-										</Texture>
-										<FontString name="$parentGroupSize" inherits="NumberFontNormalYellow" hidden="true" parentKey="groupSize">
-											<Anchors>
-												<Anchor point="CENTER" x="1" y="0"/>
-											</Anchors>
-										</FontString>
-									</Layer>
-								</Layers>
-								<Frames>
-									<Frame name="$parentIcon" inherits="EyeTemplate" hidden="false" parentKey="eye">
-										<Size x="30" y="30"/>
-										<Anchors>
-											<Anchor point="CENTER"/>
-										</Anchors>
-									</Frame>
-									<Frame name="$parentDropDown" inherits="UIDropDownMenuTemplate">
-										<Scripts>
-											<OnLoad>
-												UIDropDownMenu_Initialize(self, MiniMapLFGFrameDropDown_Update, "MENU");
-											</OnLoad>
-										</Scripts>
-									</Frame>
-								</Frames>
-								<Scripts>
-									<OnLoad>
-										self:RegisterEvent("LFG_UPDATE");
-										self:RegisterEvent("PLAYER_ENTERING_WORLD");
-										self:RegisterEvent("LFG_ROLE_CHECK_UPDATE");
-										self:RegisterEvent("LFG_PROPOSAL_UPDATE");
-										self:RegisterEvent("LFG_PROPOSAL_FAILED");
-										self:RegisterEvent("LFG_PROPOSAL_SUCCEEDED");
-										self:RegisterEvent("LFG_PROPOSAL_SHOW");
-										self:RegisterEvent("LFG_QUEUE_STATUS_UPDATE");
-										self:RegisterEvent("PARTY_MEMBERS_CHANGED");
-										self:RegisterEvent("RAID_ROSTER_UPDATE");
-										self:RegisterForClicks("LeftButtonUp", "RightButtonUp");
-										self:SetFrameLevel(self:GetFrameLevel()+1)
-									</OnLoad>
-									<OnClick function="MiniMapLFGFrame_OnClick"/>
-									<OnEvent function="MiniMapLFG_Update"/>
-									<OnEnter function="MiniMapLFGFrame_OnEnter"/>
-									<OnLeave function="MiniMapLFGFrame_OnLeave"/>
-								</Scripts>						
-								<HighlightTexture alphaMode="ADD" file="Interface\Minimap\UI-Minimap-ZoomButton-Highlight"/>
-							</Button>	
 							<Button name="MinimapZoomIn">
 								<Size>
 									<AbsDimension x="32" y="32"/>
@@ -722,7 +543,7 @@
 					<OnLoad>
 						self:RegisterEvent("PLAYER_DIFFICULTY_CHANGED");
 						self:RegisterEvent("UPDATE_INSTANCE_INFO");
-						self:RegisterEvent("PARTY_MEMBERS_CHANGED");
+						self:RegisterEvent("GROUP_ROSTER_UPDATE");
 						self:RegisterEvent("PLAYER_GUILD_UPDATE");
 						self:RegisterEvent("PARTY_MEMBER_ENABLE");
 						self:RegisterEvent("PARTY_MEMBER_DISABLE");
@@ -782,6 +603,12 @@
 							<Size x="12" y="13"/>
 							<TexCoords left="0.67968750" right="0.77343750" top="0.65625000" bottom="0.85937500"/>
 						</Texture>
+						<Texture name="$parentChallengeModeTexture" file="Interface\Common\mini-hourglass">
+							<Anchors>
+								<Anchor point="BOTTOMLEFT" x="8" y="7"/>
+							</Anchors>
+							<Size x="12" y="12"/>
+						</Texture>
 						<FontString name="$parentText" inherits="GameFontNormalSmall" text="25">
 							<Anchors>
 								<Anchor point="BOTTOMLEFT" x="20" y="8"/>
@@ -805,6 +632,22 @@
 					</OnLeave>
 				</Scripts>
 			</Frame>
+			<Frame name="MiniMapChallengeMode" hidden="true" enableMouse="true">
+				<Size x="27" y="36"/>
+				<Anchors>
+					<Anchor point="TOPLEFT" x="28" y="-23"/>
+				</Anchors>
+				<Layers>
+					<Layer level="BACKGROUND">
+						<Texture file="Interface\Challenges\challenges-minimap-banner">
+							<Size x="64" y="64"/>
+							<Anchors>
+								<Anchor point="CENTER"/>
+							</Anchors>
+						</Texture>
+					</Layer>
+				</Layers>
+			</Frame>
 		</Frames>
 		<Scripts>
 			<OnLoad>
@@ -814,8 +657,10 @@
 				self:RegisterEvent("ZONE_CHANGED_INDOORS");
 				self:RegisterEvent("ZONE_CHANGED_NEW_AREA");
 				Minimap_UpdateRotationSetting();
-				MiniMapInstanceDifficulty:SetFrameLevel(self:GetFrameLevel() + 10);
-				GuildInstanceDifficulty:SetFrameLevel(self:GetFrameLevel() + 10);
+				local raisedFrameLevel = self:GetFrameLevel() + 10;
+				MiniMapInstanceDifficulty:SetFrameLevel(raisedFrameLevel);
+				GuildInstanceDifficulty:SetFrameLevel(raisedFrameLevel);
+				MiniMapChallengeMode:SetFrameLevel(raisedFrameLevel);
 			</OnLoad>
 			<OnEvent function="Minimap_Update"/>
 		</Scripts>

@@ -4,6 +4,16 @@ local GUILDFRAME_POPUPS = { };
 local BUTTON_WIDTH_WITH_SCROLLBAR = 298;
 local BUTTON_WIDTH_NO_SCROLLBAR = 320;
 
+local GUILD_EVENT_TEXTURES = {
+	--[CALENDAR_EVENTTYPE_RAID]		= "Interface\\LFGFrame\\LFGIcon-",
+	--[CALENDAR_EVENTTYPE_DUNGEON]	= "Interface\\LFGFrame\\LFGIcon-",
+	[CALENDAR_EVENTTYPE_PVP]		= "Interface\\Calendar\\UI-Calendar-Event-PVP",
+	[CALENDAR_EVENTTYPE_MEETING]	= "Interface\\Calendar\\MeetingIcon",
+	[CALENDAR_EVENTTYPE_OTHER]		= "Interface\\Calendar\\UI-Calendar-Event-Other",
+	--[CALENDAR_EVENTTYPE_HEROIC_DUNGEON]	= "Interface\\LFGFrame\\LFGIcon-",
+};
+local GUILD_EVENT_TEXTURE_PATH = "Interface\\LFGFrame\\LFGIcon-";
+
 function GuildFrame_OnLoad(self)
 	self:RegisterEvent("GUILD_ROSTER_UPDATE");
 	self:RegisterEvent("PLAYER_GUILD_UPDATE");
@@ -55,6 +65,7 @@ function GuildFrame_OnShow(self)
 	GuildRoster();
 	UpdateMicroButtons();
 	GuildNameChangeAlertFrame.topAnchored = true;
+	GuildFrame.hasForcedNameChange = GetGuildRenameRequired();
 	GuildFrame_CheckName();
 end
 
@@ -110,14 +121,14 @@ function GuildFrame_OnEvent(self, event, ...)
 end
 
 function GuildFrame_UpdateLevel()
-	local guildLevel = GetGuildLevel();
+	local guildLevel, maxGuildLevel = GetGuildLevel();
 	GuildLevelFrameText:SetText(guildLevel);
 	if ( GetGuildFactionGroup() == 0 ) then
 		GuildXPFrameLevelText:SetFormattedText(GUILD_LEVEL_AND_FACTION, guildLevel, FACTION_HORDE);
 	else
 		GuildXPFrameLevelText:SetFormattedText(GUILD_LEVEL_AND_FACTION, guildLevel, FACTION_ALLIANCE);
 	end
-	if ( guildLevel == MAX_GUILD_LEVEL ) then
+	if ( guildLevel == maxGuildLevel ) then
 		GuildXPBar:Hide();
 		GuildXPFrameLevelText:SetPoint("BOTTOM", GuildXPFrame, "TOP", 0, -8);
 	else
@@ -128,27 +139,23 @@ function GuildFrame_UpdateLevel()
 end
 
 function GuildFrame_UpdateXP()
-	local currentXP, nextLevelXP, dailyXP, maxDailyXP, _, _, isUncapped = UnitGetGuildXP("player");
-	local capXP = maxDailyXP - dailyXP;
-	if ( isUncapped ) then
-		capXP = 0;
-	end
+	local currentXP, nextLevelXP = UnitGetGuildXP("player");
 	if ( nextLevelXP > 0 ) then
-		GuildBar_SetProgress(GuildXPBar, currentXP, nextLevelXP + currentXP, capXP);
+		GuildBar_SetProgress(GuildXPBar, currentXP, nextLevelXP + currentXP);
 	end
 end
 
 function GuildFrame_UpdateFaction()
 	local factionBar = GuildFactionFrame;
 	local gender = UnitSex("player");
-	local name, description, standingID, barMin, barMax, barValue, _, _, _, _, _, _, _, repToCap, weeklyCap = GetGuildFactionInfo();
+	local name, description, standingID, barMin, barMax, barValue, _, _, _, _, _, _, _ = GetGuildFactionInfo();
 	local factionStandingtext = GetText("FACTION_STANDING_LABEL"..standingID, gender);
 	--Normalize Values
 	barMax = barMax - barMin;
 	barValue = barValue - barMin;
 	GuildFactionBarLabel:SetText(barValue.." / "..barMax);
 	GuildFactionFrameStanding:SetText(factionStandingtext);
-	GuildBar_SetProgress(GuildFactionBar, barValue, barMax, repToCap or 0);
+	GuildBar_SetProgress(GuildFactionBar, barValue, barMax);
 end
 
 function GuildFrame_UpdateTabard()
@@ -399,27 +406,20 @@ function GuildXPBar_OnLoad()
 end
 
 function GuildXPBar_OnEnter(self)
-	local currentXP, remainingXP, dailyXP, maxDailyXP, _, _, isUncapped = UnitGetGuildXP("player");
-	local nextLevelXP = (currentXP + remainingXP) or 1;
-	local percentTotal = tostring(math.ceil((currentXP / nextLevelXP) * 100));
+	local currentXP, remainingXP = UnitGetGuildXP("player");
+	local nextLevelXP = currentXP + remainingXP;
 	GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
 	GameTooltip:SetText(GUILD_EXPERIENCE);
 	GameTooltip:AddLine(GUILD_EXPERIENCE_TOOLTIP, 1, 1, 1, 1);
-	GameTooltip:AddLine(" ");
-	if ( isUncapped ) then
-		GameTooltip:AddLine(string.format(GUILD_EXPERIENCE_NO_CAP, UNCAPPED_GUILD_LEVEL), 1, 1, 1, 1);
-		GameTooltip:AddLine(string.format(GUILD_EXPERIENCE_CURRENT, TextStatusBar_CapDisplayOfNumericValue(currentXP), TextStatusBar_CapDisplayOfNumericValue(nextLevelXP), percentTotal));
-	else
-		GameTooltip:AddLine(GUILD_EXPERIENCE_CAP, 1, 1, 1, 1);
-		GameTooltip:AddLine(string.format(GUILD_EXPERIENCE_CURRENT, TextStatusBar_CapDisplayOfNumericValue(currentXP), TextStatusBar_CapDisplayOfNumericValue(nextLevelXP), percentTotal));
-		local percentDaily = tostring(math.ceil((dailyXP / maxDailyXP) * 100));
-		GameTooltip:AddLine(string.format(GUILD_EXPERIENCE_DAILY, TextStatusBar_CapDisplayOfNumericValue(dailyXP), TextStatusBar_CapDisplayOfNumericValue(maxDailyXP), percentDaily));	
+	if nextLevelXP > 0 then
+		local percentTotal = tostring(math.ceil((currentXP / nextLevelXP) * 100));
+		GameTooltip:AddLine(string.format(GUILD_EXPERIENCE_CURRENT, BreakUpLargeNumbers(currentXP), BreakUpLargeNumbers(nextLevelXP), percentTotal));
 	end
 	GameTooltip:Show();
 end
 
 function GuildFactionBar_OnEnter(self)
-	local name, description, standingID, barMin, barMax, barValue, _, _, _, _, _, _, _, repToCap, weeklyCap = GetGuildFactionInfo();
+	local name, description, standingID, barMin, barMax, barValue, _, _, _, _, _, _, _ = GetGuildFactionInfo();
 	local factionStandingtext = GetText("FACTION_STANDING_LABEL"..standingID, gender);
 	--Normalize Values
 	barMax = barMax - barMin;
@@ -430,46 +430,25 @@ function GuildFactionBar_OnEnter(self)
 	GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
 	GameTooltip:SetText(GUILD_REPUTATION);
 	GameTooltip:AddLine(description, 1, 1, 1, 1, 1);
-	GameTooltip:AddLine("\n"..GUILD_REPUTATION_CAP, 1, 1, 1, 1, 1);
 	local percentTotal = tostring(math.ceil((barValue / barMax) * 100));
-	GameTooltip:AddLine(string.format(GUILD_EXPERIENCE_CURRENT, TextStatusBar_CapDisplayOfNumericValue(barValue), TextStatusBar_CapDisplayOfNumericValue(barMax), percentTotal));
-	local weeklyRep = weeklyCap - repToCap;
-	local percentWeekly = tostring(math.ceil((weeklyRep / weeklyCap) * 100));
-	GameTooltip:AddLine(string.format(GUILD_REPUTATION_WEEKLY, TextStatusBar_CapDisplayOfNumericValue(weeklyRep), TextStatusBar_CapDisplayOfNumericValue(weeklyCap), percentWeekly));	
+	GameTooltip:AddLine(string.format(GUILD_EXPERIENCE_CURRENT, BreakUpLargeNumbers(barValue), BreakUpLargeNumbers(barMax), percentTotal));
 	GameTooltip:Show();
 end
 
-function GuildBar_SetProgress(bar, currentValue, maxValue, capValue)
+function GuildBar_SetProgress(bar, currentValue, maxValue)
 	local MAX_BAR = bar:GetWidth() - 4;
 	local progress = min(MAX_BAR * currentValue / maxValue, MAX_BAR);
-	local capAtEdge;
 	bar.progress:SetWidth(progress + 1);
-	if ( capValue + currentValue >= maxValue ) then
-		capValue = maxValue - currentValue;
-		capAtEdge = true;
-	end
-	local capWidth = MAX_BAR * capValue / maxValue;
-	if ( capWidth > 0 ) then
-		bar.cap:SetWidth(capWidth);
-		bar.cap:Show();
-		-- don't show cap marker if cap goes all the way to the end
-		if ( capAtEdge ) then
-			bar.capMarker:Hide();
-		else
-			bar.capMarker:Show();
-		end
-	else
-		bar.cap:Hide();
-		bar.capMarker:Hide();
-	end
+	bar.cap:Hide();
+	bar.capMarker:Hide();
 	-- hide shadow on progress bar near the right edge
 	if ( progress > MAX_BAR - 4 ) then
 		bar.shadow:Hide();
 	else
 		bar.shadow:Show();
 	end
-	currentValue = TextStatusBar_CapDisplayOfNumericValue(currentValue);
-	maxValue = TextStatusBar_CapDisplayOfNumericValue(maxValue);
+	currentValue = BreakUpLargeNumbers(currentValue);
+	maxValue = BreakUpLargeNumbers(maxValue);
 end
 
 --*******************************************************************************
@@ -487,8 +466,10 @@ function GuildMainFrame_OnLoad(self)
 	-- faction icon
 	if ( GetGuildFactionGroup() == 0 ) then  -- horde
 		GuildNewPerksFrameFaction:SetTexCoord(0.42871094, 0.53808594, 0.60156250, 0.87890625);
+		GUILD_EVENT_TEXTURES[CALENDAR_EVENTTYPE_PVP] = "Interface\\Calendar\\UI-Calendar-Event-PVP01";
 	else  -- alliance
 		GuildNewPerksFrameFaction:SetTexCoord(0.31640625, 0.42675781, 0.60156250, 0.88281250);
+		GUILD_EVENT_TEXTURES[CALENDAR_EVENTTYPE_PVP] = "Interface\\Calendar\\UI-Calendar-Event-PVP02";
 	end
 	-- create buttons table for news update
 	local buttons = { };
@@ -616,7 +597,7 @@ function GuildMainFrame_UpdateNewsEvents()
 				button.icon:Show();
 				button.dash:Hide();
 			end
-			GuildInfoEvents_SetButton(button, i);
+			GuildMainFrame_SetNewsOrEventButton(button, i);
 			button:Show();
 		end
 	end
@@ -624,6 +605,74 @@ function GuildMainFrame_UpdateNewsEvents()
 
 	if ( hasImpeachFrame ) then
 		GuildUpdatesButton9:Hide();
+	end
+end
+
+local SIX_DAYS = 6 * 24 * 60 * 60		-- time in seconds
+function GuildMainFrame_SetNewsOrEventButton(button, eventIndex)
+	local today = date("*t");
+	local month, day, weekday, hour, minute, eventType, title, calendarType, textureName = CalendarGetGuildEventInfo(eventIndex);
+	local displayTime = GameTime_GetFormattedTime(hour, minute, true);
+	local displayDay;
+	
+	if ( today["day"] == day and today["month"] == month ) then
+		displayDay = NORMAL_FONT_COLOR_CODE..GUILD_EVENT_TODAY..FONT_COLOR_CODE_CLOSE;
+	else
+		local year = today["year"];
+		-- if in December and looking at an event in January
+		if ( month < today["month"] ) then
+			year = year + 1;
+		end
+		local eventTime = time{year = year, month = month, day = day};
+		if ( eventTime - time() < SIX_DAYS ) then
+			displayDay = CALENDAR_WEEKDAY_NAMES[weekday];
+		else
+			displayDay = string.format(GUILD_NEWS_DATE, CALENDAR_WEEKDAY_NAMES[weekday], day, month);
+		end
+	end
+
+	button.text:SetFormattedText(GUILD_EVENT_FORMAT, displayDay, displayTime, title);
+	button.index = eventIndex;
+	-- icon
+	if ( button.icon.type ~= "event" ) then
+		button.icon.type = "event"
+		button.icon:SetTexCoord(0, 1, 0, 1);
+		button.icon:SetWidth(14);
+		button.icon:SetHeight(14);
+	end
+	if ( GUILD_EVENT_TEXTURES[eventType] ) then
+		button.icon:SetTexture(GUILD_EVENT_TEXTURES[eventType]);
+	else
+		button.icon:SetTexture(GUILD_EVENT_TEXTURE_PATH..textureName);
+	end	
+end
+
+function GuildEventButton_OnClick(self, button)
+	if ( button == "LeftButton" ) then
+		if ( CalendarFrame and CalendarFrame:IsShown() ) then
+			-- if the calendar is already open we need to do some work that's normally happening in CalendarFrame_OnShow
+			local weekday, month, day, year = CalendarGetDate();
+			CalendarSetAbsMonth(month, year);
+		else
+			ToggleCalendar();
+		end
+		local monthOffset, day, eventIndex = CalendarGetGuildEventSelectionInfo(self.index);
+		CalendarSetMonth(monthOffset);
+		-- need to highlight the proper day/event in calendar
+		local _, _, _, firstDay = CalendarGetMonth();
+		local buttonIndex = day + firstDay - CALENDAR_FIRST_WEEKDAY;
+		if ( firstDay < CALENDAR_FIRST_WEEKDAY ) then
+			buttonIndex = buttonIndex + 7;
+		end
+		local dayButton = _G["CalendarDayButton"..buttonIndex];
+		CalendarDayButton_Click(dayButton);
+		if ( eventIndex <= 4 ) then -- can only see 4 events per day
+			local eventButton = _G["CalendarDayButton"..buttonIndex.."EventButton"..eventIndex];
+			CalendarDayEventButton_Click(eventButton, true);	-- true to open the event
+		else
+			CalendarFrame_SetSelectedEvent();	-- clears any event highlights
+			CalendarOpenEvent(0, day, eventIndex);
+		end
 	end
 end
 
@@ -636,8 +685,7 @@ function GuildPerksButton_OnEnter(self)
 end
 
 function GuildMainFrame_UpdatePerks()
-	local guildLevel = GetGuildLevel();
-	local perkIndex = guildLevel - 1;	-- no perk at first level
+	local perkIndex = GetCurrentGuildPerkIndex();
 	if ( perkIndex < 1 ) then
 		GuildLatestPerkButton:Hide();
 	else
@@ -647,14 +695,16 @@ function GuildMainFrame_UpdatePerks()
 		GuildLatestPerkButtonName:SetText(name);
 		GuildLatestPerkButton.spellID = spellID;
 	end
-	if ( guildLevel == MAX_GUILD_LEVEL ) then
+
+	local nextPerkIndex = GetNextGuildPerkIndex();
+	if ( nextPerkIndex < 1 ) then
 		GuildNextPerkButton:Hide();
 	else
-		local name, spellID, iconTexture = GetGuildPerkInfo(perkIndex + 1);
+		local name, spellID, iconTexture, nextPerkLevel = GetGuildPerkInfo(nextPerkIndex);
 		GuildNextPerkButtonIconTexture:SetTexture(iconTexture);
 		GuildNextPerkButtonIconTexture:SetDesaturated(1);
 		GuildNextPerkButtonName:SetText(name);
-		GuildNextPerkButtonLabel:SetFormattedText(GUILD_NEXT_PERK_LEVEL, guildLevel + 1);
+		GuildNextPerkButtonLabel:SetFormattedText(GUILD_NEXT_PERK_LEVEL, nextPerkLevel);
 		GuildNextPerkButton.spellID = spellID;
 		GuildNextPerkButton:Show();
 	end

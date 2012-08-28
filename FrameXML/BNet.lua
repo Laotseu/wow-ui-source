@@ -65,7 +65,9 @@ function BNToastFrame_OnEvent(self, event, arg1)
 	if ( event == "BN_FRIEND_ACCOUNT_ONLINE" ) then	
 		BNToastFrame_AddToast(BN_TOAST_TYPE_ONLINE, arg1);
 	elseif ( event == "BN_FRIEND_ACCOUNT_OFFLINE" ) then
-		BNToastFrame_AddToast(BN_TOAST_TYPE_OFFLINE, arg1);
+		if ( BNet_ShouldProcessOfflineEvents() ) then
+			BNToastFrame_AddToast(BN_TOAST_TYPE_OFFLINE, arg1);
+		end
 	elseif ( event == "BN_CUSTOM_MESSAGE_CHANGED" ) then
 		if ( arg1 ) then
 			BNToastFrame_AddToast(BN_TOAST_TYPE_BROADCAST, arg1);
@@ -144,9 +146,9 @@ function BNToastFrame_Show()
 		BNToastFrameDoubleLine:Show();
 		BNToastFrameDoubleLine:SetFormattedText(BN_TOAST_PENDING_INVITES, toastData);
 	elseif ( toastType == BN_TOAST_TYPE_ONLINE ) then
-		local presenceID, givenName, surname = BNGetFriendInfoByID(toastData);
+		local presenceID, presenceName = BNGetFriendInfoByID(toastData);
 		-- don't display a toast if we didn't get the data in time
-		if ( not givenName or not surname ) then
+		if ( not presenceName ) then
 			return;
 		end
 		
@@ -168,21 +170,21 @@ function BNToastFrame_Show()
 		
 		BNToastFrameIconTexture:SetTexCoord(0, 0.25, 0.5, 1);
 		topLine:Show();
-		topLine:SetFormattedText(BATTLENET_NAME_FORMAT, givenName, surname);
+		topLine:SetText(presenceName);
 		topLine:SetTextColor(FRIENDS_BNET_NAME_COLOR.r, FRIENDS_BNET_NAME_COLOR.g, FRIENDS_BNET_NAME_COLOR.b);
 		bottomLine:Show();
 		bottomLine:SetText(BN_TOAST_ONLINE);
 		bottomLine:SetTextColor(FRIENDS_GRAY_COLOR.r, FRIENDS_GRAY_COLOR.g, FRIENDS_GRAY_COLOR.b);
 		BNToastFrameDoubleLine:Hide();
 	elseif ( toastType == BN_TOAST_TYPE_OFFLINE ) then
-		local presenceID, givenName, surname = BNGetFriendInfoByID(toastData);
+		local presenceID, presenceName = BNGetFriendInfoByID(toastData);
 		-- don't display a toast if we didn't get the data in time
-		if ( not givenName or not surname ) then
+		if ( not presenceName ) then
 			return;
 		end
 		BNToastFrameIconTexture:SetTexCoord(0, 0.25, 0.5, 1);
 		topLine:Show();
-		topLine:SetFormattedText(BATTLENET_NAME_FORMAT, givenName, surname);
+		topLine:SetFormattedText(presenceName);
 		topLine:SetTextColor(FRIENDS_BNET_NAME_COLOR.r, FRIENDS_BNET_NAME_COLOR.g, FRIENDS_BNET_NAME_COLOR.b);
 		bottomLine:Show();
 		bottomLine:SetText(BN_TOAST_OFFLINE);
@@ -200,13 +202,13 @@ function BNToastFrame_Show()
 		BNToastFrameDoubleLine:Hide();
 		middleLine:Hide();
 	elseif ( toastType == BN_TOAST_TYPE_BROADCAST ) then
-		local presenceID, givenName, surname, toonName, toonID, client, isOnline, lastOnline, isAFK, isDND, messageText = BNGetFriendInfoByID(toastData);
+		local presenceID, presenceName, battleTag, isBattleTagPresence, toonName, toonID, client, isOnline, lastOnline, isAFK, isDND, messageText = BNGetFriendInfoByID(toastData);
 		if ( not messageText or messageText == "" ) then
 			return;
 		end	
 		BNToastFrameIconTexture:SetTexCoord(0, 0.25, 0, 0.5);
 		topLine:Show();
-		topLine:SetFormattedText(BATTLENET_NAME_FORMAT, givenName, surname);
+		topLine:SetText(presenceName);
 		topLine:SetTextColor(FRIENDS_BNET_NAME_COLOR.r, FRIENDS_BNET_NAME_COLOR.g, FRIENDS_BNET_NAME_COLOR.b);
 		bottomLine:Show();
 		bottomLine:SetWidth(0);
@@ -339,9 +341,9 @@ function BNToastFrame_OnClick(self)
 		_G[chatFrame:GetName().."Tab"]:Click();
 		--ChatFrame_OpenChat("/"..(toastData + MAX_WOW_CHAT_CHANNELS), chatFrame);
 	elseif ( toastType == BN_TOAST_TYPE_ONLINE or toastType == BN_TOAST_TYPE_BROADCAST ) then
-		local presenceID, givenName, surname = BNGetFriendInfoByID(toastData);
-		if ( givenName ) then	--This player may have been removed from our friends list, so we may not have a name.
-			ChatFrame_SendTell(string.format(BATTLENET_NAME_FORMAT, givenName, surname));
+		local presenceID, presenceName = BNGetFriendInfoByID(toastData);
+		if ( presenceName ) then	--This player may have been removed from our friends list, so we may not have a name.
+			ChatFrame_SendSmartTell(presenceName);
 		end
 	end
 end
@@ -350,7 +352,7 @@ function SynchronizeBNetStatus()
 	if ( BNFeaturesEnabledAndConnected() ) then
 		local wowAFK = (IsChatAFK());
 		local wowDND = (IsChatDND());
-		local _, _, _, bnetAFK, bnetDND = BNGetInfo();
+		local _, _, _, _, bnetAFK, bnetDND = BNGetInfo();
 		if ( wowAFK ~= bnetAFK ) then
 			BNSetAFK(wowAFK);
 		end
@@ -367,18 +369,17 @@ function BNet_InitiateReport(presenceID, reportType)
 	end
 	CloseDropDownMenus();
 	-- set up
-	local fullName, givenName, surname;
+	local fullName;
 	if ( not presenceID ) then
 		-- invite
-		presenceID, givenName, surname = BNGetFriendInviteInfo(UIDROPDOWNMENU_MENU_VALUE);
-		fullName = string.format(BATTLENET_NAME_FORMAT, givenName, surname);
+		presenceID, fullName = BNGetFriendInviteInfo(UIDROPDOWNMENU_MENU_VALUE);
 	else
-		local _, givenName, surname, toonName = BNGetFriendInfoByID(presenceID);
-		if ( givenName and surname ) then
+		local _, presenceName, battleTag, isBattleTagPresence, toonName = BNGetFriendInfoByID(presenceID);
+		if ( presenceName ) then
 			if ( toonName ) then
-				fullName = string.format(BATTLENET_NAME_FORMAT, givenName, surname).." ("..toonName..")";
+				fullName = presenceName.." ("..toonName..")";
 			else
-				fullName = string.format(BATTLENET_NAME_FORMAT, givenName, surname);
+				fullName = presenceName;
 			end
 		else
 			local _, toonName = BNGetToonInfo(presenceID);
@@ -462,5 +463,29 @@ function TimeAlert_OnUpdate(self, elapsed)
 	end
 end
 
-
-
+function BNet_ShouldProcessOfflineEvents()
+	-- can process if we're not logging out
+	if ( not IsLoggingOut() ) then
+		return true;
+	end
+	-- if the logout timer is up, we should only process if there is more than 1 second left
+	local frameName = StaticPopup_Visible("CAMP");
+	if ( frameName ) then
+		if ( _G[frameName].timeleft ) > 1 then
+			return true;
+		else
+			return false;
+		end
+	end
+	-- ugh, why are there 2 of these?
+	frameName = StaticPopup_Visible("QUIT");
+	if ( frameName ) then
+		if ( _G[frameName].timeleft ) > 1 then
+			return true;
+		else
+			return false;
+		end
+	end
+	-- no logout timers up, must be instant logout
+	return false;
+end

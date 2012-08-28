@@ -26,6 +26,7 @@ function ScrollOfResurrection_Show(sendType, target, text)
 end
 
 function ScrollOfResurrectionAcceptButton_OnClick(self)
+	PlaySound("igMainMenuOptionCheckBoxOn");
 	local comment = ScrollOfResurrectionFrame.noteFrame.scrollFrame.editBox:GetText();
 	if ( ScrollOfResurrectionFrame.type == "bn" ) then
 		BNSendSoR(ScrollOfResurrectionFrame.target, comment);
@@ -43,6 +44,7 @@ function ScrollOfResurrectionSelection_OnLoad(self)
 	self.list.scrollFrame.scrollBar.doNotHide = true;
 	self.list.scrollFrame.update = ScrollOfResurrectionSelectionList_Update;
 	self.exclusive = true;
+	self.hideOnEscape = true;
 	HybridScrollFrame_CreateButtons(self.list.scrollFrame, "ScrollOfResurrectionSelectionButtonTemplate");
 	self:RegisterEvent("GUILD_ROSTER_UPDATE");
 	self:RegisterEvent("SOR_COUNTS_UPDATED");
@@ -58,6 +60,7 @@ function ScrollOfResurrectionSelection_OnEvent(self, event, ...)
 end
 
 function ScrollOfResurrectionSelection_OnShow(self)
+	PlaySound("igSpellBookOpen");
 	ScrollOfResurrectionSelectionFrame.sendType = nil;
 	ScrollOfResurrectionSelectionFrame.target = nil;
 	ScrollOfResurrectionSelectionFrame.text = nil;
@@ -191,9 +194,9 @@ function ScrollOfResurrectionSelection_RebuildEligibleList()
 	SOR_AVAILABLE_LIST = {};
 	--First, add RID friends:
 	for i=1, BNGetNumFriends() do
-		local presenceID, givenName, surname, toonName, toonID, client, isOnline, lastOnline, isAFK, isDND, messageText, noteText, isRIDFriend, messageTime, canSoR = BNGetFriendInfo(i);
+		local presenceID, presenceName, battleTag, isBattleTagPresence, toonName, toonID, client, isOnline, lastOnline, isAFK, isDND, messageText, noteText, isRIDFriend, messageTime, canSoR = BNGetFriendInfo(i);
 		if ( canSoR ) then
-			tinsert(SOR_AVAILABLE_LIST, string.format(BATTLENET_NAME_FORMAT, givenName, surname));
+			tinsert(SOR_AVAILABLE_LIST, presenceName);
 			tinsert(SOR_AVAILABLE_LIST, presenceID);
 			tinsert(SOR_AVAILABLE_LIST, "bn");
 		end

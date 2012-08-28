@@ -105,6 +105,7 @@
 				</Anchors>
 				<Scripts>
 					<OnClick>
+						PlaySound("igMainMenuOptionCheckBoxOn");
 						StaticPopupSpecial_Hide(self:GetParent());
 					</OnClick>
 				</Scripts>
@@ -166,7 +167,7 @@
 					</OnLoad>
 				</Scripts>
 			</Button>
-			<Button name="$parentAcceptButton" inherits="UIPanelButtonTemplate2" parentKey="acceptButton" text="ACCEPT">
+			<Button name="$parentAcceptButton" inherits="UIPanelButtonTemplate" parentKey="acceptButton" text="ACCEPT">
 				<Size>
 					<AbsDimension x="115" y="22"/>
 				</Size>

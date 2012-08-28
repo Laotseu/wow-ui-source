@@ -6,20 +6,23 @@ UIPanelWindows["InspectFrame"] = { area = "left", pushable = 0, };
 function InspectFrame_Show(unit)
 	HideUIPanel(InspectFrame);
 	if ( CanInspect(unit, true) ) then
+		INSPECTED_UNIT = unit;
 		NotifyInspect(unit);
 		InspectFrame.unit = unit;
 		InspectSwitchTabs(1);
-		ShowUIPanel(InspectFrame);
-		InspectFrame_UpdateTabs();
+	else
+		INSPECTED_UNIT = nil;
 	end
 end
 
 function InspectFrame_OnLoad(self)
 	self:RegisterEvent("PLAYER_TARGET_CHANGED");
-	self:RegisterEvent("PARTY_MEMBERS_CHANGED");
+	self:RegisterEvent("GROUP_ROSTER_UPDATE");
 	self:RegisterEvent("UNIT_NAME_UPDATE");
 	self:RegisterEvent("UNIT_PORTRAIT_UPDATE");
+	self:RegisterEvent("INSPECT_READY");
 	self.unit = nil;
+	INSPECTED_UNIT = nil;
 
 	-- Tab Handling code
 	PanelTemplates_SetNumTabs(self, 4);
@@ -27,18 +30,27 @@ function InspectFrame_OnLoad(self)
 	self.TitleText:SetFontObject("GameFontHighlight");
 end
 
-function InspectFrame_OnEvent(self, event, ...)
+function InspectFrame_OnEvent(self, event, unit, ...)
+
+	if(event == "INSPECT_READY" and InspectFrame.unit and (UnitGUID(InspectFrame.unit) == unit)) then
+		ShowUIPanel(InspectFrame);
+		InspectFrame_UpdateTabs();
+	end
+
+
 	if ( not self:IsShown() ) then
 		return;
 	end
-	if ( event == "PLAYER_TARGET_CHANGED" or event == "PARTY_MEMBERS_CHANGED" ) then
+	if ( event == "PLAYER_TARGET_CHANGED" or event == "GROUP_ROSTER_UPDATE" ) then
 		if ( (event == "PLAYER_TARGET_CHANGED" and self.unit == "target") or
-		     (event == "PARTY_MEMBERS_CHANGED" and self.unit ~= "target") ) then
-			if ( CanInspect(self.unit) ) then
-				InspectFrame_UnitChanged(self);
-			else
-				HideUIPanel(InspectFrame);
-			end
+		     (event == "GROUP_ROSTER_UPDATE" and self.unit ~= "target") ) then
+			-- Just hide the InspectFrame when the unit changes.  This hides the bug that occurs when you click on targets too quickly and the server drops the inspect data when flooded with inspect requests.
+			--if ( CanInspect(self.unit) ) then
+			--	InspectFrame_UnitChanged(self);
+			--else
+			--	HideUIPanel(InspectFrame);
+			--end
+			HideUIPanel(InspectFrame);
 		end
 		return;
 	elseif ( event == "UNIT_NAME_UPDATE" ) then
@@ -49,8 +61,8 @@ function InspectFrame_OnEvent(self, event, ...)
 		return;
 	elseif ( event == "UNIT_PORTRAIT_UPDATE" ) then
 		local arg1 = ...;
-		if ( arg1 == self.unit ) then
-			SetPortraitTexture(InspectFramePortrait, arg1);
+		if ( not arg1 or arg1 == self.unit ) then
+			SetPortraitTexture(InspectFramePortrait, self.unit);
 		end
 		return;
 	end
@@ -90,9 +102,6 @@ function InspectFrame_OnHide(self)
 end
 
 function InspectFrame_OnUpdate(self)
-	if ( not UnitIsVisible(self.unit) ) then
-		HideUIPanel(InspectFrame);
-	end
 end		
 
 function InspectSwitchTabs(newID)
@@ -103,7 +112,6 @@ function InspectSwitchTabs(newID)
 			oldFrame:Hide();
 		end
 		PanelTemplates_SetTab(InspectFrame, newID);
-		ShowUIPanel(InspectFrame);
 		newFrame:Show();
 	end
 end
@@ -120,18 +128,17 @@ function InspectFrame_UpdateTabs()
 	
 	-- Talent tab
 	local level = UnitLevel(InspectFrame.unit);
-	if ( level > 0 and level < 10 ) then
+	if ( level < 10 ) then
 		PanelTemplates_DisableTab(InspectFrame, 3);
 		if ( PanelTemplates_GetSelectedTab(InspectFrame) == 3 ) then
 			InspectSwitchTabs(1);
 		end
 	else
 		PanelTemplates_EnableTab(InspectFrame, 3);
-		InspectTalentFrame_UpdateTabs();
 	end
 	
 	-- Guild tab
-	local guildName = GetGuildInfo(InspectFrame.unit);
+	local _, _, _, guildName = GetInspectGuildInfo(InspectFrame.unit);
 	if ( guildName and guildName ~= "" ) then
 		PanelTemplates_EnableTab(InspectFrame, 4);
 	else

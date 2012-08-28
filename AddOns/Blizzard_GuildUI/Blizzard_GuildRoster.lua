@@ -17,6 +17,7 @@ local GUILD_ROSTER_COLUMNS = {
 	pvp = { "level", "class", "name", "bgrating", "arenarating" },
 	achievement = { "level", "class", "wideName", "achievement" },
 	tradeskill = { "wideName", "zone", "skill" },
+	reputation = { "level", "class", "wideName", "reputation" },
 };
 
 -- global for localization changes
@@ -35,6 +36,7 @@ GUILD_ROSTER_COLUMN_DATA = {
 	totalxp = { width = 144, text = GUILD_XP_TOTAL, stringJustify="RIGHT", hasBar = true },
 	achievement = { width = 144, text = ACHIEVEMENT_POINTS, stringJustify="RIGHT", sortType="achievementpoints", hasBar = true },
 	skill = { width = 63, text = SKILL_POINTS_ABBR, stringJustify="LEFT" },
+	reputation = { width = 144, text = REPUTATION, stringJustify="LEFT" },
 };
 
 local MOBILE_BUSY_ICON = "|TInterface\\ChatFrame\\UI-ChatIcon-ArmoryChat-BusyMobile:14:14:0:0:16:16:0:16:0:16|t";
@@ -53,6 +55,9 @@ function GuildRosterFrame_OnLoad(self)
 	GuildRoster_SetView(GetCVar("guildRosterView"));
 	SetGuildRosterSelection(0);
 	UIDropDownMenu_SetSelectedValue(GuildRosterViewDropdown, currentGuildView);
+	-- right-click dropdown
+	GuildMemberDropDown.displayMode = "MENU";
+
 	self.doRecipeQuery = true;
 end
 
@@ -153,7 +158,11 @@ function GuildRoster_Update()
 		else
 			GuildMemberDetailName:SetText(GuildFrame.selectedName);
 		end
-		GuildMemberDetailLevel:SetFormattedText(FRIENDS_LEVEL_TEMPLATE, level, class);
+		if ( level and class) then
+			GuildMemberDetailLevel:SetFormattedText(FRIENDS_LEVEL_TEMPLATE, level, class);
+		else
+			GuildMemberDetailLevel:SetText("");
+		end
 		GuildMemberDetailZoneText:SetText(isMobile and REMOTE_CHAT or zone);
 		GuildMemberDetailRankText:SetText(rank);
 		if ( online ) then
@@ -233,7 +242,7 @@ function GuildRoster_Update()
 	for i = 1, numButtons do
 		button = buttons[i];		
 		index = offset + i;
-		local name, rank, rankIndex, level, class, zone, note, officernote, online, isAway, classFileName, achievementPoints, achievementRank, isMobile, canSoR = GetGuildRosterInfo(index);
+		local name, rank, rankIndex, level, class, zone, note, officernote, online, isAway, classFileName, achievementPoints, achievementRank, isMobile, canSoR, repStanding = GetGuildRosterInfo(index);
 		
 		if ( name and index <= visibleMembers ) then
 			button.guildIndex = index;
@@ -320,6 +329,11 @@ function GuildRoster_Update()
 					button.barTexture:Hide();
 				end
 				GuildRosterButton_SetStringText(button.barLabel, "#"..achievementRank, online);
+			elseif ( currentGuildView == "reputation" ) then
+				GuildRosterButton_SetStringText(button.string1, level, online)
+				button.icon:SetTexCoord(unpack(CLASS_ICON_TCOORDS[classFileName]));
+				GuildRosterButton_SetStringText(button.string2, displayedName, online, classFileName);
+				GuildRosterButton_SetStringText(button.string3, GetText("FACTION_STANDING_LABEL"..repStanding, gender), online);
 			end
 			button:Show();
 			if ( mod(index, 2) == 0 ) then
@@ -350,26 +364,56 @@ function GuildRosterButton_OnClick(self, button)
 				GetGuildMemberRecipes(playerName, skillID);
 			end
 		else
-			FriendsFrame_ShowDropdown(playerName, online, nil, nil, nil, nil, isMobile);
+			GuildRoster_ShowMemberDropDown(playerName, online, isMobile);
 		end
 	else
 		if ( button == "LeftButton" ) then
 			if ( GuildMemberDetailFrame:IsShown() and self.guildIndex == GuildFrame.selectedGuildMember ) then
 				SetGuildRosterSelection(0);
 				GuildFrame.selectedGuildMember = 0;
+				PlaySound("igCharacterInfoClose");
 				GuildMemberDetailFrame:Hide();
 			else
 				SetGuildRosterSelection(self.guildIndex);
 				GuildFrame.selectedGuildMember = self.guildIndex;
+				PlaySound("igCharacterInfoOpen");
 				GuildFramePopup_Show(GuildMemberDetailFrame);
 				CloseDropDownMenus();
 			end
 			GuildRoster_Update();
 		else
 			local name, rank, rankIndex, level, class, zone, note, officernote, online, isAway, classFileName, achievementPoints, achievementRank, isMobile = GetGuildRosterInfo(self.guildIndex);
-			FriendsFrame_ShowDropdown(name, online, nil, nil, nil, nil, isMobile);
+			GuildRoster_ShowMemberDropDown(name, online, isMobile);
 		end
 	end
+end
+
+function GuildRoster_ShowMemberDropDown(name, online, isMobile)
+	if ( online ) then
+		GuildMemberDropDown.name = name;
+		GuildMemberDropDown.isMobile = isMobile;
+		GuildMemberDropDown.initialize = GuildMemberDropDown_Initialize;
+		ToggleDropDownMenu(1, nil, GuildMemberDropDown, "cursor");
+	else
+		-- show menu for offline members if player can send BattleTag request
+		if ( BNFeaturesEnabledAndConnected() ) then
+			local _, battleTag = BNGetInfo();
+			if ( battleTag ) then
+				GuildMemberDropDown.name = name;
+				GuildMemberDropDown.isMobile = false;
+				GuildMemberDropDown.initialize = GuildMemberOfflineDropDown_Initialize;
+				ToggleDropDownMenu(1, nil, GuildMemberDropDown, "cursor");
+			end
+		end
+	end
+end
+
+function GuildMemberDropDown_Initialize()
+	UnitPopup_ShowMenu(UIDROPDOWNMENU_OPEN_MENU, "GUILD", nil, GuildMemberDropDown.name);
+end
+
+function GuildMemberOfflineDropDown_Initialize()
+	UnitPopup_ShowMenu(UIDROPDOWNMENU_OPEN_MENU, "GUILD_OFFLINE", nil, GuildMemberDropDown.name);
 end
 
 function GuildRoster_UpdateTradeSkills()
@@ -466,6 +510,7 @@ function GuildRoster_UpdateTradeSkills()
 end
 
 function GuildRosterTradeSkillHeader_OnClick(self)
+	PlaySound("igMainMenuOptionCheckBoxOn");
 	if ( self.collapsed ) then
 		ExpandGuildTradeSkillHeader(self.skillID);
 	else
@@ -583,6 +628,9 @@ function GuildRosterViewDropdown_Initialize()
 	info.text = TRADE_SKILLS;
 	info.value = "tradeskill";
 	UIDropDownMenu_AddButton(info);	
+	info.text = GUILD_REPUTATION;
+	info.value = "reputation";
+	UIDropDownMenu_AddButton(info);
 	
 	UIDropDownMenu_SetSelectedValue(GuildRosterViewDropdown, currentGuildView);
 end

@@ -4,7 +4,7 @@ function ItemTextFrame_OnLoad(self)
 	self:RegisterEvent("ITEM_TEXT_READY");
 	self:RegisterEvent("ITEM_TEXT_CLOSED");
 	ItemTextScrollFrame.scrollBarHideable = 1;
-	ItemTextScrollFrameScrollBar:Hide();
+	ButtonFrameTemplate_HideButtonBar(self);
 end
 
 function ItemTextFrame_OnEvent(self, event, ...)
@@ -38,9 +38,9 @@ function ItemTextFrame_OnEvent(self, event, ...)
 		local creator = ItemTextGetCreator();
 		if ( creator ) then
 			creator = "\n\n"..ITEM_TEXT_FROM.."\n"..creator.."\n\n\n";
-			ItemTextPageText:SetText("\n"..ItemTextGetText()..creator);
+			ItemTextPageText:SetText(ItemTextGetText()..creator);
 		else
-			ItemTextPageText:SetText("\n"..ItemTextGetText().."\n\n");
+			ItemTextPageText:SetText(ItemTextGetText().."\n\n");
 		end
 		
 		ItemTextScrollFrameScrollBar:SetValue(0);

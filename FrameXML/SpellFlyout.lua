@@ -5,15 +5,24 @@ local SPELLFLYOUT_FINAL_SPACING = 4;
 
 
 function SpellFlyoutButton_OnClick(self)
-	if (self.spellID) then
-		if (CastSpellByID(self.spellID)) then
-			self:GetParent():Hide();
+	if ( self.offSpec ) then
+		return;
+	elseif ( self.spellName ) then
+		CastSpellByName(self.spellName);
+		self:GetParent():Hide();
+	end
+end
+
+function SpellFlyoutButton_OnDrag(self)
+	if (not self:GetParent().isActionBar or LOCK_ACTIONBAR ~= "1" or IsModifiedClick("PICKUPACTION")) then
+		if (self.spellID) then
+			PickupSpell(self.spellID);
 		end
 	end
 end
 
 function SpellFlyoutButton_SetTooltip(self)
-	if ( GetCVar("UberTooltips") == "1" ) then
+	if ( GetCVar("UberTooltips") == "1" or self.showFullTooltip ) then
 		if (SpellFlyout.isActionBar) then
 			GameTooltip_SetDefaultAnchor(GameTooltip, self);
 		else
@@ -136,12 +145,13 @@ function SpellFlyout_OnEvent(self, event, ...)
 	end
 end
 
-function SpellFlyout_Toggle(self, flyoutID, parent, direction, distance, isActionBar)
-
+function SpellFlyout_Toggle(self, flyoutID, parent, direction, distance, isActionBar, specID, showFullTooltip)
 	if (self:IsShown() and self:GetParent() == parent) then
 		self:Hide();
 		return;
 	end
+
+	local offSpec = specID and (specID ~= 0);
 	
 	-- Save previous parent to update at the end
 	local oldParent = self:GetParent();
@@ -151,9 +161,9 @@ function SpellFlyout_Toggle(self, flyoutID, parent, direction, distance, isActio
 	local actionBar = parent:GetParent();
 	self:SetParent(parent);
 	self.isActionBar = isActionBar;
-	
-	-- Make sure this flyout is known
-	if (not isKnown or numSlots == 0) then
+
+	-- Make sure this flyout is known or we are showing an offSpec flyout
+	if ((not isKnown and not offSpec) or numSlots == 0) then
 		self:Hide();
 		return;
 	end
@@ -166,7 +176,7 @@ function SpellFlyout_Toggle(self, flyoutID, parent, direction, distance, isActio
 	local prevButton = nil;
 	local numButtons = 0;
 	for i=1, numSlots do
-		local spellID, isKnown = GetFlyoutSlotInfo(flyoutID, i);
+		local spellID, overrideSpellID, isKnown, spellName, slotSpecID = GetFlyoutSlotInfo(flyoutID, i);
 		local visible = true;
 		
 		-- Ignore Call Pet spells if there isn't a pet in that slot
@@ -175,7 +185,7 @@ function SpellFlyout_Toggle(self, flyoutID, parent, direction, distance, isActio
 			visible = false;
 		end
 		
-		if (isKnown and visible) then
+		if ( ((not offSpec or slotSpecID == 0) and visible and isKnown) or (offSpec and slotSpecID == specID) ) then
 			local button = _G["SpellFlyoutButton"..numButtons+1];
 			if (not button) then
 				button = CreateFrame("CHECKBUTTON", "SpellFlyoutButton"..numButtons+1, SpellFlyout, "SpellFlyoutButtonTemplate");
@@ -209,9 +219,18 @@ function SpellFlyout_Toggle(self, flyoutID, parent, direction, distance, isActio
 			end
 			
 			button:Show();
+			button.showFullTooltip = showFullTooltip;
 			
-			_G[button:GetName().."Icon"]:SetTexture(GetSpellTexture(spellID));
+			_G[button:GetName().."Icon"]:SetTexture(GetSpellTexture(overrideSpellID));
+			_G[button:GetName().."Icon"]:SetDesaturated(offSpec);
+			button.offSpec = offSpec;
 			button.spellID = spellID;
+			button.spellName = spellName;
+			if ( offSpec ) then
+				button:Disable();
+			else
+				button:Enable();
+			end
 			SpellFlyoutButton_UpdateCooldown(button);
 			SpellFlyoutButton_UpdateState(button);
 			SpellFlyoutButton_UpdateUsable(button);

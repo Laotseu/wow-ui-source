@@ -1089,7 +1089,7 @@
 					<OnClick function="WorldStateScoreFrameTab_OnClick"/>
 				</Scripts>
             </Button>
-			<Button name="WorldStateScoreFrameLeaveButton" inherits="UIPanelButtonTemplate2" text="LEAVE_BATTLEGROUND">
+			<Button name="WorldStateScoreFrameLeaveButton" inherits="UIPanelButtonTemplate" text="LEAVE_BATTLEGROUND">
 				<Size>
 					<AbsDimension x="153" y="21"/>
 				</Size>
@@ -1179,6 +1179,77 @@
 				WorldStateScoreFrameTab_OnClick(WorldStateScoreFrameTab1);
 			</OnShow>
 			<OnUpdate function="RequestBattlefieldScoreData"/>
+		</Scripts>
+	</Frame>
+	<Frame name="WorldStateChallengeModeFrame" hidden="true">
+		<Size x="198" y="55"/>
+		<Layers>
+			<Layer level="BACKGROUND">
+				<Texture setAllPoints="true">
+					<Color r="0" g="0" b="0" a="0.5"/>
+				</Texture>
+			</Layer>
+			<Layer level="BORDER">
+				<Texture file="Interface\Challenges\challenges-main">
+					<Size x="207" y="64"/>	
+					<Anchors>
+						<Anchor point="CENTER"/>
+					</Anchors>
+					<TexCoords left="0.71972656" right="0.92187500" top="0.21289063" bottom="0.33789063"/>	
+				</Texture>			
+			</Layer>
+			<Layer level="ARTWORK">
+				<Texture parentKey="medalIcon">
+					<Size x="48" y="48"/>
+					<Anchors>
+						<Anchor point="LEFT" x="5" y="-2"/>
+					</Anchors>
+				</Texture>
+				<Texture parentKey="noMedal" file="Interface\Challenges\challenges-main" hidden="true">
+					<Size x="9" y="10"/>
+					<Anchors>
+						<Anchor point="LEFT" x="24" y="-2"/>
+					</Anchors>
+					<TexCoords left="0.93847656" right="0.94726563" top="0.00195313" bottom="0.02148438"/>
+				</Texture>
+			</Layer>			
+		</Layers>
+		<Frames>
+			<StatusBar parentKey="statusBar">
+				<Size>
+					<AbsDimension x="133" y="17"/>
+				</Size>
+				<Anchors>
+					<Anchor point="CENTER" x="22" y="-2"/>
+				</Anchors>				
+				<Layers>
+					<Layer level="OVERLAY">
+						<Texture file="Interface\Challenges\challenges-main">
+							<Size x="140" y="32"/>
+							<Anchors>
+								<Anchor point="CENTER" x="0" y="0"/>
+							</Anchors>
+							<TexCoords left="0.00097656" right="0.13769531" top="0.47265625" bottom="0.51757813"/>	
+						</Texture>
+						<FontString inherits="GameFontHighlight" justifyH="LEFT" parentKey="timeLeft">
+							<Anchors>
+								<Anchor point="LEFT" x="42" y="0"/>
+							</Anchors>
+						</FontString>
+					</Layer>
+				</Layers>
+				<Scripts>
+					<OnLoad>
+						self:SetStatusBarColor(0, 0.33, 0.61);
+					</OnLoad>
+				</Scripts>
+				<BarTexture file="Interface\TargetingFrame\UI-StatusBar"/>
+			</StatusBar>
+		</Frames>
+	</Frame>
+	<Frame name="WorldStateChallengeModeTimer" hidden="true">
+		<Scripts>
+			<OnUpdate function="WorldStateChallengeModeTimer_OnUpdate"/>
 		</Scripts>
 	</Frame>
 </Ui>

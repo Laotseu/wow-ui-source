@@ -114,23 +114,17 @@ function MailFrameTab_OnClick(self, tabID)
 	PanelTemplates_SetTab(MailFrame, tabID);
 	if ( tabID == 1 ) then
 		-- Inbox tab clicked
+		ButtonFrameTemplate_HideButtonBar(MailFrame)
+		MailFrameInset:SetPoint("TOPLEFT", 4, -58);
 		InboxFrame:Show();
 		SendMailFrame:Hide();
-		MailFrameTopLeft:SetTexture("Interface\\ItemTextFrame\\UI-ItemText-TopLeft");
-		MailFrameTopRight:SetTexture("Interface\\Spellbook\\UI-SpellbookPanel-TopRight");
-		MailFrameBotLeft:SetTexture("Interface\\ItemTextFrame\\UI-ItemText-BotLeft");
-		MailFrameBotRight:SetTexture("Interface\\Spellbook\\UI-SpellbookPanel-BotRight");
-		MailFrameTopLeft:SetPoint("TOPLEFT", "MailFrame", "TOPLEFT", 0, 0);
 		SetSendMailShowing(false);
 	else
 		-- Sendmail tab clicked
+		ButtonFrameTemplate_ShowButtonBar(MailFrame)
+		MailFrameInset:SetPoint("TOPLEFT", 4, -80);
 		InboxFrame:Hide();
 		SendMailFrame:Show();
-		MailFrameTopLeft:SetTexture("Interface\\ClassTrainerFrame\\UI-ClassTrainer-TopLeft");
-		MailFrameTopRight:SetTexture("Interface\\ClassTrainerFrame\\UI-ClassTrainer-TopRight");
-		MailFrameBotLeft:SetTexture("Interface\\ClassTrainerFrame\\UI-ClassTrainer-BotLeft");
-		MailFrameBotRight:SetTexture("Interface\\ClassTrainerFrame\\UI-ClassTrainer-BotRight");
-		MailFrameTopLeft:SetPoint("TOPLEFT", "MailFrame", "TOPLEFT", 2, -1);
 		SendMailFrame_Update();
 		SetSendMailShowing(true);
 
@@ -273,6 +267,7 @@ function InboxFrame_OnClick(self, index)
 		OpenMail_Update();
 		--OpenMailFrame:Show();
 		ShowUIPanel(OpenMailFrame);
+		OpenMailFrameInset:SetPoint("TOPLEFT", 4, -80);
 		PlaySound("igSpellBookOpen");
 	else
 		InboxFrame.openMailID = 0;
@@ -293,7 +288,10 @@ function InboxFrameItem_OnEnter(self)
 	GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
 	if ( self.hasItem ) then
 		if ( self.itemCount == 1) then
-			GameTooltip:SetInboxItem(self.index);
+			local hasCooldown, speciesID, level, breedQuality, maxHealth, power, speed, name = GameTooltip:SetInboxItem(self.index);
+			if(speciesID and speciesID > 0) then
+				BattlePetToolTip_Show(speciesID, level, breedQuality, maxHealth, power, speed, name);
+			end
 		else
 			GameTooltip:AddLine(MAIL_MULTIPLE_ITEMS.." ("..self.itemCount..")");
 		end
@@ -581,7 +579,7 @@ function OpenMail_Update()
 	OpenMailFrame.itemButtonCount = itemButtonCount;
 
 	-- Determine starting position for buttons
-	local marginxl = 23 + 4;
+	local marginxl = 10 + 4;
 	local marginxr = 43 + 4;
 	local areax = OpenMailFrame:GetWidth() - marginxl - marginxr;
 	local iconx = OpenMailAttachmentButton1:GetWidth() + 2;
@@ -592,8 +590,8 @@ function OpenMail_Update()
 	local gapy2 = 3;
 	local areay = gapy2 + OpenMailAttachmentText:GetHeight() + gapy2 + (icony * itemRowCount) + (gapy1 * (itemRowCount - 1)) + gapy2;
 	local indentx = marginxl + gapx2;
-	local indenty = 103 + gapy2;
-	local tabx = (iconx + gapx1);
+	local indenty = 28 + gapy2;
+	local tabx = (iconx + gapx1) + 6; --this magic number changes the button spacing
 	local taby = (icony + gapy1);
 	local scrollHeight = 305 - areay;
 	if (scrollHeight > 256) then
@@ -604,7 +602,7 @@ function OpenMail_Update()
 	-- Resize the scroll frame
 	OpenMailScrollFrame:SetHeight(scrollHeight);
 	OpenMailScrollChildFrame:SetHeight(scrollHeight);
-	OpenMailHorizontalBarLeft:SetPoint("TOPLEFT", "OpenMailFrame", "BOTTOMLEFT", 15, 114 + areay);
+	OpenMailHorizontalBarLeft:SetPoint("TOPLEFT", "OpenMailFrame", "BOTTOMLEFT", 2, 39 + areay);
 	OpenScrollBarBackgroundTop:SetHeight(min(scrollHeight, 256));
 	OpenScrollBarBackgroundTop:SetTexCoord(0, 0.484375, 0, min(scrollHeight, 256) / 256);
 	OpenStationeryBackgroundLeft:SetHeight(scrollHeight);
@@ -764,7 +762,10 @@ end
 
 function OpenMailAttachment_OnEnter(self, index)
 	GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-	GameTooltip:SetInboxItem(InboxFrame.openMailID, index);
+	local hasCooldown, speciesID, level, breedQuality, maxHealth, power, speed, name = GameTooltip:SetInboxItem(InboxFrame.openMailID, index);
+	if(speciesID and speciesID > 0) then
+		BattlePetToolTip_Show(speciesID, level, breedQuality, maxHealth, power, speed, name);
+	end
 
 	if ( OpenMailFrame.cod ) then
 		SetTooltipMoney(GameTooltip, OpenMailFrame.cod);
@@ -900,7 +901,7 @@ function SendMailFrame_Update()
 	-- Compute sizes
 	local cursorx = 0;
 	local cursory = itemRowCount - 1;
-	local marginxl = 25 + 6;
+	local marginxl = 8 + 6;
 	local marginxr = 40 + 6;
 	local areax = SendMailFrame:GetWidth() - marginxl - marginxr;
 	local iconx = SendMailAttachment1:GetWidth() + 2;
@@ -911,15 +912,15 @@ function SendMailFrame_Update()
 	local gapy2 = 6;
 	local areay = (gapy2 * 2) + (gapy1 * (itemRowCount - 1)) + (icony * itemRowCount);
 	local indentx = marginxl + gapx2;
-	local indenty = 156 + gapy2 + icony;
-	local tabx = (iconx + gapx1);
+	local indenty = 170 + gapy2 + icony;
+	local tabx = (iconx + gapx1) - 2; --this magic number changes the attachment spacing
 	local taby = (icony + gapy1);
 	local scrollHeight = 249 - areay;
 
 	-- Resize the scroll frame
 	SendMailScrollFrame:SetHeight(scrollHeight);
 	SendMailScrollChildFrame:SetHeight(scrollHeight);
-	SendMailHorizontalBarLeft2:SetPoint("TOPLEFT", "SendMailFrame", "BOTTOMLEFT", 15, 170 + areay);
+	SendMailHorizontalBarLeft2:SetPoint("TOPLEFT", "SendMailFrame", "BOTTOMLEFT", 2, 184 + areay);
 	SendScrollBarBackgroundTop:SetHeight(min(scrollHeight, 256));
 	SendScrollBarBackgroundTop:SetTexCoord(0, 0.484375, 0, min(scrollHeight, 256) / 256);
 	SendStationeryBackgroundLeft:SetHeight(min(scrollHeight, 256));
@@ -1102,7 +1103,10 @@ function SendMailAttachment_OnEnter(self)
 	local index = self:GetID();
 	GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
 	if ( GetSendMailItem(index) ) then
-		GameTooltip:SetSendMailItem(index);
+		local hasCooldown, speciesID, level, breedQuality, maxHealth, power, speed, name = GameTooltip:SetSendMailItem(index);
+		if(speciesID and speciesID > 0) then
+			BattlePetToolTip_Show(speciesID, level, breedQuality, maxHealth, power, speed, name);
+		end
 	else
 		GameTooltip:SetText(ATTACHMENT_TEXT, 1.0, 1.0, 1.0);
 	end

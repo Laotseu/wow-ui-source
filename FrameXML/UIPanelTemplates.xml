@@ -16,48 +16,30 @@
 		<TexCoords left="0" right="0.625" top="0" bottom="0.6875"/>
 	</Texture>
 	<Button name="UIPanelButtonTemplate" virtual="true">
-		<ButtonText name="$parentText"/>
-		<NormalFont style="GameFontNormal"/>
-		<HighlightFont style="GameFontHighlight"/>
-		<DisabledFont style="GameFontDisable"/>
-		<NormalTexture inherits="UIPanelButtonUpTexture"/>
-		<PushedTexture inherits="UIPanelButtonDownTexture"/>
-		<DisabledTexture inherits="UIPanelButtonDisabledTexture"/>
-		<HighlightTexture inherits="UIPanelButtonHighlightTexture"/>
-	</Button>
-	<Button name="UIPanelButtonTemplate2" virtual="true">
-		<Size>
-			<AbsDimension x="40" y="22"/>
-		</Size>
+		<Size x="40" y="22"/>
 		<Layers>
 			<Layer level="BACKGROUND">
-				<Texture name="$parentLeft" file="Interface\Buttons\UI-Panel-Button-Up">
-					<Size>
-						<AbsDimension x="12" y="22"/>
-					</Size>
+				<Texture parentKey="Left" file="Interface\Buttons\UI-Panel-Button-Up">
+					<Size x="12" y="22"/>
 					<Anchors>
 						<Anchor point="TOPLEFT"/>
 						<Anchor point="BOTTOMLEFT"/>
 					</Anchors>
 					<TexCoords left="0" right="0.09375" top="0" bottom="0.6875"/>
 				</Texture>
-				<Texture name="$parentRight" file="Interface\Buttons\UI-Panel-Button-Up">
-					<Size>
-						<AbsDimension x="12" y="22"/>
-					</Size>
+				<Texture parentKey="Right" file="Interface\Buttons\UI-Panel-Button-Up">
+					<Size x="12" y="22"/>
 					<Anchors>
 						<Anchor point="TOPRIGHT"/>
 						<Anchor point="BOTTOMRIGHT"/>
 					</Anchors>
 					<TexCoords left="0.53125" right="0.625" top="0" bottom="0.6875"/>
 				</Texture>
-				<Texture name="$parentMiddle" file="Interface\Buttons\UI-Panel-Button-Up">
-					<Size>
-						<AbsDimension x="12" y="22"/>
-					</Size>
+				<Texture parentKey="Middle" file="Interface\Buttons\UI-Panel-Button-Up">
+					<Size x="12" y="22"/>
 					<Anchors>
-						<Anchor point="TOPLEFT" relativeTo="$parentLeft" relativePoint="TOPRIGHT"/>
-						<Anchor point="BOTTOMRIGHT" relativeTo="$parentRight" relativePoint="BOTTOMLEFT"/>
+						<Anchor point="TOPLEFT" relativeKey="$parent.Left" relativePoint="TOPRIGHT"/>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.Right" relativePoint="BOTTOMLEFT"/>
 					</Anchors>
 					<TexCoords left="0.09375" right="0.53125" top="0" bottom="0.6875"/>
 				</Texture>
@@ -66,48 +48,42 @@
 		<Scripts>
 			<OnLoad>
 				if ( not self:IsEnabled() ) then
-					local name = self:GetName();
-					_G[name.."Left"]:SetTexture("Interface\\Buttons\\UI-Panel-Button-Disabled");
-					_G[name.."Middle"]:SetTexture("Interface\\Buttons\\UI-Panel-Button-Disabled");
-					_G[name.."Right"]:SetTexture("Interface\\Buttons\\UI-Panel-Button-Disabled");
+					self.Left:SetTexture("Interface\\Buttons\\UI-Panel-Button-Disabled");
+					self.Middle:SetTexture("Interface\\Buttons\\UI-Panel-Button-Disabled");
+					self.Right:SetTexture("Interface\\Buttons\\UI-Panel-Button-Disabled");
 				end
 			</OnLoad>
 			<OnMouseDown>
 				if ( self:IsEnabled() ) then
-					local name = self:GetName();
-					_G[name.."Left"]:SetTexture("Interface\\Buttons\\UI-Panel-Button-Down");
-					_G[name.."Middle"]:SetTexture("Interface\\Buttons\\UI-Panel-Button-Down");
-					_G[name.."Right"]:SetTexture("Interface\\Buttons\\UI-Panel-Button-Down");
+					self.Left:SetTexture("Interface\\Buttons\\UI-Panel-Button-Down");
+					self.Middle:SetTexture("Interface\\Buttons\\UI-Panel-Button-Down");
+					self.Right:SetTexture("Interface\\Buttons\\UI-Panel-Button-Down");
 				end
 			</OnMouseDown>
 			<OnMouseUp>
 				if ( self:IsEnabled() ) then
-					local name = self:GetName();
-					_G[name.."Left"]:SetTexture("Interface\\Buttons\\UI-Panel-Button-Up");
-					_G[name.."Middle"]:SetTexture("Interface\\Buttons\\UI-Panel-Button-Up");
-					_G[name.."Right"]:SetTexture("Interface\\Buttons\\UI-Panel-Button-Up");
+					self.Left:SetTexture("Interface\\Buttons\\UI-Panel-Button-Up");
+					self.Middle:SetTexture("Interface\\Buttons\\UI-Panel-Button-Up");
+					self.Right:SetTexture("Interface\\Buttons\\UI-Panel-Button-Up");
 				end
 			</OnMouseUp>
 			<OnShow>
 				if ( self:IsEnabled() ) then
 					-- we need to reset our textures just in case we were hidden before a mouse up fired
-					local name = self:GetName();
-					_G[name.."Left"]:SetTexture("Interface\\Buttons\\UI-Panel-Button-Up");
-					_G[name.."Middle"]:SetTexture("Interface\\Buttons\\UI-Panel-Button-Up");
-					_G[name.."Right"]:SetTexture("Interface\\Buttons\\UI-Panel-Button-Up");
+					self.Left:SetTexture("Interface\\Buttons\\UI-Panel-Button-Up");
+					self.Middle:SetTexture("Interface\\Buttons\\UI-Panel-Button-Up");
+					self.Right:SetTexture("Interface\\Buttons\\UI-Panel-Button-Up");
 				end
 			</OnShow>
 			<OnDisable>
-				local name = self:GetName();
-				_G[name.."Left"]:SetTexture("Interface\\Buttons\\UI-Panel-Button-Disabled");
-				_G[name.."Middle"]:SetTexture("Interface\\Buttons\\UI-Panel-Button-Disabled");
-				_G[name.."Right"]:SetTexture("Interface\\Buttons\\UI-Panel-Button-Disabled");
+				self.Left:SetTexture("Interface\\Buttons\\UI-Panel-Button-Disabled");
+				self.Middle:SetTexture("Interface\\Buttons\\UI-Panel-Button-Disabled");
+				self.Right:SetTexture("Interface\\Buttons\\UI-Panel-Button-Disabled");
 			</OnDisable>
 			<OnEnable>
-				local name = self:GetName();
-				_G[name.."Left"]:SetTexture("Interface\\Buttons\\UI-Panel-Button-Up");
-				_G[name.."Middle"]:SetTexture("Interface\\Buttons\\UI-Panel-Button-Up");
-				_G[name.."Right"]:SetTexture("Interface\\Buttons\\UI-Panel-Button-Up");
+				self.Left:SetTexture("Interface\\Buttons\\UI-Panel-Button-Up");
+				self.Middle:SetTexture("Interface\\Buttons\\UI-Panel-Button-Up");
+				self.Right:SetTexture("Interface\\Buttons\\UI-Panel-Button-Up");
 			</OnEnable>
 			<OnEnter>
 				if(self.tooltipText ~= nil) then
@@ -260,6 +236,32 @@
 			<TexCoords left="0" right="1.0" top="0.03" bottom="0.7175"/>	
 		</HighlightTexture>
 	</Button>
+	<Button name="UIGoldBorderButtonTemplate" virtual="true">
+		<Size x="105" y="22"/>
+		<Anchors>
+			<Anchor point="BOTTOM" relativeTo="$parentDetails" x="0" y="5"/>
+		</Anchors>
+		<Layers>
+			<Layer level="BACKGROUND">
+				<Texture file="Interface\Common\dark-goldframe-button" >
+					<Anchors>
+						<Anchor point="TOPLEFT" x="0" y="2"/>
+						<Anchor point="BOTTOMRIGHT" x="0" y="-2"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+		</Layers>
+		<Scripts>
+			<OnLoad function="RaiseFrameLevel"/>
+		</Scripts>
+		<NormalFont style="GameFontNormal"/>
+		<HighlightFont style="GameFontHighlight"/>
+		<DisabledFont style="GameFontDisable"/>
+		<PushedTexture file="Interface\Common\dark-goldframe-button-pressed"/>
+		<HighlightTexture file="Interface\Buttons\UI-Silver-Button-Highlight" alphaMode="ADD">
+			<TexCoords left="0" right="1.0" top="0.03" bottom="0.7175"/>	
+		</HighlightTexture>
+	</Button>
 	<Button name="UIPanelButtonGrayTemplate" virtual="true">
 		<NormalFont style="GameFontHighlight"/>
 		<HighlightFont style="GameFontHighlight"/>
@@ -309,7 +311,7 @@
 			<AbsDimension x="16" y="0"/>
 		</Size>
 		<Frames>
-			<Button name="$parentScrollUpButton" inherits="UIPanelScrollUpButtonTemplate">
+			<Button name="$parentScrollUpButton" parentKey="ScrollUpButton" inherits="UIPanelScrollUpButtonTemplate">
 				<Anchors>
 					<Anchor point="BOTTOM" relativePoint="TOP"/>
 				</Anchors>
@@ -322,7 +324,7 @@
 					</OnClick>
 				</Scripts>
 			</Button>
-			<Button name="$parentScrollDownButton" inherits="UIPanelScrollDownButtonTemplate">
+			<Button name="$parentScrollDownButton" parentKey="ScrollDownButton" inherits="UIPanelScrollDownButtonTemplate">
 				<Anchors>
 					<Anchor point="TOP" relativePoint="BOTTOM"/>
 				</Anchors>
@@ -998,7 +1000,7 @@
 			</Anchors>
 		</HighlightTexture>
     </Button>
-	<Button name="GameMenuButtonTemplate" inherits="UIPanelButtonTemplate2" virtual="true">
+	<Button name="GameMenuButtonTemplate" inherits="UIPanelButtonTemplate" virtual="true">
 		<Size>
 			<AbsDimension x="144" y="21"/>
 		</Size>
@@ -1505,7 +1507,7 @@
 		</Size>
 		<Layers>
 			<Layer level="ARTWORK">
-				<Texture name="$parentTexture" file="Interface\FriendsFrame\InformationIcon">
+				<Texture name="$parentTexture" file="Interface\FriendsFrame\InformationIcon" parentKey="texture">
 					<Anchors>
 						<Anchor point="TOPLEFT"/>
 					</Anchors>
@@ -1514,10 +1516,10 @@
 		</Layers>
 		<Scripts>
 			<OnMouseDown>
-				_G[self:GetName().."Texture"]:SetPoint("TOPLEFT", 1, -1);
+				self.texture:SetPoint("TOPLEFT", 1, -1);
 			</OnMouseDown>
 			<OnMouseUp>
-				_G[self:GetName().."Texture"]:SetPoint("TOPLEFT", 0, 0);
+				self.texture:SetPoint("TOPLEFT", 0, 0);
 			</OnMouseUp>
 		</Scripts>
 		<HighlightTexture file="Interface\FriendsFrame\InformationIcon-Highlight" alphaMode="ADD">
@@ -1813,9 +1815,13 @@
 		<Size x="198" y="33"/>	
 		<TexCoords left="0.00390625" right="0.77734375" top="0.54687500" bottom="0.61132813"/>	
 	</Texture>
-	<Texture name="HelpPlateArrow" file="Interface\TalentFrame\TalentFrame-Parts" virtual="true" >
+	<Texture name="HelpPlateArrowDOWN" file="Interface\TalentFrame\TalentFrame-Parts" virtual="true" >
 		<Size x="53" y="21"/>	
 		<TexCoords left="0.78515625" right="0.99218750" top="0.54687500" bottom="0.58789063"/>	
+	</Texture>
+	<Texture name="HelpPlateArrowUP" file="Interface\TalentFrame\TalentFrame-Parts" virtual="true" >
+		<Size x="53" y="21"/>	
+		<TexCoords left="0.78515625" right="0.99218750" bottom="0.54687500" top="0.58789063"/>	
 	</Texture>
 	<Texture name="Talent-PrimaryHighlight-TopLeft" file="Interface\TalentFrame\TalentFrame-Parts" virtual="true" >
 		<Size x="9" y="9"/>	
@@ -1921,9 +1927,13 @@
 		<Size x="17" y="21"/>	
 		<TexCoords left="0.92968750" right="0.99609375" top="0.68359375" bottom="0.72460938"/>	
 	</Texture>
-	<Texture name="HelpPlateArrow-Glow" file="Interface\TalentFrame\TalentFrame-Parts" virtual="true" >
+	<Texture name="HelpPlateArrow-GlowDOWN" file="Interface\TalentFrame\TalentFrame-Parts" virtual="true" >
 		<Size x="65" y="28"/>	
 		<TexCoords left="0.40625000" right="0.66015625" top="0.77343750" bottom="0.82812500"/>	
+	</Texture>
+	<Texture name="HelpPlateArrow-GlowUP" file="Interface\TalentFrame\TalentFrame-Parts" virtual="true" >
+		<Size x="65" y="28"/>	
+		<TexCoords left="0.40625000" right="0.66015625" bottom="0.77343750" top="0.82812500"/>	
 	</Texture>
 	<Texture name="HelpPlateBox-Shadow-TopRight" file="Interface\TalentFrame\TalentFrame-Parts" virtual="true" >
 		<Size x="25" y="25"/>	
@@ -2193,7 +2203,7 @@
 			</Layer>
 			-->
 			<Layer level="BACKGROUND">
-				<Texture name="$parentBg">
+				<Texture name="$parentBg" parentKey="BG">
 					<Anchors>
 						<Anchor point="TOPLEFT" x="1" y="-1"/>
 						<Anchor point="BOTTOMRIGHT" x="-1" y="1"/>
@@ -2317,14 +2327,14 @@
 		
 		<Layers>
 			<Layer level="ARTWORK">
-				<Texture name="$parentArrow" inherits="HelpPlateArrow">
+				<Texture name="$parentArrow" inherits="HelpPlateArrowDOWN">
 					<Anchors>
 						<Anchor point="TOPLEFT"/>
 					</Anchors>
 				</Texture>
 			</Layer>
 			<Layer level="BORDER">
-				<Texture name="$parentGlow" inherits="HelpPlateArrow-Glow" alphaMode="ADD" alpha="0.5">
+				<Texture name="$parentGlow" inherits="HelpPlateArrow-GlowDOWN" alphaMode="ADD" alpha="0.5">
 					<Anchors>
 						<Anchor point="TOP"/>
 					</Anchors>
@@ -2335,88 +2345,199 @@
 	
 <!--
 *******************************************************************************
+    ThinBorderTemplate
+	Thin box to highlight areas with. Just add color!
+*******************************************************************************
+-->
+	<Frame name="ThinBorderTemplate" virtual="true">
+		<Size x="100" y="100"/>	
+		<Layers>
+			<Layer level="BORDER">
+				<Texture parentKey="TopLeft" parentArray="Textures" file="Interface\Common\ThinBorder2-Corner">
+					<Size x="8" y="8"/>
+					<Anchors>
+						<Anchor point="TOPLEFT" x="-3" y="3"/>
+					</Anchors>
+				</Texture>
+				<Texture parentKey="TopRight" parentArray="Textures" file="Interface\Common\ThinBorder2-Corner">
+					<Size x="8" y="8"/>
+					<Anchors>
+						<Anchor point="TOPRIGHT" x="3" y="3"/>
+					</Anchors>
+					<TexCoords left="1" right="0" top="0" bottom="1"/>
+				</Texture>
+				<Texture parentKey="BottomLeft" parentArray="Textures" file="Interface\Common\ThinBorder2-Corner">
+					<Size x="8" y="8"/>
+					<Anchors>
+						<Anchor point="BOTTOMLEFT" x="-3" y="-3"/>
+					</Anchors>
+					<TexCoords left="0" right="1" top="1" bottom="0"/>
+				</Texture>
+				<Texture parentKey="BottomRight" parentArray="Textures" file="Interface\Common\ThinBorder2-Corner">
+					<Size x="8" y="8"/>
+					<Anchors>
+						<Anchor point="BOTTOMRIGHT" x="3" y="-3"/>
+					</Anchors>
+					<TexCoords left="1" right="0" top="1" bottom="0"/>
+				</Texture>
+				
+				<Texture parentKey="Top" parentArray="Textures" file="Interface\Common\ThinBorder2-Top">
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeKey="$parent.TopLeft" relativePoint="TOPRIGHT"/>
+						<Anchor point="TOPRIGHT" relativeKey="$parent.TopRight" relativePoint="TOPLEFT"/>
+					</Anchors>
+				</Texture>
+				<Texture parentKey="Bottom" parentArray="Textures" file="Interface\Common\ThinBorder2-Top">
+					<Anchors>
+						<Anchor point="BOTTOMLEFT" relativeKey="$parent.BottomLeft" relativePoint="BOTTOMRIGHT"/>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.BottomRight" relativePoint="BOTTOMLEFT"/>
+					</Anchors>
+					<TexCoords left="0" right="1" top="1" bottom="0"/>
+				</Texture>
+
+				<Texture parentKey="Left" parentArray="Textures" file="Interface\Common\ThinBorder2-Left">
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeKey="$parent.TopLeft" relativePoint="BOTTOMLEFT"/>
+						<Anchor point="BOTTOMLEFT" relativeKey="$parent.BottomLeft" relativePoint="TOPLEFT"/>
+					</Anchors>
+				</Texture>
+				<Texture parentKey="Right" parentArray="Textures" file="Interface\Common\ThinBorder2-Left">
+					<Anchors>
+						<Anchor point="TOPRIGHT" relativeKey="$parent.TopRight" relativePoint="BOTTOMRIGHT"/>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.BottomRight" relativePoint="TOPRIGHT"/>
+					</Anchors>
+					<TexCoords left="1" right="0" top="0" bottom="1"/>
+				</Texture>
+			</Layer>
+		</Layers>
+	</Frame>
+
+	<Frame name="GlowBorderTemplate" virtual="true">
+		<Size x="100" y="100"/>	
+		<Layers>
+			<Layer level="BORDER">
+				<Texture parentKey="TopLeft" parentArray="Textures" file="Interface\Common\GlowBorder-Corner" alphaMode="ADD">
+					<Size x="16" y="16"/>
+					<Anchors>
+						<Anchor point="TOPLEFT" x="-8" y="8"/>
+					</Anchors>
+				</Texture>
+				<Texture parentKey="TopRight" parentArray="Textures" file="Interface\Common\GlowBorder-Corner" alphaMode="ADD">
+					<Size x="16" y="16"/>
+					<Anchors>
+						<Anchor point="TOPRIGHT" x="8" y="8"/>
+					</Anchors>
+					<TexCoords left="1" right="0" top="0" bottom="1"/>
+				</Texture>
+				<Texture parentKey="BottomLeft" parentArray="Textures" file="Interface\Common\GlowBorder-Corner" alphaMode="ADD">
+					<Size x="16" y="16"/>
+					<Anchors>
+						<Anchor point="BOTTOMLEFT" x="-8" y="-8"/>
+					</Anchors>
+					<TexCoords left="0" right="1" top="1" bottom="0"/>
+				</Texture>
+				<Texture parentKey="BottomRight" parentArray="Textures" file="Interface\Common\GlowBorder-Corner" alphaMode="ADD">
+					<Size x="16" y="16"/>
+					<Anchors>
+						<Anchor point="BOTTOMRIGHT" x="8" y="-8"/>
+					</Anchors>
+					<TexCoords left="1" right="0" top="1" bottom="0"/>
+				</Texture>
+				
+				<Texture parentKey="Top" parentArray="Textures" file="Interface\Common\GlowBorder-Top" alphaMode="ADD">
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeKey="$parent.TopLeft" relativePoint="TOPRIGHT"/>
+						<Anchor point="TOPRIGHT" relativeKey="$parent.TopRight" relativePoint="TOPLEFT"/>
+					</Anchors>
+				</Texture>
+				<Texture parentKey="Bottom" parentArray="Textures" file="Interface\Common\GlowBorder-Top" alphaMode="ADD">
+					<Anchors>
+						<Anchor point="BOTTOMLEFT" relativeKey="$parent.BottomLeft" relativePoint="BOTTOMRIGHT"/>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.BottomRight" relativePoint="BOTTOMLEFT"/>
+					</Anchors>
+					<TexCoords left="0" right="1" top="1" bottom="0"/>
+				</Texture>
+
+				<Texture parentKey="Left" parentArray="Textures" file="Interface\Common\GlowBorder-Left" alphaMode="ADD">
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeKey="$parent.TopLeft" relativePoint="BOTTOMLEFT"/>
+						<Anchor point="BOTTOMLEFT" relativeKey="$parent.BottomLeft" relativePoint="TOPLEFT"/>
+					</Anchors>
+				</Texture>
+				<Texture parentKey="Right" parentArray="Textures" file="Interface\Common\GlowBorder-Left" alphaMode="ADD">
+					<Anchors>
+						<Anchor point="TOPRIGHT" relativeKey="$parent.TopRight" relativePoint="BOTTOMRIGHT"/>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.BottomRight" relativePoint="TOPRIGHT"/>
+					</Anchors>
+					<TexCoords left="1" right="0" top="0" bottom="1"/>
+				</Texture>
+			</Layer>
+		</Layers>
+	</Frame>
+<!--
+*******************************************************************************
     BasicFrameTemplate
 	This is an empty frame with a titlebar and a close button.
 *******************************************************************************
 -->
-	<Frame name="BasicFrameTemplate" virtual="true">
+	<Frame name="BaseBasicFrameTemplate" virtual="true">
 		<Layers>
-			<Layer level="BACKGROUND">
-				<Texture name="$parentBg" file="Interface\FrameGeneral\UI-Background-Rock" horizTile="true" vertTile="true">
-					<Anchors>
-						<Anchor point="TOPLEFT" x="2" y="-21"/>
-						<Anchor point="BOTTOMRIGHT" x="-2" y="2"/>
-					</Anchors>
-				</Texture>
-				<Texture name="$parentTitleBg" inherits="_UI-Frame-TitleTileBg">
-					<Anchors>
-						<Anchor point="TOPLEFT" x="2" y="-3"/>
-						<Anchor point="TOPRIGHT" x="-25" y="-3"/>
-					</Anchors>
-				</Texture>
-			</Layer>
 			<Layer level="OVERLAY">
-				<Texture name="$parentTopLeftCorner" inherits="UI-Frame-TopLeftCorner">
+				<Texture parentKey="TopLeftCorner" inherits="UI-Frame-TopLeftCorner">
 					<Anchors>
 						<Anchor point="TOPLEFT" x="-6" y="1"/>
 					</Anchors>
 				</Texture>
-				<Texture name="$parentTopRightCorner" inherits="UI-Frame-TopCornerRight">
+				<Texture parentKey="TopRightCorner" inherits="UI-Frame-TopCornerRight">
 					<Anchors>
 						<Anchor point="TOPRIGHT" x="0" y="1"/>
 					</Anchors>
 				</Texture>
-				<Texture name="$parentTopBorder" inherits="_UI-Frame-TitleTile">
+				<Texture parentKey="TopBorder" inherits="_UI-Frame-TitleTile">
 					<Anchors>
-						<Anchor point="TOPLEFT" relativeTo="$parentTopLeftCorner" relativePoint="TOPRIGHT"/>
-						<Anchor point="TOPRIGHT" relativeTo="$parentTopRightCorner" relativePoint="TOPLEFT"/>
+						<Anchor point="TOPLEFT" relativeKey="$parent.TopLeftCorner" relativePoint="TOPRIGHT"/>
+						<Anchor point="TOPRIGHT" relativeKey="$parent.TopRightCorner" relativePoint="TOPLEFT"/>
 					</Anchors>
 				</Texture>
-				<FontString name="$parentTitleText" inherits="GameFontNormal" text="">
+				<FontString parentKey="TitleText" inherits="GameFontNormal" text="">
 					<Anchors>
 						<Anchor point="TOP" x="-6" y="-4" />
 					</Anchors>
 				</FontString>
 			</Layer>
 			<Layer level="BORDER">
-				<Texture name="$parentTopTileStreaks" inherits="_UI-Frame-TopTileStreaks">
-					<Anchors>
-						<Anchor point="TOPLEFT" x="0" y="-21"/>
-						<Anchor point="TOPRIGHT" x="-2" y="-21"/>
-					</Anchors>
-				</Texture>
-				<Texture name="$parentBotLeftCorner" inherits="UI-Frame-BotCornerLeft">
+				<Texture parentKey="BotLeftCorner" inherits="UI-Frame-BotCornerLeft">
 					<Anchors>
 						<Anchor point="BOTTOMLEFT" x="-6" y="-5"/>
 					</Anchors>
 				</Texture>
-				<Texture name="$parentBotRightCorner" inherits="UI-Frame-BotCornerRight">
+				<Texture parentKey="BotRightCorner" inherits="UI-Frame-BotCornerRight">
 					<Anchors>
 						<Anchor point="BOTTOMRIGHT" x="0" y="-5"/>
 					</Anchors>
 				</Texture>
-				<Texture name="$parentBottomBorder" inherits="_UI-Frame-Bot">
+				<Texture parentKey="BottomBorder" inherits="_UI-Frame-Bot">
 					<Anchors>
-						<Anchor point="BOTTOMLEFT" relativeTo="$parentBotLeftCorner" relativePoint="BOTTOMRIGHT" y="0"/>
-						<Anchor point="BOTTOMRIGHT" relativeTo="$parentBotRightCorner" relativePoint="BOTTOMLEFT" y="0"/>
+						<Anchor point="BOTTOMLEFT" relativeKey="$parent.BotLeftCorner" relativePoint="BOTTOMRIGHT" y="0"/>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.BotRightCorner" relativePoint="BOTTOMLEFT" y="0"/>
 					</Anchors>
 				</Texture>
-				<Texture name="$parentLeftBorder" inherits="!UI-Frame-LeftTile">
+				<Texture parentKey="LeftBorder" inherits="!UI-Frame-LeftTile">
 					<Anchors>
-						<Anchor point="TOPLEFT" relativeTo="$parentTopLeftCorner" relativePoint="BOTTOMLEFT"/>
-						<Anchor point="BOTTOMLEFT" relativeTo="$parentBotLeftCorner" relativePoint="TOPLEFT"/>
+						<Anchor point="TOPLEFT" relativeKey="$parent.TopLeftCorner" relativePoint="BOTTOMLEFT"/>
+						<Anchor point="BOTTOMLEFT" relativeKey="$parent.BotLeftCorner" relativePoint="TOPLEFT"/>
 					</Anchors>
 				</Texture>
-				<Texture name="$parentRightBorder" inherits="!UI-Frame-RightTile">
+				<Texture parentKey="RightBorder" inherits="!UI-Frame-RightTile">
 					<Anchors>
-						<Anchor point="TOPRIGHT" relativeTo="$parentTopRightCorner" relativePoint="BOTTOMRIGHT" x="1"/>
-						<Anchor point="BOTTOMRIGHT" relativeTo="$parentBotRightCorner" relativePoint="TOPRIGHT"/>
+						<Anchor point="TOPRIGHT" relativeKey="$parent.TopRightCorner" relativePoint="BOTTOMRIGHT" x="1"/>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.BotRightCorner" relativePoint="TOPRIGHT"/>
 					</Anchors>
 				</Texture>
 			</Layer>
 		</Layers>
 		<Frames>
-			<Button name="$parentCloseButton" inherits="UIPanelCloseButton">
+			<Button parentKey="CloseButton" inherits="UIPanelCloseButton">
 				<Anchors>
 					<Anchor point="TOPRIGHT" relativePoint="TOPRIGHT">
 						<Offset x="4" y="5"/>
@@ -2425,11 +2546,38 @@
 			</Button>
 		</Frames>
 	</Frame>
+
+	<Frame name="BasicFrameTemplate" inherits="BaseBasicFrameTemplate" virtual="true">
+		<Layers>
+			<Layer level="BACKGROUND" textureSubLevel="-1">
+				<Texture parentKey="Bg" file="Interface\FrameGeneral\UI-Background-Rock" horizTile="true" vertTile="true">
+					<Anchors>
+						<Anchor point="TOPLEFT" x="2" y="-21"/>
+						<Anchor point="BOTTOMRIGHT" x="-2" y="2"/>
+					</Anchors>
+				</Texture>
+				<Texture parentKey="TitleBg" inherits="_UI-Frame-TitleTileBg">
+					<Anchors>
+						<Anchor point="TOPLEFT" x="2" y="-3"/>
+						<Anchor point="TOPRIGHT" x="-25" y="-3"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+			<Layer level="BACKGROUND">
+				<Texture parentKey="TopTileStreaks" inherits="_UI-Frame-TopTileStreaks">
+					<Anchors>
+						<Anchor point="TOPLEFT" x="0" y="-21"/>
+						<Anchor point="TOPRIGHT" x="-2" y="-21"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+		</Layers>
+	</Frame>
 	
 	<Frame name="BasicFrameTemplateWithInset" inherits="BasicFrameTemplate" virtual="true">
 		<Layers>
 			<Layer level="BACKGROUND" textureSubLevel="1">
-				<Texture name="$parentInsetBg" file="Interface\FrameGeneral\UI-Background-Marble" horizTile="true" vertTile="true" parentKey="InsetBg">
+				<Texture parentKey="InsetBg" file="Interface\FrameGeneral\UI-Background-Marble" horizTile="true" vertTile="true">
 					<Anchors>
 						<Anchor point="TOPLEFT" x="4" y="-24" />
 						<Anchor point="BOTTOMRIGHT" x="-6" y="4" />
@@ -2437,52 +2585,52 @@
 				</Texture>
 			</Layer>
 			<Layer level="BORDER" textureSubLevel="-1">
-				<Texture name="$parentInsetTopLeftCorner" inherits="UI-Frame-InnerTopLeft" parentKey="InsetBorderTopLeft">
+				<Texture parentKey="InsetBorderTopLeft" inherits="UI-Frame-InnerTopLeft">
 					<Anchors>
-						<Anchor point="TOPLEFT" relativeTo="$parentInsetBg"/>
+						<Anchor point="TOPLEFT" relativeKey="$parent.InsetBg"/>
 					</Anchors>
 				</Texture>
 
-				<Texture name="$parentInsetTopRightCorner" inherits="UI-Frame-InnerTopRight" parentKey="InsetBorderTopRight">
+				<Texture parentKey="InsetBorderTopRight" inherits="UI-Frame-InnerTopRight">
 					<Anchors>
-						<Anchor point="TOPRIGHT" relativeTo="$parentInsetBg"/>
+						<Anchor point="TOPRIGHT" relativeKey="$parent.InsetBg"/>
 					</Anchors>
 				</Texture>
 				
-				<Texture name="$parentInsetBotLeftCorner" inherits="UI-Frame-InnerBotLeftCorner" parentKey="InsetBorderBottomLeft">
+				<Texture parentKey="InsetBorderBottomLeft" inherits="UI-Frame-InnerBotLeftCorner">
 					<Anchors>
-						<Anchor point="BOTTOMLEFT" relativeTo="$parentInsetBg" y="-1"/>
+						<Anchor point="BOTTOMLEFT" relativeKey="$parent.InsetBg" y="-1"/>
 					</Anchors>
 				</Texture>
 				
-				<Texture name="$parentInsetBotRightCorner" inherits="UI-Frame-InnerBotRight" parentKey="InsetBorderBottomRight">
+				<Texture parentKey="InsetBorderBottomRight" inherits="UI-Frame-InnerBotRight">
 					<Anchors>
-						<Anchor point="BOTTOMRIGHT" relativeTo="$parentInsetBg" y="-1"/>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.InsetBg" y="-1"/>
 					</Anchors>
 				</Texture>
 
-				<Texture name="$parentInsetTopBorder" inherits="_UI-Frame-InnerTopTile" parentKey="InsetBorderTop">
+				<Texture parentKey="InsetBorderTop" inherits="_UI-Frame-InnerTopTile">
 					<Anchors>
-						<Anchor point="TOPLEFT" relativeTo="$parentInsetTopLeftCorner" relativePoint="TOPRIGHT"/>
-						<Anchor point="TOPRIGHT" relativeTo="$parentInsetTopRightCorner" relativePoint="TOPLEFT"/>
+						<Anchor point="TOPLEFT" relativeKey="$parent.InsetBorderTopLeft" relativePoint="TOPRIGHT"/>
+						<Anchor point="TOPRIGHT" relativeKey="$parent.InsetBorderTopRight" relativePoint="TOPLEFT"/>
 					</Anchors>
 				</Texture>
-				<Texture name="$parentInsetBottomBorder" inherits="_UI-Frame-InnerBotTile" parentKey="InsetBorderBottom">
+				<Texture parentKey="InsetBorderBottom" inherits="_UI-Frame-InnerBotTile">
 					<Anchors>
-						<Anchor point="BOTTOMLEFT" relativeTo="$parentInsetBotLeftCorner" relativePoint="BOTTOMRIGHT"/>
-						<Anchor point="BOTTOMRIGHT" relativeTo="$parentInsetBotRightCorner" relativePoint="BOTTOMLEFT"/>
+						<Anchor point="BOTTOMLEFT" relativeKey="$parent.InsetBorderBottomLeft" relativePoint="BOTTOMRIGHT"/>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.InsetBorderBottomRight" relativePoint="BOTTOMLEFT"/>
 					</Anchors>
 				</Texture>
-				<Texture name="$parentInsetLeftBorder" inherits="!UI-Frame-InnerLeftTile" parentKey="InsetBorderLeft">
+				<Texture parentKey="InsetBorderLeft" inherits="!UI-Frame-InnerLeftTile">
 					<Anchors>
-						<Anchor point="TOPLEFT" relativeTo="$parentInsetTopLeftCorner" relativePoint="BOTTOMLEFT" x="0" y="0" />
-						<Anchor point="BOTTOMLEFT" relativeTo="$parentInsetBotLeftCorner" relativePoint="TOPLEFT"/>
+						<Anchor point="TOPLEFT" relativeKey="$parent.InsetBorderTopLeft" relativePoint="BOTTOMLEFT" x="0" y="0" />
+						<Anchor point="BOTTOMLEFT" relativeKey="$parent.InsetBorderBottomLeft" relativePoint="TOPLEFT"/>
 					</Anchors>
 				</Texture>
-				<Texture name="$parentInsetRightBorder" inherits="!UI-Frame-InnerRightTile" parentKey="InsetBorderRight">
+				<Texture parentKey="InsetBorderRight" inherits="!UI-Frame-InnerRightTile">
 					<Anchors>
-						<Anchor point="TOPRIGHT" relativeTo="$parentInsetTopRightCorner" relativePoint="BOTTOMRIGHT"/>
-						<Anchor point="BOTTOMRIGHT" relativeTo="$parentInsetBotRightCorner" relativePoint="TOPRIGHT"/>
+						<Anchor point="TOPRIGHT" relativeKey="$parent.InsetBorderTopRight" relativePoint="BOTTOMRIGHT"/>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.InsetBorderBottomRight" relativePoint="TOPRIGHT"/>
 					</Anchors>
 				</Texture>	
 			</Layer>
@@ -2594,6 +2742,9 @@
 						<Offset x="4" y="5"/>
 					</Anchor>
 				</Anchors>
+				<Scripts>
+					<OnClick function="PortraitFrameCloseButton_OnClick" />
+				</Scripts>
 			</Button>
 		</Frames>
 	</Frame>
@@ -2619,49 +2770,49 @@
 			<Layer level="BORDER" textureSubLevel="-5">
 				<Texture name="$parentInsetTopLeftCorner" inherits="UI-Frame-InnerTopLeft" parentKey="InsetBorderTopLeft">
 					<Anchors>
-						<Anchor point="TOPLEFT" relativeTo="$parentBg"/>
+						<Anchor point="TOPLEFT" relativeKey="$parent.Bg"/>
 					</Anchors>
 				</Texture>
 				<Texture name="$parentInsetTopRightCorner" inherits="UI-Frame-InnerTopRight" parentKey="InsetBorderTopRight">
 					<Anchors>
-						<Anchor point="TOPRIGHT" relativeTo="$parentBg"/>
+						<Anchor point="TOPRIGHT" relativeKey="$parent.Bg"/>
 					</Anchors>
 				</Texture>
 				
 				<Texture name="$parentInsetBotLeftCorner" inherits="UI-Frame-InnerBotLeftCorner" parentKey="InsetBorderBottomLeft">
 					<Anchors>
-						<Anchor point="BOTTOMLEFT" relativeTo="$parentBg" y="-1"/>
+						<Anchor point="BOTTOMLEFT" relativeKey="$parent.Bg" y="-1"/>
 					</Anchors>
 				</Texture>
 				
 				<Texture name="$parentInsetBotRightCorner" inherits="UI-Frame-InnerBotRight" parentKey="InsetBorderBottomRight">
 					<Anchors>
-						<Anchor point="BOTTOMRIGHT" relativeTo="$parentBg" y="-1"/>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.Bg" y="-1"/>
 					</Anchors>
 				</Texture>
 
 				<Texture name="$parentInsetTopBorder" inherits="_UI-Frame-InnerTopTile" parentKey="InsetBorderTop">
 					<Anchors>
-						<Anchor point="TOPLEFT" relativeTo="$parentInsetTopLeftCorner" relativePoint="TOPRIGHT"/>
-						<Anchor point="TOPRIGHT" relativeTo="$parentInsetTopRightCorner" relativePoint="TOPLEFT"/>
+						<Anchor point="TOPLEFT" relativeKey="$parent.InsetBorderTopLeft" relativePoint="TOPRIGHT"/>
+						<Anchor point="TOPRIGHT" relativeKey="$parent.InsetBorderTopRight" relativePoint="TOPLEFT"/>
 					</Anchors>
 				</Texture>
 				<Texture name="$parentInsetBottomBorder" inherits="_UI-Frame-InnerBotTile" parentKey="InsetBorderBottom">
 					<Anchors>
-						<Anchor point="BOTTOMLEFT" relativeTo="$parentInsetBotLeftCorner" relativePoint="BOTTOMRIGHT"/>
-						<Anchor point="BOTTOMRIGHT" relativeTo="$parentInsetBotRightCorner" relativePoint="BOTTOMLEFT"/>
+						<Anchor point="BOTTOMLEFT" relativeKey="$parent.InsetBorderBottomLeft" relativePoint="BOTTOMRIGHT"/>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.InsetBorderBottomRight" relativePoint="BOTTOMLEFT"/>
 					</Anchors>
 				</Texture>
 				<Texture name="$parentInsetLeftBorder" inherits="!UI-Frame-InnerLeftTile" parentKey="InsetBorderLeft">
 					<Anchors>
-						<Anchor point="TOPLEFT" relativeTo="$parentInsetTopLeftCorner" relativePoint="BOTTOMLEFT" x="0" y="0" />
-						<Anchor point="BOTTOMLEFT" relativeTo="$parentInsetBotLeftCorner" relativePoint="TOPLEFT"/>
+						<Anchor point="TOPLEFT" relativeKey="$parent.InsetBorderTopLeft" relativePoint="BOTTOMLEFT" x="0" y="0" />
+						<Anchor point="BOTTOMLEFT" relativeKey="$parent.InsetBorderBottomLeft" relativePoint="TOPLEFT"/>
 					</Anchors>
 				</Texture>
 				<Texture name="$parentInsetRightBorder" inherits="!UI-Frame-InnerRightTile" parentKey="InsetBorderRight">
 					<Anchors>
-						<Anchor point="TOPRIGHT" relativeTo="$parentInsetTopRightCorner" relativePoint="BOTTOMRIGHT"/>
-						<Anchor point="BOTTOMRIGHT" relativeTo="$parentInsetBotRightCorner" relativePoint="TOPRIGHT"/>
+						<Anchor point="TOPRIGHT" relativeKey="$parent.InsetBorderTopRight" relativePoint="BOTTOMRIGHT"/>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.InsetBorderBottomRight" relativePoint="TOPRIGHT"/>
 					</Anchors>
 				</Texture>	
 			</Layer>
@@ -2671,50 +2822,127 @@
 	<Frame name="InsetFrameTemplate2" virtual="true">
 		<Layers>
 			<Layer level="BORDER">
-				<Texture name="$parentTopLeftCorner" inherits="Talent-Inner-TopLeft" parentKey="BorderTopLeft">
+				<Texture parentKey="TopLeftCorner" inherits="Talent-Inner-TopLeft">
 					<Anchors>
 						<Anchor point="TOPLEFT" x="0" y="0"/>
 					</Anchors>
 				</Texture>
-				<Texture name="$parentTopRightCorner" inherits="Talent-Inner-TopRight" parentKey="BorderTopRight">
+				<Texture parentKey="TopRightCorner" inherits="Talent-Inner-TopRight">
 					<Anchors>
 						<Anchor point="TOPRIGHT" x="0" y="0"/>
 					</Anchors>
 				</Texture>
-				<Texture name="$parentBotLeftCorner" inherits="Talent-Inner-BotLeft" parentKey="BorderBottomLeft">
+				<Texture parentKey="BotLeftCorner" inherits="Talent-Inner-BotLeft">
 					<Anchors>
 						<Anchor point="BOTTOMLEFT" x="0" y="0"/>
 					</Anchors>
 				</Texture>
-				<Texture name="$parentBotRightCorner" inherits="Talent-Inner-BotRight" parentKey="BorderBottomRight">
+				<Texture parentKey="BotRightCorner" inherits="Talent-Inner-BotRight">
 					<Anchors>
 						<Anchor point="BOTTOMRIGHT" x="0" y="0"/>
 					</Anchors>
 				</Texture>
-				<Texture name="$parentTopBorder" inherits="_Talent-Inner-TopTile" parentKey="BorderTop">
+				<Texture parentKey="TopBorder" inherits="_Talent-Inner-TopTile">
 					<Anchors>
-						<Anchor point="TOPLEFT" relativeTo="$parentTopLeftCorner" relativePoint="TOPRIGHT" x="0" y="0" />
-						<Anchor point="TOPRIGHT" relativeTo="$parentTopRightCorner" relativePoint="TOPLEFT"/>
+						<Anchor point="TOPLEFT" relativeKey="$parent.TopLeftCorner" relativePoint="TOPRIGHT" x="0" y="0"/>
+						<Anchor point="TOPRIGHT" relativeKey="$parent.TopRightCorner" relativePoint="TOPLEFT" x="0" y="0"/>
 					</Anchors>
 				</Texture>
-				<Texture name="$parentBottomBorder" inherits="_Talent-Inner-BotTile" parentKey="BorderBottom">
+				<Texture parentKey="BottomBorder" inherits="_Talent-Inner-BotTile">
 					<Anchors>
-						<Anchor point="BOTTOMLEFT" relativeTo="$parentBotLeftCorner" relativePoint="BOTTOMRIGHT" y="0"/>
-						<Anchor point="BOTTOMRIGHT" relativeTo="$parentBotRightCorner" relativePoint="BOTTOMLEFT" y="0"/>
+						<Anchor point="BOTTOMLEFT" relativeKey="$parent.BotLeftCorner" relativePoint="BOTTOMRIGHT" x="0" y="0"/>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.BotRightCorner" relativePoint="BOTTOMLEFT" x="0" y="0"/>
 					</Anchors>
 				</Texture>
-				<Texture name="$parentLeftBorder" inherits="!Talent-Inner-LeftTile" parentKey="BorderLeft">
+				<Texture parentKey="LeftBorder" inherits="!Talent-Inner-LeftTile">
 					<Anchors>
-						<Anchor point="TOPLEFT" relativeTo="$parentTopLeftCorner" relativePoint="BOTTOMLEFT" x="0" y="0" />
-						<Anchor point="BOTTOMLEFT" relativeTo="$parentBotLeftCorner" relativePoint="TOPLEFT"/>
+						<Anchor point="TOPLEFT" relativeKey="$parent.TopLeftCorner" relativePoint="BOTTOMLEFT" x="0" y="0"/>
+						<Anchor point="BOTTOMLEFT" relativeKey="$parent.BotLeftCorner" relativePoint="TOPLEFT" x="0" y="0"/>
 					</Anchors>
 				</Texture>
-				<Texture name="$parentRightBorder" inherits="!Talent-Inner-RightTile" parentKey="BorderRight">
+				<Texture parentKey="RightBorder" inherits="!Talent-Inner-RightTile">
 					<Anchors>
-						<Anchor point="TOPRIGHT" relativeTo="$parentTopRightCorner" relativePoint="BOTTOMRIGHT"/>
-						<Anchor point="BOTTOMRIGHT" relativeTo="$parentBotRightCorner" relativePoint="TOPRIGHT"/>
+						<Anchor point="TOPRIGHT" relativeKey="$parent.TopRightCorner" relativePoint="BOTTOMRIGHT" x="0" y="0"/>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.BotRightCorner" relativePoint="TOPRIGHT" x="0" y="0"/>
 					</Anchors>
 				</Texture>	
+			</Layer>
+		</Layers>
+	</Frame>
+
+	<Frame name="InsetFrameTemplate3" virtual="true">
+		<Layers>
+			<Layer level="BORDER">
+				<Texture parentKey="BorderTopRight" file="Interface\Common\Common-Input-Border">
+					<Size x="8" y="8"/>
+					<Anchors>
+						<Anchor point="TOPRIGHT"/>
+					</Anchors>
+					<TexCoords left="0.9375" right="1.0" top="0" bottom="0.25"/>
+				</Texture>
+				<Texture parentKey="BorderBottomRight" file="Interface\Common\Common-Input-Border">
+					<Size x="8" y="8"/>
+					<Anchors>
+						<Anchor point="BOTTOMRIGHT"/>
+					</Anchors>
+					<TexCoords left="0.9375" right="1.0" top="0.375" bottom="0.625"/>
+				</Texture>
+				<Texture parentKey="BorderRightMiddle" file="Interface\Common\Common-Input-Border">
+					<Size x="8" y="0"/>
+					<Anchors>
+						<Anchor point="TOP" relativeKey="$parent.BorderTopRight" relativePoint="BOTTOM"/>
+						<Anchor point="BOTTOM" relativeKey="$parent.BorderBottomRight" relativePoint="TOP"/>
+					</Anchors>
+					<TexCoords left="0.9375" right="1.0" top="0.25" bottom="0.375"/>
+				</Texture>
+				<Texture parentKey="BorderTopLeft" file="Interface\Common\Common-Input-Border">
+					<Size x="8" y="8"/>
+					<Anchors>
+						<Anchor point="TOPLEFT"/>
+					</Anchors>
+					<TexCoords left="0" right="0.0625" top="0" bottom="0.25"/>
+				</Texture>
+				<Texture parentKey="BorderBottomLeft" file="Interface\Common\Common-Input-Border">
+					<Size x="8" y="8"/>
+					<Anchors>
+						<Anchor point="BOTTOMLEFT"/>
+					</Anchors>
+					<TexCoords left="0" right="0.0625" top="0.375" bottom="0.625"/>
+				</Texture>
+				<Texture parentKey="BorderLeftMiddle" file="Interface\Common\Common-Input-Border">
+					<Size x="8" y="0"/>
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeKey="$parent.BorderTopLeft" relativePoint="BOTTOMLEFT"/>
+						<Anchor point="BOTTOMLEFT" relativeKey="$parent.BorderBottomLeft" relativePoint="TOPLEFT"/>
+					</Anchors>
+					<TexCoords left="0" right="0.0625" top="0.25" bottom="0.375"/>
+				</Texture>
+				<Texture parentKey="BorderTopMiddle" file="Interface\Common\Common-Input-Border">
+					<Size x="100" y="8"/>
+					<Anchors>								
+						<Anchor point="RIGHT" relativeKey="$parent.BorderTopRight" relativePoint="LEFT"/>
+						<Anchor point="LEFT" relativeKey="$parent.BorderTopLeft" relativePoint="RIGHT"/>
+					</Anchors>
+					<TexCoords left="0.0625" right="0.9375" top="0" bottom="0.25"/>
+				</Texture>
+				<Texture parentKey="BorderBottomMiddle" file="Interface\Common\Common-Input-Border">
+					<Size x="100" y="8"/>
+					<Anchors>								
+						<Anchor point="RIGHT" relativeKey="$parent.BorderBottomRight" relativePoint="LEFT"/>
+						<Anchor point="LEFT" relativeKey="$parent.BorderBottomLeft" relativePoint="RIGHT"/>
+					</Anchors>
+					<TexCoords left="0.0625" right="0.9375" top="0.375" bottom="0.625"/>
+				</Texture>
+			</Layer>
+			<Layer level="BACKGROUND">
+				<Texture parentKey="Bg" file="Interface\Common\Common-Input-Border">
+					<Size x="100" y="4"/>
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeKey="$parent.BorderTopLeft" relativePoint="BOTTOMRIGHT"/>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.BorderBottomRight" relativePoint="TOPLEFT"/>
+					</Anchors>
+					<TexCoords left="0.0625" right="0.9375" top="0.25" bottom="0.375"/>
+				</Texture>
 			</Layer>
 		</Layers>
 	</Frame>
@@ -2883,7 +3111,7 @@
 	"MagicButton_OnLoad" from within your script.
 *******************************************************************************
 -->
-	<Button name="MagicButtonTemplate" inherits="UIPanelButtonTemplate2" virtual="true">
+	<Button name="MagicButtonTemplate" inherits="UIPanelButtonTemplate" virtual="true">
 		<Size x="80" y="22"/>
 		<Scripts>
 			<OnLoad function="MagicButton_OnLoad" />
@@ -3189,6 +3417,77 @@
 			<OnLeave function="GameTooltip_Hide"/>
 		</Scripts>
 	</Frame>
+	
+<!--
+*******************************************************************************
+    Tooltip bordered frame
+*******************************************************************************
+-->
+<Frame name="TooltipBorderedFrameTemplate" virtual="true">
+	<Layers>
+		<Layer level="BACKGROUND">
+			<Texture parentKey="BorderTopLeft" file="Interface\Tooltips\UI-Tooltip-TL">
+				<Size x="8" y="8"/>
+				<Anchors>
+					<Anchor point="TOPLEFT"/>
+				</Anchors>
+			</Texture>
+			<Texture parentKey="BorderTopRight" file="Interface\Tooltips\UI-Tooltip-TR">
+				<Size x="8" y="8"/>
+				<Anchors>
+					<Anchor point="TOPRIGHT"/>
+				</Anchors>
+			</Texture>
+			<Texture parentKey="BorderBottomRight" file="Interface\Tooltips\UI-Tooltip-BR">
+				<Size x="8" y="8"/>
+				<Anchors>
+					<Anchor point="BOTTOMRIGHT"/>
+				</Anchors>
+			</Texture>
+			<Texture parentKey="BorderBottomLeft" file="Interface\Tooltips\UI-Tooltip-BL">
+				<Size x="8" y="8"/>
+				<Anchors>
+					<Anchor point="BOTTOMLEFT"/>
+				</Anchors>
+			</Texture>
+			<Texture parentKey="BorderTop" file="Interface\Tooltips\UI-Tooltip-T">
+				<Size x="8" y="8"/>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeKey="$parent.BorderTopLeft" relativePoint="TOPRIGHT"/>
+					<Anchor point="TOPRIGHT" relativeKey="$parent.BorderTopRight" relativePoint="TOPLEFT"/>
+				</Anchors>
+			</Texture>
+			<Texture parentKey="BorderRight" file="Interface\Tooltips\UI-Tooltip-R">
+				<Size x="8" y="8"/>
+				<Anchors>
+					<Anchor point="TOPRIGHT" relativeKey="$parent.BorderTopRight" relativePoint="BOTTOMRIGHT"/>
+					<Anchor point="BOTTOMRIGHT" relativeKey="$parent.BorderBottomRight" relativePoint="TOPRIGHT"/>
+				</Anchors>
+			</Texture>
+			<Texture parentKey="BorderBottom" file="Interface\Tooltips\UI-Tooltip-B">
+				<Size x="8" y="8"/>
+				<Anchors>
+					<Anchor point="BOTTOMLEFT" relativeKey="$parent.BorderBottomLeft" relativePoint="BOTTOMRIGHT"/>
+					<Anchor point="BOTTOMRIGHT" relativeKey="$parent.BorderBottomRight" relativePoint="BOTTOMLEFT"/>
+				</Anchors>
+			</Texture>
+			<Texture parentKey="BorderLeft" file="Interface\Tooltips\UI-Tooltip-L">
+				<Size x="8" y="8"/>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeKey="$parent.BorderTopLeft" relativePoint="BOTTOMLEFT"/>
+					<Anchor point="BOTTOMLEFT" relativeKey="$parent.BorderBottomLeft" relativePoint="TOPLEFT"/>
+				</Anchors>
+			</Texture>
+			<Texture parentKey="Background">
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeKey="$parent.BorderTopLeft" relativePoint="BOTTOMRIGHT"/>
+					<Anchor point="BOTTOMRIGHT" relativeKey="$parent.BorderBottomRight" relativePoint="TOPLEFT"/>
+				</Anchors>
+				<Color r="0" g="0" b="0" a="0.8"/>
+			</Texture>
+		</Layer>
+	</Layers>
+</Frame>
 
 <!--
 *******************************************************************************
@@ -3262,4 +3561,381 @@
 			</OnLoad>
 		</Scripts>
 	</Frame>
+	
+	<!--
+*******************************************************************************
+    Gold edge designed to go around money frames
+*******************************************************************************
+-->
+	
+	<Frame name="ThinGoldEdgeTemplate" virtual="true">
+		<Size>
+			<AbsDimension x="100" y="20"/>
+		</Size>
+		<Layers>
+			<Layer level="BACKGROUND">
+				<Texture name="$parentLeft" file="Interface\Common\Moneyframe">
+					<Size x="7" y="20"/>
+					<Anchors>
+						<Anchor point="TOPLEFT"/>
+						<Anchor point="BOTTOMLEFT"/>
+					</Anchors>
+					<TexCoords left="0.953125" right="0.9921875" top="0" bottom="0.296875"/>
+				</Texture>
+				<Texture name="$parentRight" file="Interface\Common\Moneyframe">
+					<Size x="7" y="20"/>
+					<Anchors>
+						<Anchor point="TOPRIGHT"/>
+						<Anchor point="BOTTOMRIGHT"/>
+					</Anchors>
+					<TexCoords left="0" right="0.0546875" top="0" bottom="0.296875"/>
+				</Texture>
+				<Texture name="$parentMiddle" file="Interface\Common\Moneyframe">
+					<Size x="80" y="20"/>
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeTo="$parentLeft" relativePoint="TOPRIGHT"/>
+						<Anchor point="BOTTOMRIGHT" relativeTo="$parentRight" relativePoint="BOTTOMLEFT"/>
+					</Anchors>
+					<TexCoords left="0" right="0.9921875" top="0.3125" bottom="0.609375"/>
+				</Texture>
+			</Layer>
+		</Layers>
+	</Frame>
+	
+<!--
+*******************************************************************************
+    Help Plate System
+*******************************************************************************
+-->
+	<Button name="MainHelpPlateButton" virtual="true">
+		<Size x="64" y="64"/>
+		<Layers>
+			<Layer level="BACKGROUND">
+				<Texture parentKey="I" file="Interface\common\help-i">
+					<Size x="46" y="46"/>
+					<Anchors>
+						<Anchor point="CENTER"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+			<Layer level="BORDER">
+				<Texture parentKey="Ring" file="Interface\Minimap\MiniMap-TrackingBorder">
+					<Size x="64" y="64"/>
+					<Anchors>
+						<Anchor point="CENTER" x="12" y="-13"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+			<Layer level="OVERLAY">
+				<Texture name="$parentBigIPulse" file="Interface\common\help-i" alphaMode="ADD" hidden="true">
+					<Size x="46" y="46"/>
+					<Anchors>
+						<Anchor point="CENTER"/>
+					</Anchors>
+				</Texture>
+				<Texture name="$parentRingPulse" file="Interface\TutorialFrame\minimap-glow" alphaMode="ADD" hidden="true">
+					<Size x="52" y="52"/>
+					<Anchors>
+						<Anchor point="CENTER" x="0" y="0"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+		</Layers>
+		<Scripts>
+			<OnEnter function="Main_HelpPlate_Button_OnEnter"/>
+			<OnLeave function="Main_HelpPlate_Button_OnLeave"/>
+			<OnMouseDown>
+				self.I:SetPoint("CENTER", 1, -1);
+			</OnMouseDown>
+			<OnMouseUp>
+				PlaySound("igMainMenuOptionCheckBoxOn");
+				self.I:SetPoint("CENTER", 0, 0);
+			</OnMouseUp>
+			<OnHide function="Main_HelpPlate_Button_OnLeave"/>
+		</Scripts>
+		<HighlightTexture alphaMode="ADD" file="Interface\Minimap\UI-Minimap-ZoomButton-Highlight">
+			<Size x="46" y="46"/>
+			<Anchors>
+				<Anchor point="CENTER" x="-1" y="1"/>
+			</Anchors>
+		</HighlightTexture>
+		<Animations>
+			<AnimationGroup parentKey="Pulse" looping="BOUNCE">
+				<Alpha target="$parentBigIPulse" change="-0.75" duration="1.0" smoothing="IN_OUT" order="1"/>
+				<Alpha target="$parentRingPulse" change="-0.5" duration="1.0" smoothing="IN_OUT" order="1"/>
+			</AnimationGroup>
+		</Animations>
+	</Button>
+
+	<Button name="HelpPlate" parent="UIParent" hidden="true" toplevel="true" enableMouse="true" enableKeyboard="true" frameStrata="DIALOG">
+		<Size x="100" y="100"/>
+<!--
+		<Layers>
+			<Layer level="BACKGROUND">
+				<Texture setAllPoints="true">
+					<Color r="0" g="0" b="0" a="0.5"/>
+				</Texture>
+			</Layer>
+		</Layers>
+-->
+	</Button>
+
+	<Frame name="HelpPlateTooltip" inherits="GlowBoxTemplate" parent="UIParent" hidden="true" frameStrata="FULLSCREEN_DIALOG" frameLevel="2">
+		<Size x="220" y="100"/>
+		<Layers>
+			<Layer level="OVERLAY">
+				<FontString parentKey="Text" inherits="GameFontHighlightLeft">
+					<Size x="200" y="0"/>
+					<Anchors>
+						<Anchor point="TOPLEFT" x="15" y="-15"/>
+					</Anchors>
+				</FontString>
+			</Layer>
+			<Layer level="ARTWORK">
+				<Texture parentKey="ArrowUP" inherits="HelpPlateArrowDOWN" hidden="true">
+					<Size x="53" y="21"/>
+					<Anchors>
+						<Anchor point="TOP" relativePoint="BOTTOM" x="0" y="3"/>
+					</Anchors>
+				</Texture>
+				<Texture parentKey="ArrowDOWN" inherits="HelpPlateArrowUP" hidden="true">
+					<Size x="53" y="21"/>
+					<Anchors>
+						<Anchor point="BOTTOM" relativePoint="TOP" x="0" y="-3"/>
+					</Anchors>
+				</Texture>
+				<Texture parentKey="ArrowRIGHT" inherits="HelpPlateArrowDOWN" hidden="true">
+					<Size x="53" y="21"/>
+					<Anchors>
+						<Anchor point="RIGHT" relativePoint="LEFT" x="3" y="0"/>
+					</Anchors>
+				</Texture>
+				<Texture parentKey="ArrowLEFT" inherits="HelpPlateArrowDOWN" hidden="true">
+					<Size x="53" y="21"/>
+					<Anchors>
+						<Anchor point="LEFT" relativePoint="RIGHT" x="-3" y="0"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+			<Layer level="BORDER">
+				<Texture parentKey="ArrowGlowUP" inherits="HelpPlateArrow-GlowDOWN" hidden="true" alphaMode="ADD" alpha="0.5">
+					<Size x="53" y="21"/>
+					<Anchors>
+						<Anchor point="TOP" relativePoint="BOTTOM" x="0" y="3"/>
+					</Anchors>
+				</Texture>
+				<Texture parentKey="ArrowGlowDOWN" inherits="HelpPlateArrow-GlowUP" hidden="true" alphaMode="ADD" alpha="0.5">
+					<Size x="53" y="21"/>
+					<Anchors>
+						<Anchor point="BOTTOM" relativePoint="TOP" x="0" y="-3"/>
+					</Anchors>
+				</Texture>
+				<Texture parentKey="ArrowGlowRIGHT" inherits="HelpPlateArrow-GlowDOWN" hidden="true" alphaMode="ADD" alpha="0.5">
+					<Size x="53" y="21"/>
+					<Anchors>
+						<Anchor point="RIGHT" relativePoint="LEFT" x="3" y="0"/>
+					</Anchors>
+				</Texture>
+				<Texture parentKey="ArrowGlowLEFT" inherits="HelpPlateArrow-GlowDOWN" hidden="true" alphaMode="ADD" alpha="0.5">
+					<Size x="53" y="21"/>
+					<Anchors>
+						<Anchor point="LEFT" relativePoint="RIGHT" x="-3" y="0"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+		</Layers>
+		<Scripts>
+			<OnLoad>
+				self.Text:SetSpacing(4);
+				SetClampedTextureRotation(self.ArrowLEFT, 270);
+				SetClampedTextureRotation(self.ArrowRIGHT, 90);
+				SetClampedTextureRotation(self.ArrowGlowLEFT, 270);
+				SetClampedTextureRotation(self.ArrowGlowRIGHT, 90);
+			</OnLoad>
+			<OnShow>
+				self:SetHeight(self.Text:GetHeight()+30);
+			</OnShow>
+		</Scripts>
+	</Frame>
+
+	<Button name="HelpPlateButton" virtual="true" frameStrata="DIALOG" hidden="true">
+		<Size x="46" y="46"/>
+		<Layers>
+			<Layer level="OVERLAY">
+				<Texture parentKey="I" file="Interface\common\help-i" setallpoints="true"/>
+				<Texture parentKey="BigI" file="Interface\common\help-i" setallpoints="true" alphaMode="ADD" hidden="true"/>
+				<Texture parentKey="Ring" file="Interface\Minimap\UI-Minimap-ZoomButton-Highlight" setallpoints="true" alphaMode="ADD" hidden="true"/>
+			</Layer>
+		</Layers>
+		<Scripts>
+			<OnLoad function="HelpPlate_Button_OnLoad"/>
+			<OnShow function="HelpPlate_Button_OnShow"/>
+			<OnEnter function="HelpPlate_Button_OnEnter"/>
+			<OnLeave function="HelpPlate_Button_OnLeave"/>
+		</Scripts>
+		<HighlightTexture alphaMode="ADD" file="Interface\Minimap\UI-Minimap-ZoomButton-Highlight">
+			<Size x="46" y="46"/>
+			<Anchors>
+				<Anchor point="CENTER" x="-1" y="-1"/>
+			</Anchors>
+		</HighlightTexture>
+		<Animations>
+			<AnimationGroup parentKey="Pulse" looping="BOUNCE">
+				<Alpha targetKey="$parent.$parent.BigI" change="-0.8" duration="0.5"/>
+				<Alpha targetKey="$parent.$parent.Ring" change="-0.8" duration="0.5"/>
+			</AnimationGroup>
+		</Animations>
+	</Button>
+
+	<Frame name="HelpPlateBox" inherits="ThinBorderTemplate" virtual="true" hidden="true">
+		<Size x="200" y="200"/>
+		<Layers>
+			<Layer level="BACKGROUND">
+				<Texture parentKey="BG">
+					<Anchors>
+						<Anchor point="TOPLEFT" x="0" y="0"/>
+						<Anchor point="BOTTOMRIGHT" x="0" y="0"/>
+					</Anchors>
+					<Color r="0" g="0" b="0" a="0.7"/>
+				</Texture>
+			</Layer>
+		</Layers>
+		<Scripts>
+			<OnLoad function="HelpPlateBox_OnLoad"/>
+		</Scripts>
+	</Frame>
+	
+	<Frame name="HelpPlateBoxHighlight" inherits="GlowBorderTemplate" virtual="true" hidden="true">
+		<Size x="200" y="200"/>
+	</Frame>
+
+	<ScrollFrame name="InputScrollFrameTemplate" inherits="UIPanelScrollFrameTemplate" virtual="true">
+		<Size x="278" y="48"/>
+		<Layers>
+			<Layer level="BACKGROUND">
+				<Texture parentKey="TopLeftTex" file="Interface\Common\Common-Input-Border-TL">
+					<Size x="8" y="8"/>
+					<Anchors>
+						<Anchor point="TOPLEFT" x="-5" y="5"/>
+					</Anchors>
+				</Texture>
+				<Texture parentKey="TopRightTex" file="Interface\Common\Common-Input-Border-TR">
+					<Size x="8" y="8"/>
+					<Anchors>
+						<Anchor point="TOPRIGHT" x="5" y="5"/>
+					</Anchors>
+				</Texture>
+				<Texture parentKey="TopTex" file="Interface\Common\Common-Input-Border-T">
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeKey="$parent.TopLeftTex" relativePoint="TOPRIGHT"/>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.TopRightTex" relativePoint="BOTTOMLEFT"/>
+					</Anchors>
+				</Texture>
+				<Texture parentKey="BottomLeftTex" file="Interface\Common\Common-Input-Border-BL">
+					<Size x="8" y="8"/>
+					<Anchors>
+						<Anchor point="BOTTOMLEFT" x="-5" y="-5"/>
+					</Anchors>
+				</Texture>
+				<Texture parentKey="BottomRightTex" file="Interface\Common\Common-Input-Border-BR">
+					<Size x="8" y="8"/>
+					<Anchors>
+						<Anchor point="BOTTOMRIGHT" x="5" y="-5"/>
+					</Anchors>
+				</Texture>
+				<Texture parentKey="BottomTex" file="Interface\Common\Common-Input-Border-B">
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeKey="$parent.BottomLeftTex" relativePoint="TOPRIGHT"/>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.BottomRightTex" relativePoint="BOTTOMLEFT"/>
+					</Anchors>
+				</Texture>
+				<Texture parentKey="LeftTex" file="Interface\Common\Common-Input-Border-L">
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeKey="$parent.TopLeftTex" relativePoint="BOTTOMLEFT"/>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.BottomLeftTex" relativePoint="TOPRIGHT"/>
+					</Anchors>
+				</Texture>
+				<Texture parentKey="RightTex" file="Interface\Common\Common-Input-Border-R">
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeKey="$parent.TopRightTex" relativePoint="BOTTOMLEFT"/>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.BottomRightTex" relativePoint="TOPRIGHT"/>
+					</Anchors>
+				</Texture>
+				<Texture parentKey="MiddleTex" file="Interface\Common\Common-Input-Border-M">
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeKey="$parent.LeftTex" relativePoint="TOPRIGHT"/>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.RightTex" relativePoint="BOTTOMLEFT"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+			<Layer level="OVERLAY">
+				<FontString inherits="GameFontDisableLarge" parentKey="CharCount">
+					<Anchors>
+						<Anchor point="BOTTOMRIGHT" x="-6" y="0"/>
+					</Anchors>
+				</FontString>
+			</Layer>
+		</Layers>
+		<Frames>
+			<Button parentKey="FocusButton" setAllPoints="true">
+				<Scripts>
+					<OnClick>
+						self:GetParent().EditBox:SetFocus();
+					</OnClick>
+				</Scripts>
+			</Button>
+		</Frames>
+		<Scripts>
+			<OnLoad function="InputScrollFrame_OnLoad"/>
+		</Scripts>
+		<ScrollChild>
+			<EditBox parentKey="EditBox" multiLine="true" letters="127" countInvisibleLetters="true" autoFocus="false">
+				<Size x="1" y="1"/>
+				<Anchors>
+					<Anchor point="TOPLEFT"/>
+				</Anchors>
+				<Layers>
+					<Layer level="BORDER">
+						<FontString parentKey="PromptText" inherits="GameFontNormalSmall" justifyH="LEFT" justifyV="MIDDLE">
+							<Anchors>
+								<Anchor point="LEFT" x="3" y="0"/>
+							</Anchors>
+							<Color r="0.35" g="0.35" b="0.35"/>
+						</FontString>
+					</Layer>
+				</Layers>
+				<Scripts>
+					<OnTabPressed>
+						if ( self.nextEditBox ) then
+							self.nextEditBox:SetFocus();
+						end
+					</OnTabPressed>
+					<OnTextChanged>
+						local scrollFrame = self:GetParent();
+						ScrollingEdit_OnTextChanged(self, scrollFrame);
+						if ( self:GetText() ~= "" ) then
+							self.PromptText:Hide();
+						else
+							self.PromptText:Show();
+						end
+						scrollFrame.CharCount:SetText(self:GetMaxLetters() - self:GetNumLetters());
+						if ( scrollFrame.ScrollBar:IsShown() ) then
+							scrollFrame.CharCount:SetPoint("BOTTOMRIGHT", -17, 0);
+						else
+							scrollFrame.CharCount:SetPoint("BOTTOMRIGHT", 0, 0);
+						end
+					</OnTextChanged> 
+					<OnCursorChanged function="ScrollingEdit_OnCursorChanged"/>
+					<OnUpdate>
+						ScrollingEdit_OnUpdate(self, elapsed, self:GetParent());
+					</OnUpdate>
+					<OnEscapePressed>
+						self:ClearFocus();
+					</OnEscapePressed>
+				</Scripts>
+				<FontString inherits="GameFontHighlightSmall"/>
+			</EditBox>
+		</ScrollChild>
+	</ScrollFrame>
+
 </Ui>

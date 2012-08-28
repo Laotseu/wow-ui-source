@@ -4,18 +4,21 @@ WATCHFRAME_COLLAPSEDWIDTH = 0;		-- set in WatchFrame_OnLoad
 WATCHFRAME_EXPANDEDWIDTH = 204;
 WATCHFRAME_LINEHEIGHT = 16;
 WATCHFRAME_MAXLINEWIDTH = 0;		-- set in WatchFrame_SetWidth
-WATCHFRAME_MULTIPLE_LINEHEIGHT = 29;
+WATCHFRAME_MULTIPLE_LINEHEIGHT = 0;	-- set in WatchFrame_SetWidth
 WATCHFRAME_ITEM_WIDTH = 33;
 
 local DASH_NONE = 0;
 local DASH_SHOW = 1;
 local DASH_HIDE = 2;
+local DASH_ICON = 3;
 local DASH_WIDTH;
+DASH_ICON_WIDTH = 20;
 local IS_HEADER = true;
 
 WATCHFRAME_INITIAL_OFFSET = 0;
 WATCHFRAME_TYPE_OFFSET = 10;
 WATCHFRAME_QUEST_OFFSET = 10;
+WATCHFRAME_SCENARIO_LINE_OFFSET = 10;
 
 WATCHFRAMELINES_FONTSPACING = 0;
 WATCHFRAMELINES_FONTHEIGHT = 0;
@@ -26,6 +29,7 @@ WATCHFRAME_CRITERIA_PER_ACHIEVEMENT = 5;
 
 WATCHFRAME_NUM_TIMERS = 0;
 WATCHFRAME_NUM_ITEMS = 0;
+WATCHFRAME_NUM_POPUPS = 0;
 
 WATCHFRAME_OBJECTIVEHANDLERS = {};
 WATCHFRAME_TIMEDCRITERIA = {};
@@ -33,6 +37,7 @@ WATCHFRAME_TIMERLINES = {};
 WATCHFRAME_ACHIEVEMENTLINES = {};
 WATCHFRAME_QUESTLINES = {};
 WATCHFRAME_LINKBUTTONS = {};
+WATCHFRAME_SCENARIOLINES = {};
 local WATCHFRAME_SETLINES = { };			-- buffer to hold lines for a quest/achievement that will be displayed only if there is room
 local WATCHFRAME_SETLINES_NUMLINES;		-- the number of visual lines to be rendered for the buffered data - used just for item wrapping right now
 
@@ -205,6 +210,39 @@ local function WatchFrame_ReleaseUnusedQuestLines ()
 	end
 end
 
+local scenarioLineIndex = 1;
+local function WatchFrame_GetScenarioLine(newParent)
+	local line = WATCHFRAME_SCENARIOLINES[scenarioLineIndex];
+	if ( not line ) then
+		WATCHFRAME_SCENARIOLINES[scenarioLineIndex] = WatchFrame.lineCache:GetFrame();
+		line = WATCHFRAME_SCENARIOLINES[scenarioLineIndex];
+	end
+
+	line:Reset();
+	if (newParent ) then
+		line:SetParent(newParent);
+	end
+	scenarioLineIndex = scenarioLineIndex + 1;
+	return line;
+end
+
+local function WatchFrame_ResetScenarioLines()
+	scenarioLineIndex = 1;
+end
+
+local function WatchFrame_ReleaseUnusedScenarioLines()
+	local line
+	for i = scenarioLineIndex, #WATCHFRAME_SCENARIOLINES do
+		line = WATCHFRAME_SCENARIOLINES[i];
+		line:Hide();
+		line.icon:Hide();
+		line.dash:SetWidth(0);
+		line:SetParent(WatchFrameLines);
+		line.frameCache:ReleaseFrame(line);
+		WATCHFRAME_SCENARIOLINES[i] = nil;
+	end
+end
+
 function WatchFrame_OnLoad (self)
 	self:RegisterEvent("PLAYER_ENTERING_WORLD");
 	self:RegisterEvent("QUEST_LOG_UPDATE");
@@ -217,6 +255,10 @@ function WatchFrame_OnLoad (self)
 	self:RegisterEvent("PLAYER_MONEY");
 	self:RegisterEvent("VARIABLES_LOADED");
 	self:RegisterEvent("QUEST_AUTOCOMPLETE");
+	self:RegisterEvent("SCENARIO_UPDATE");
+	self:RegisterEvent("SCENARIO_CRITERIA_UPDATE");
+	self:RegisterEvent("CRITERIA_COMPLETE");
+	self:RegisterEvent("NEW_WMO_CHUNK");
 	self:SetScript("OnSizeChanged", WatchFrame_OnSizeChanged); -- Has to be set here instead of in XML for now due to OnSizeChanged scripts getting run before OnLoad scripts.
 	self.lineCache = UIFrameCache:New("FRAME", "WatchFrameLine", WatchFrameLines, "WatchFrameLineTemplate");
 	self.buttonCache = UIFrameCache:New("BUTTON", "WatchFrameLinkButton", WatchFrameLines, "WatchFrameLinkButtonTemplate")
@@ -227,7 +269,9 @@ function WatchFrame_OnLoad (self)
 	watchFrameTestLine.dash:SetText(QUEST_DASH);
 	DASH_WIDTH = watchFrameTestLine.dash:GetWidth();
 	WATCHFRAMELINES_FONTHEIGHT = fontHeight;
-	WATCHFRAMELINES_FONTSPACING = (WATCHFRAME_LINEHEIGHT - WATCHFRAMELINES_FONTHEIGHT) / 2
+	WATCHFRAMELINES_FONTSPACING = (WATCHFRAME_LINEHEIGHT - WATCHFRAMELINES_FONTHEIGHT) / 2;
+	WATCHFRAME_MULTIPLE_LINEHEIGHT = WATCHFRAMELINES_FONTHEIGHT * 2 + 5;
+	WatchFrame_AddObjectiveHandler(WatchFrameScenario_DisplayScenario);
 	WatchFrame_AddObjectiveHandler(WatchFrameAutoQuest_DisplayAutoQuestPopUps);
 	WatchFrame_AddObjectiveHandler(WatchFrame_HandleDisplayQuestTimers);
 	WatchFrame_AddObjectiveHandler(WatchFrame_HandleDisplayTrackedAchievements);
@@ -273,7 +317,21 @@ function WatchFrame_OnEvent (self, event, ...)
 		WatchFrame_Update();
 	elseif ( event == "ITEM_PUSH" ) then
 		WatchFrame_Update();
-	elseif ( event == "ZONE_CHANGED_NEW_AREA" ) then
+	elseif ( event == "SCENARIO_UPDATE" ) then
+		local newStep = ...;
+		if ( newStep ) then
+			WatchFrame_Expand(self);
+		else
+			WatchFrame_Update();
+		end
+	elseif ( event == "SCENARIO_CRITERIA_UPDATE" ) then
+		WatchFrame_Update();
+	elseif ( event == "CRITERIA_COMPLETE" ) then
+		if ( not self.collapsed and self:IsShown() ) then
+			WatchFrameScenario_ReadyCriteriaAnimation(...);
+		end
+		WatchFrame_Update();
+	elseif ( event == "ZONE_CHANGED_NEW_AREA" or event == "NEW_WMO_CHUNK" ) then
 		if ( not WorldMapFrame:IsShown() and WatchFrame.showObjectives ) then
 			SetMapToCurrentZone();			-- update the zone to get the right POI numbers for the tracker
 		end
@@ -320,6 +378,7 @@ function WatchFrame_Collapse (self)
 	texture:SetTexCoord(0, 0.5, 0, 0.5);
 	texture = button:GetPushedTexture();	
 	texture:SetTexCoord(0.5, 1, 0, 0.5);
+	WatchFrameScenario_StopCriteriaAnimation();
 end
 
 function WatchFrame_Expand (self)
@@ -382,19 +441,30 @@ function WatchFrame_Update (self)
 	
 	local maxFrameWidth = WATCHFRAME_MAXLINEWIDTH;
 	local maxWidth = 0;
-	local maxLineWidth;
-	local numObjectives;
+	local maxLineWidth, numObjectives, numPopUps;
 	local totalObjectives = 0;
+	WATCHFRAME_NUM_POPUPS = 0;
 	
 	WatchFrame_ResetLinkButtons();
-	
 	for i = 1, #WATCHFRAME_OBJECTIVEHANDLERS do
-		nextAnchor, maxLineWidth, numObjectives = WATCHFRAME_OBJECTIVEHANDLERS[i](lineFrame, nextAnchor, maxHeight, maxFrameWidth);
+		nextAnchor, maxLineWidth, numObjectives, numPopUps = WATCHFRAME_OBJECTIVEHANDLERS[i](lineFrame, nextAnchor, maxHeight, maxFrameWidth);
 		maxWidth = max(maxLineWidth, maxWidth);
-		totalObjectives = totalObjectives + numObjectives
+		totalObjectives = totalObjectives + numObjectives;
+		WATCHFRAME_NUM_POPUPS = WATCHFRAME_NUM_POPUPS + numPopUps;
 	end
+	
 	--disabled for now, might make it an option
 	--lineFrame:SetWidth(min(maxWidth, maxFrameWidth));
+	
+	-- shadow
+	if ( WATCHFRAME_NUM_POPUPS > 0) then
+		if (not lineFrame.Shadow:IsShown()) then
+			lineFrame.Shadow:Show();
+			lineFrame.Shadow.FadeIn:Play();
+		end
+	else
+		lineFrame.Shadow:Hide();
+	end
 	
 	if ( totalObjectives > 0 ) then
 		WatchFrameHeader:Show();
@@ -423,7 +493,7 @@ function WatchFrame_Update (self)
 	self.updating = nil;
 end
 
-function WatchFrame_AddObjectiveHandler (func)
+function WatchFrame_AddObjectiveHandler (func, index)
 	local numFunctions = #WATCHFRAME_OBJECTIVEHANDLERS
 	for i = 1, numFunctions do
 		if ( WATCHFRAME_OBJECTIVEHANDLERS[i] == func ) then
@@ -431,7 +501,11 @@ function WatchFrame_AddObjectiveHandler (func)
 		end
 	end
 	
-	tinsert(WATCHFRAME_OBJECTIVEHANDLERS, func);
+	if ( index ) then
+		tinsert(WATCHFRAME_OBJECTIVEHANDLERS, index, func);
+	else
+		tinsert(WATCHFRAME_OBJECTIVEHANDLERS, func);
+	end
 	return true;
 end
 
@@ -490,7 +564,7 @@ function WatchFrame_DisplayQuestTimers (lineFrame, nextAnchor, maxHeight, frameW
 			WatchFrameLines_RemoveUpdateFunction(WatchFrame_HandleQuestTimerUpdate);
 			WATCHFRAME_NUM_TIMERS = 0;
 		end
-		return nextAnchor, 0, 0;
+		return nextAnchor, 0, 0, 0;
 	end
 	
 	WatchFrame_ResetTimerLines();
@@ -538,7 +612,7 @@ function WatchFrame_DisplayQuestTimers (lineFrame, nextAnchor, maxHeight, frameW
 	end
 	
 	WatchFrame_ReleaseUnusedTimerLines();
-	return nextAnchor, maxWidth, 0;
+	return nextAnchor, maxWidth, 0, 0;
 end
 
 function WatchFrame_HandleQuestTimerUpdate ()
@@ -621,6 +695,9 @@ function WatchFrame_SetLine(line, anchor, verticalOffset, isHeader, text, dash, 
 		line.dash:SetText(QUEST_DASH);
 		line.dash:Hide();
 		usedWidth = DASH_WIDTH;
+	elseif ( dash == DASH_ICON ) then
+		line.dash:SetWidth(DASH_ICON_WIDTH);
+		usedWidth = DASH_ICON_WIDTH;
 	end	
 	-- multiple lines
 	if ( hasItem and WATCHFRAME_SETLINES_NUMLINES < 2 ) then
@@ -650,9 +727,10 @@ function WatchFrame_DisplayTrackedAchievements (lineFrame, nextAnchor, maxHeight
 	local linkButton;
 	
 	local numCriteria, criteriaDisplayed;
-	local achievementID, achievementName, completed, description, icon;
+	local achievementID, achievementName, completed, description, icon, wasEarnedByMe;
 	local criteriaString, criteriaType, criteriaCompleted, quantity, totalQuantity, name, flags, assetID, quantityString, criteriaID, eligible, achievementCategory;
-	local displayOnlyArena = ArenaEnemyFrames and ArenaEnemyFrames:IsShown();
+	local _, instanceType = IsInInstance();
+	local displayOnlyArena = ArenaEnemyFrames and ArenaEnemyFrames:IsShown() and (instanceType == "arena");
 
 	local lineWidth = 0;
 	local maxWidth = 0;
@@ -665,8 +743,8 @@ function WatchFrame_DisplayTrackedAchievements (lineFrame, nextAnchor, maxHeight
 			WATCHFRAME_SETLINES = table.wipe(WATCHFRAME_SETLINES or { });
 			achievementID = select(i, ...);
 			achievementCategory = GetAchievementCategory(achievementID);
-			_, achievementName, _, completed, _, _, _, description, _, icon = GetAchievementInfo(achievementID);
-			if ( not completed and (not displayOnlyArena) or achievementCategory == WATCHFRAME_ACHIEVEMENT_ARENA_CATEGORY ) then			
+			_, achievementName, _, completed, _, _, _, description, _, icon, _, _, wasEarnedByMe = GetAchievementInfo(achievementID);
+			if ( not wasEarnedByMe and (not displayOnlyArena) or achievementCategory == WATCHFRAME_ACHIEVEMENT_ARENA_CATEGORY ) then			
 				-- achievement name
 				line = WatchFrame_GetAchievementLine();
 				achievementTitle = line;
@@ -710,7 +788,7 @@ function WatchFrame_DisplayTrackedAchievements (lineFrame, nextAnchor, maxHeight
 								criteriaDisplayed = criteriaDisplayed + 1;
 								WatchFrameLines_AddUpdateFunction(WatchFrame_UpdateTimedAchievements);
 							end
-							if ( bit.band(flags, ACHIEVEMENT_CRITERIA_PROGRESS_BAR) == ACHIEVEMENT_CRITERIA_PROGRESS_BAR ) then
+							if ( bit.band(flags, EVALUATION_TREE_FLAG_PROGRESS_BAR) == EVALUATION_TREE_FLAG_PROGRESS_BAR ) then
 								-- progress bar
 								if ( string.find(strlower(quantityString), "interface\\moneyframe") ) then	-- no easy way of telling it's a money progress bar
 									criteriaString = quantityString.."\n"..description;
@@ -797,7 +875,7 @@ function WatchFrame_DisplayTrackedAchievements (lineFrame, nextAnchor, maxHeight
 	end
 
 	WatchFrame_ReleaseUnusedAchievementLines();
-	return previousLine or nextAnchor, maxWidth, numTrackedAchievements;
+	return previousLine or nextAnchor, maxWidth, numTrackedAchievements, 0;
 end
 
 function WatchFrame_DisplayTrackedQuests (lineFrame, nextAnchor, maxHeight, frameWidth)
@@ -813,11 +891,12 @@ function WatchFrame_DisplayTrackedQuests (lineFrame, nextAnchor, maxHeight, fram
 	local numPOINumeric = 0;
 	local numPOICompleteIn = 0;
 	local numPOICompleteOut = 0;
-	
+
 	local text, finished, objectiveType;
 	local numQuestWatches = GetNumQuestWatches();
 	local numObjectives;
-	local title, level, questTag, suggestedGroup, isHeader, isCollapsed, isComplete, isDaily, questID;
+	local title, level, questTag, suggestedGroup, isHeader, isCollapsed, isComplete, isDaily, questID, startEvent;
+	local numValidQuests = 0;
 
 	local maxWidth = 0;
 	local lineWidth = 0;
@@ -842,10 +921,20 @@ function WatchFrame_DisplayTrackedQuests (lineFrame, nextAnchor, maxHeight, fram
 		SetSuperTrackedQuestID(0);
 	end
 	
+	local inScenario = C_Scenario.IsInScenario();
+
 	for i = 1, numQuestWatches do
+		local validQuest = false;
 		WATCHFRAME_SETLINES = table.wipe(WATCHFRAME_SETLINES or { });
 		questIndex = GetQuestIndexForWatch(i);
 		if ( questIndex ) then
+			-- don't show non-scenario quests in scenarios
+			if ( not inScenario or GetQuestLogQuestType(questIndex) == QUEST_TYPE_SCENARIO ) then
+				validQuest = true;
+			end
+		end
+		if ( validQuest ) then
+			numValidQuests = numValidQuests + 1;
 			title, level, questTag, suggestedGroup, isHeader, isCollapsed, isComplete, isDaily, questID, startEvent = GetQuestLogTitle(questIndex);
 			
 			if (WORLDMAP_SETTINGS and GetSuperTrackedQuestID() == 0) then
@@ -1011,7 +1100,7 @@ function WatchFrame_DisplayTrackedQuests (lineFrame, nextAnchor, maxHeight, fram
 		QuestPOI_SelectButtonByQuestId("WatchFrameLines", WORLDMAP_SETTINGS.selectedQuestId, true);	
 	end
 	
-	return lastLine or nextAnchor, maxWidth, numQuestWatches;	
+	return lastLine or nextAnchor, maxWidth, numValidQuests, 0;
 end
 
 function WatchFrameLines_OnUpdate (self, elapsed)
@@ -1156,7 +1245,7 @@ function WatchFrameDropDown_Initialize (self)
 		info.checked = false;
 		UIDropDownMenu_AddButton(info, UIDROPDOWN_MENU_LEVEL);
 		
-		if ( GetQuestLogPushable(GetQuestIndexForWatch(self.index)) and ( GetNumPartyMembers() > 0 or GetNumRaidMembers() > 1 ) ) then
+		if ( GetQuestLogPushable(GetQuestIndexForWatch(self.index)) and IsInGroup() ) then
 			info.text = SHARE_QUEST;
 			info.func = WatchFrame_ShareQuest;
 			info.arg1 = self.index;
@@ -1382,21 +1471,11 @@ function WatchFrame_GetCurrentMapQuests()
 end
 
 function WatchFrameQuestPOI_OnClick(self, button)
-	if ( button == "RightButton" ) then	
-		WORLDMAP_SETTINGS.selectedQuestId = self.questId;
-		QuestPOI_SelectButtonByQuestId("WatchFrameLines", self.questId, true);
-		SetSuperTrackedQuestID(self.questId);
-		PlaySound("igMainMenuOptionCheckBoxOn");
-	else
-		if ( WorldMapFrame:IsShown() ) then
-			if ( WORLDMAP_SETTINGS.selectedQuestId == self.questId ) then
-				HideUIPanel(WorldMapFrame);
-				return;
-			end
-			PlaySound("igMainMenuOptionCheckBoxOn");
-		end
-		WorldMap_OpenToQuest(self.questId);
-	end
+	WORLDMAP_SETTINGS.selectedQuestId = self.questId;
+	QuestPOI_SelectButtonByQuestId("WatchFrameLines", self.questId, true);
+	WorldMapFrame_SelectQuestById(self.questId);
+	SetSuperTrackedQuestID(self.questId);
+	PlaySound("igMainMenuOptionCheckBoxOn");
 end
 
 function WatchFrame_SetWidth(width)
@@ -1407,6 +1486,7 @@ function WatchFrame_SetWidth(width)
 		WATCHFRAME_EXPANDEDWIDTH = 306;
 		WATCHFRAME_MAXLINEWIDTH = 294;
 	end
+	WatchFrameScenarioPopUpFrame:SetWidth(WATCHFRAME_EXPANDEDWIDTH);
 	if ( WatchFrame:IsShown() and not WatchFrame.collapsed ) then
 		WatchFrame:SetWidth(WATCHFRAME_EXPANDEDWIDTH);
 		WatchFrame_Update();
@@ -1565,7 +1645,7 @@ function WatchFrameAutoQuest_GetOrCreateFrame(parent, index)
 		return _G["WatchFrameAutoQuestPopUp"..index];
 	end
 	local frame = CreateFrame("SCROLLFRAME", "WatchFrameAutoQuestPopUp"..index, parent, "WatchFrameAutoQuestPopUpTemplate");	
-	frame.index = index;
+	frame.isFirst = (index == 1 and WATCHFRAME_NUM_POPUPS == 0);	-- used by slide-in animation
 	numPopUpFrames = numPopUpFrames+1;
 	return frame;
 end
@@ -1594,7 +1674,7 @@ function WatchFrameAutoQuest_DisplayAutoQuestPopUps(lineFrame, nextAnchor, maxHe
 			if (not frame.questId) then
 				-- Only show the animation for new notifications
 				frame.ScrollChild.Flash:Hide();
-				WatchFrameAutoQuest_SlideIn(frame, 0.4);
+				WatchFrame_SlideInFrame(frame, "AUTOQUEST");
 			end
 			
 			if (isComplete and popUpType == "COMPLETE") then
@@ -1648,63 +1728,14 @@ function WatchFrameAutoQuest_DisplayAutoQuestPopUps(lineFrame, nextAnchor, maxHe
 		_G["WatchFrameAutoQuestPopUp"..i]:Hide();
 	end
 	
-	if (numPopUps > 0) then
-		if (not lineFrame.AutoQuestShadow:IsShown()) then
-			lineFrame.AutoQuestShadow:Show();
-			lineFrame.AutoQuestShadow.FadeIn:Play();
-		end
-	else
-		lineFrame.AutoQuestShadow:Hide();
-	end
-	
-	return nextAnchor, maxWidth, 0;
+	return nextAnchor, maxWidth, 0, numPopUps;
 end
 
-function WatchFrameAutoQuest_OnUpdate(frame, timestep)
-	local height = 72;
-	local scrollStart = 65;
-	local scrollEnd = -9;
-	
-	-- Pause animation while the AutoQuestShadow is animating
-	if (WatchFrameLinesAutoQuestShadow.FadeIn:IsPlaying()) then
-		return;
-	end
-	
-	-- The first pop-up needs to include the WATCHFRAME_TYPE_OFFSET in the animation
-	if (frame.index == 1) then
-		height = height + WATCHFRAME_TYPE_OFFSET;
-		scrollEnd = scrollEnd - WATCHFRAME_TYPE_OFFSET;
-	end
-	
-	frame.totalTime = frame.totalTime+timestep;
-	if (frame.totalTime > frame.slideInTime) then
-		frame.totalTime = frame.slideInTime;
-	end
-	
-	local scrollPos = scrollEnd;
-	if (frame.slideInTime and frame.slideInTime > 0) then
-		height = height*(frame.totalTime/frame.slideInTime);
-		scrollPos = scrollStart + (scrollEnd-scrollStart)*(frame.totalTime/frame.slideInTime);
-	end
-	frame:SetHeight(height);
-	frame:UpdateScrollChildRect();
-	frame:SetVerticalScroll(floor(scrollPos+0.5));
-	
-	if (frame.totalTime >= frame.slideInTime) then
-		frame:SetScript("OnUpdate", nil);
-		WatchFrame_Update();
-		frame.ScrollChild.Shine:Show();
-		frame.ScrollChild.IconShine:Show();
-		frame.ScrollChild.Shine.Flash:Play();
-		frame.ScrollChild.IconShine.Flash:Play();
-	end
-end
-
-function WatchFrameAutoQuest_SlideIn(frame, slideInTime)
-	frame.totalTime = 0;
-	frame.slideInTime = slideInTime;
-	frame:SetHeight(1);
-	frame:SetScript("OnUpdate", WatchFrameAutoQuest_OnUpdate);
+function WatchFrameAutoQuest_OnFinishSlideIn(frame)
+	frame.ScrollChild.Shine:Show();
+	frame.ScrollChild.IconShine:Show();
+	frame.ScrollChild.Shine.Flash:Play();
+	frame.ScrollChild.IconShine.Flash:Play();
 end
 
 function WatchFrameAutoQuest_AddPopUp(questId, type)
@@ -1724,4 +1755,220 @@ end
 function WatchFrameAutoQuest_ClearPopUpByLogIndex(questIndex)
 	local questId = select(9, GetQuestLogTitle(questIndex));
 	WatchFrameAutoQuest_ClearPopUp(questId);
+end
+
+--------------------------------------------------------------------------------------------
+-- Scenario
+--------------------------------------------------------------------------------------------
+local SCENARIO_POPUP_BASE_HEIGHT = 83;
+
+function WatchFrameScenario_DisplayScenario(lineFrame, nextAnchor, maxHeight, frameWidth)
+	WatchFrame_ResetScenarioLines();
+	-- for return values
+	local width = 0;
+	local numObjectives = 0;
+	local numPopups = 0;
+
+	local animationCriteriaID = ScenarioCriteriaAnimationLine.criteriaID;
+	local popupFrame = WatchFrameScenarioPopUpFrame;
+	local name, currentStage, numStages = C_Scenario.GetInfo();
+	if ( currentStage > 0 and currentStage <= numStages ) then
+		local initialCriteriaOffset;
+		local stageName, stageDescription, numCriteria = C_Scenario.GetStepInfo();
+		local inChallengeMode = C_Scenario.IsChallengeMode();
+		local linesParent;		-- if using the scenario header, lines need to be parented to WatchFrameScenarioPopUpFrame
+		if ( not inChallengeMode ) then
+			popupFrame:SetParent(lineFrame);
+			popupFrame:ClearAllPoints();
+			if (nextAnchor) then
+				popupFrame:SetPoint("TOPLEFT", nextAnchor, "BOTTOMLEFT", 0, -WATCHFRAME_TYPE_OFFSET);
+			else
+				popupFrame:SetPoint("TOPLEFT", lineFrame, "TOPLEFT", 0, -WATCHFRAME_INITIAL_OFFSET + 4)
+			end
+			local frame = WatchFrameScenarioFrame;
+			linesParent = WatchFrameScenarioFrame;
+			nextAnchor = frame;
+			-- step info
+			if ( currentStage == numStages ) then
+				frame.stageLevel:SetText(SCENARIO_STAGE_FINAL);
+				frame.finalBg:Show();
+			else
+				frame.stageLevel:SetFormattedText(SCENARIO_STAGE, currentStage);
+				frame.finalBg:Hide();
+			end
+			frame.stageName:SetText(stageName);
+			if ( frame.stageName:GetStringWidth() > frame.stageName:GetWrappedWidth() ) then
+				frame.stageLevel:SetPoint("TOPLEFT", 15, -10);
+			else
+				frame.stageLevel:SetPoint("TOPLEFT", 15, -18);
+			end
+			
+			WATCHFRAME_SETLINES_NUMLINES = 0;	-- have to manually reset this since we're not using a normal header
+			popupFrame:Show();
+			initialCriteriaOffset = 0;
+		else
+			local line = WatchFrame_GetScenarioLine();
+			WatchFrame_SetLine(line, _, WATCHFRAMELINES_FONTSPACING - 6, IS_HEADER, stageName, DASH_NONE);
+			line:SetPoint("RIGHT", lineFrame, "RIGHT", 0, 0);
+			line:SetPoint("LEFT", lineFrame, "LEFT", 0, 0);
+			if (nextAnchor) then
+				line:SetPoint("TOP", nextAnchor, "BOTTOM", 0, -WATCHFRAME_TYPE_OFFSET);
+			else
+				line:SetPoint("TOP", lineFrame, "TOP", 0, -WATCHFRAME_INITIAL_OFFSET);
+			end
+			line:Show();
+			nextAnchor = line;
+			popupFrame:Hide();
+			initialCriteriaOffset = WATCHFRAME_SCENARIO_LINE_OFFSET;
+		end
+		-- criteria info
+		local contentHeight = SCENARIO_POPUP_BASE_HEIGHT;
+		local firstLine = true;
+		for i = 1, numCriteria do
+			local criteriaString, criteriaType, criteriaCompleted, quantity, totalQuantity, flags, assetID, quantityString, criteriaID = C_Scenario.GetCriteriaInfo(i);
+			criteriaString = string.format("%d/%d %s", quantity, totalQuantity, criteriaString);
+			local line = WatchFrame_GetScenarioLine(linesParent);
+			if ( firstLine ) then
+				WatchFrame_SetLine(line, nextAnchor, WATCHFRAMELINES_FONTSPACING - initialCriteriaOffset, not IS_HEADER, criteriaString, DASH_ICON);
+				line:SetPoint("RIGHT", lineFrame, "RIGHT", 0, 0);
+				line:SetPoint("LEFT", lineFrame, "LEFT", 0, 0);
+				firstLine = false;
+			else
+				WatchFrame_SetLine(line, nextAnchor, WATCHFRAMELINES_FONTSPACING - WATCHFRAME_SCENARIO_LINE_OFFSET, not IS_HEADER, criteriaString, DASH_ICON);
+			end
+			if ( criteriaCompleted ) then
+				line.text:SetTextColor(0.6, 0.6, 0.6);
+				line.icon:SetTexture("Interface\\Scenarios\\ScenarioIcon-Check");
+			else
+				line.icon:SetTexture("Interface\\Scenarios\\ScenarioIcon-Combat");
+			end
+			-- animation
+			if ( criteriaID == animationCriteriaID and criteriaCompleted ) then
+				WatchFrameScenario_PlayCriteriaAnimation(line);
+			end
+
+			nextAnchor = line;
+			line.icon:Show();
+			line:Show();
+			contentHeight = contentHeight + line:GetHeight() - WATCHFRAMELINES_FONTSPACING + WATCHFRAME_SCENARIO_LINE_OFFSET;
+		end
+		
+		if ( not inChallengeMode ) then
+			WATCHFRAME_SLIDEIN_ANIMATIONS["SCENARIO"].height = contentHeight;
+			WATCHFRAME_SLIDEIN_ANIMATIONS["SCENARIO"].scrollStart = contentHeight;
+			-- slide in only if new stage
+			if ( popupFrame.stage == currentStage ) then
+				popupFrame:SetHeight(contentHeight);
+			else
+				WatchFrame_SlideInFrame(popupFrame, "SCENARIO");
+				if ( popupFrame.stage ) then
+					PlaySound("UI_Scenario_Stage_End");
+				end
+			end
+			popupFrame.stage = currentStage;
+			-- set up return values
+			width = WatchFrameScenarioFrame:GetWidth();
+			numPopups = 1;
+			nextAnchor = popupFrame;
+		end
+		numObjectives = 1;
+	else
+		popupFrame:Hide();
+		popupFrame.stage = nil;
+	end
+
+	WatchFrame_ReleaseUnusedScenarioLines();
+	return nextAnchor, width, numObjectives, numPopups;
+end
+
+function WatchFrameScenario_ReadyCriteriaAnimation(criteriaID)
+	local animationLine = ScenarioCriteriaAnimationLine;
+	if ( animationLine.playState == "playing" ) then
+		WatchFrameScenario_StopCriteriaAnimation();
+	end
+	animationLine.playState = "ready";
+	animationLine.criteriaID = criteriaID;
+end
+
+function WatchFrameScenario_PlayCriteriaAnimation(targetLine)
+	local animationLine = ScenarioCriteriaAnimationLine;
+	-- always reparent in case lines got shuffled
+	animationLine:SetParent(targetLine);
+	animationLine:SetAllPoints(targetLine);
+	-- start animations if in the ready state
+	if ( animationLine.playState == "ready" ) then
+		animationLine.playState = "playing";
+		animationLine.Glow.ScaleAnim:Play();
+		animationLine.Glow.AlphaAnim:Play();
+		animationLine.Sheen.Anim:Play();
+		animationLine.Check.Anim:Play();
+	end
+end
+
+function WatchFrameScenario_StopCriteriaAnimation()
+	local animationLine = ScenarioCriteriaAnimationLine;
+	if ( animationLine.playState ) then
+		animationLine.Glow.ScaleAnim:Stop();
+		animationLine.Glow.AlphaAnim:Stop();
+		animationLine.Sheen.Anim:Stop();
+		animationLine.Check.Anim:Stop();
+		animationLine.playState = nil;
+		animationLine.criteriaID = nil;
+	end
+end
+
+--------------------------------------------------------------------------------------------
+-- Slide-in Animations
+--------------------------------------------------------------------------------------------
+WATCHFRAME_SLIDEIN_ANIMATIONS = {
+	["AUTOQUEST"] = { height = 72, scrollStart = 65, scrollEnd = -9, slideInTime = 0.4, onFinishFunc = WatchFrameAutoQuest_OnFinishSlideIn },
+	["SCENARIO"] = { height = nil, scrollStart = nil, scrollEnd = 0, slideInTime = 0.4 },	-- various content heights, nil values must be set
+};
+
+function WatchFrame_SlideInFrame(frame, animType)
+	frame.totalTime = 0;
+	frame.animData = WATCHFRAME_SLIDEIN_ANIMATIONS[animType];
+	frame.slideInTime = frame.animData.slideInTime;
+	frame:SetHeight(1);
+	frame:SetScript("OnUpdate", WatchFrameSlideInFrame_OnUpdate);
+end
+
+function WatchFrameSlideInFrame_OnUpdate(frame, timestep)
+	local animData = frame.animData;
+	local height = animData.height;
+	local scrollStart = animData.scrollStart;
+	local scrollEnd = animData.scrollEnd;
+
+	-- Pause animation while the lineframe shadow is animating
+	if (WatchFrameLinesShadow.FadeIn:IsPlaying()) then
+		return;
+	end
+
+	-- The first pop-up needs to include the WATCHFRAME_TYPE_OFFSET in the animation
+	if (frame.isFirst) then
+		height = height + WATCHFRAME_TYPE_OFFSET;
+		scrollEnd = scrollEnd - WATCHFRAME_TYPE_OFFSET;
+	end
+
+	frame.totalTime = frame.totalTime+timestep;
+	if (frame.totalTime > animData.slideInTime) then
+		frame.totalTime = animData.slideInTime;
+	end
+
+	local scrollPos = scrollEnd;
+	if (animData.slideInTime and animData.slideInTime > 0) then
+		height = height*(frame.totalTime/animData.slideInTime);
+		scrollPos = scrollStart + (scrollEnd-scrollStart)*(frame.totalTime/animData.slideInTime);
+	end
+	frame:SetHeight(height);
+	frame:UpdateScrollChildRect();
+	frame:SetVerticalScroll(floor(scrollPos+0.5));
+
+	if (frame.totalTime >= animData.slideInTime) then
+		frame:SetScript("OnUpdate", nil);
+		WatchFrame_Update();
+		if ( animData.onFinishFunc ) then
+			animData.onFinishFunc(frame);
+		end
+	end
 end

@@ -354,11 +354,12 @@
 			</xs:choice>
 		</xs:sequence>
 		<xs:attribute name="name" type="xs:string"/>
+		<xs:attribute name="parentKey" type="xs:string"/>
+		<xs:attribute name="parentArray" type="xs:string"/>
 		<xs:attribute name="inherits" type="xs:string"/>
 		<xs:attribute name="virtual" type="xs:boolean" default="false"/>
 		<xs:attribute name="setAllPoints" type="xs:boolean" default="false"/>
 		<xs:attribute name="hidden" type="xs:boolean" default="false"/>
-		<xs:attribute name="parentKey" type="xs:string"/>
 	</xs:complexType>
 	<xs:element name="LayoutFrame" type="LayoutFrameType"/>
 
@@ -818,7 +819,6 @@
 		<xs:complexContent>
 			<xs:extension base="FrameType">
 				<xs:attribute name="reverse" type="xs:boolean" default="false"/>
-				<xs:attribute name="drawEdge" type="xs:boolean" default="false"/>
 			</xs:extension>
 		</xs:complexContent>
 	</xs:complexType>
@@ -844,7 +844,17 @@
 	</xs:complexType>
 	<xs:element name="ArchaeologyDigSiteFrame" type="ArchaeologyDigSiteFrameType" substitutionGroup="ui:Frame"/>
 
-	<xs:complexType name="MinimapType">
+  <xs:complexType name="ScenarioPOIFrameType">
+    <xs:complexContent>
+      <xs:extension base="FrameType">
+        <xs:attribute name="filltexture" type="xs:string"/>
+        <xs:attribute name="bordertexture" type="xs:string"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:element name="ScenarioPOIFrame" type="ScenarioPOIFrameType" substitutionGroup="ui:Frame"/>
+
+  <xs:complexType name="MinimapType">
 		<xs:complexContent>
 			<xs:extension base="FrameType">
 				<xs:attribute name="minimapArrowModel" type="xs:string"/>
@@ -962,6 +972,7 @@
 		<xs:attribute name="inherits" type="xs:string"/>
 		<xs:attribute name="virtual" type="xs:boolean" default="false"/>
 		<xs:attribute name="target" type="xs:string"/>
+		<xs:attribute name="targetKey" type="xs:string"/>
 		<xs:attribute name="parentKey" type="xs:string"/>
 		<xs:attribute name="startDelay" type="xs:float" default="0.0"/>
 		<xs:attribute name="endDelay" type="xs:float" default="0.0"/>

@@ -188,7 +188,7 @@
 				end
 			</OnClick>
 			<OnDragStart>
-				if ( IsRaidLeader() or IsRaidOfficer() ) then
+				if ( UnitIsGroupLeader("player") or UnitIsGroupAssistant("player") ) then
 					if ( IsShiftKeyDown() ) then
 						--self.keypressed = "1";
 						--RaidPulloutButton_OnDragStart(RaidPullout_GeneratePulloutFrame(self.name, nil));
@@ -201,7 +201,7 @@
 				end
 			</OnDragStart>
 			<OnDragStop>
-				if ( IsRaidLeader() or IsRaidOfficer() ) then
+				if ( UnitIsGroupLeader("player") or UnitIsGroupAssistant("player") ) then
 					if ( self.keypressed ) then
 						RaidPulloutStopMoving();
 					else
@@ -211,18 +211,7 @@
 					RaidPulloutStopMoving();
 				end
 			</OnDragStop>
-			<OnEnter>
-				RaidGroupButton_OnEnter(self);
-				if ( RaidFrame:IsMouseOver() ) then
-					GameTooltip:AddLine("\n");
-					if ( IsRaidLeader() or IsRaidOfficer() ) then
-						GameTooltip:AddLine(TOOLTIP_RAID_SHIFT_TIP, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, 1);
-					else
-						GameTooltip:AddLine(TOOLTIP_RAID_DRAG_TIP, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, 1);
-					end
-					GameTooltip:Show();
-				end
-			</OnEnter>
+			<OnEnter function="RaidGroupButton_OnEnter"/>
 			<OnLeave>
 				GameTooltip:Hide();
 			</OnLeave>
@@ -688,7 +677,7 @@
 		</HitRectInsets>
 		<Scripts>
 			<OnLoad>
-				self:RegisterEvent("RAID_ROSTER_UPDATE");
+				self:RegisterEvent("GROUP_ROSTER_UPDATE");
 				self:RegisterEvent("UNIT_PET");
 				self:RegisterEvent("UNIT_NAME_UPDATE");
 				self:RegisterEvent("READY_CHECK");
@@ -720,62 +709,14 @@
 			</OnMouseUp> 
 		</Scripts>
 	</Button>
-	<CheckButton name="RaidFrameAllAssistCheckButton" parent="RaidFrame" motionScriptsWhileDisabled="true" inherits="UICheckButtonTemplate">
-		<Size x="24" y="24"/>
+	<Button name="RaidClassButton14"  parent="RaidFrame" inherits="RaidClassButtonTemplate" id="14">
 		<Anchors>
-			<Anchor point="TOPLEFT" x="58" y="-23"/>
+			<Anchor point="BOTTOMLEFT" relativeTo="RaidFrame" relativePoint="BOTTOMRIGHT" x="-2" y="16"/>
 		</Anchors>
-		<HitRectInsets>
-			<AbsInset left="0" right="-30" top="0" bottom="0"/>
-		</HitRectInsets>
-		<Scripts>
-			<OnLoad>
-				_G[self:GetName().."Text"]:SetText(ALL_ASSIST_LABEL);
-				self:RegisterEvent("RAID_ROSTER_UPDATE");
-				self:RegisterEvent("PARTY_LEADER_CHANGED");
-			</OnLoad>
-			<OnEvent>
-				self:SetChecked(IsEveryoneAssistant());
-				if ( IsRaidLeader() ) then
-					self:Enable();
-					self.text:SetFontObject(GameFontNormalSmall);
-				else
-					self:Disable();
-					self.text:SetFontObject(GameFontDisableSmall);
-				end
-			</OnEvent>
-			<OnClick>
-				SetEveryoneIsAssistant(self:GetChecked());	
-			</OnClick>
-			<OnEnter>
-				GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-				GameTooltip:SetText(ALL_ASSIST_DESCRIPTION, nil, nil, nil, nil, true);
-				if ( not self:IsEnabled() ) then
-					GameTooltip:AddLine(ALL_ASSIST_NOT_LEADER_ERROR, RED_FONT_COLOR.r, RED_FONT_COLOR.g, RED_FONT_COLOR.b, 1);
-				end
-				GameTooltip:Show();
-			</OnEnter>
-			<OnLeave function="GameTooltip_Hide"/>
-		</Scripts>
-	</CheckButton>
-	<Button name="RaidFrameReadyCheckButton" inherits="UIPanelButtonTemplate" parent="RaidFrame" text="READY_CHECK">
-		<Size x="90" y="21"/>
-		<Anchors>
-			<Anchor point="TOPLEFT" relativeTo="RaidFrameAllAssistCheckButton" relativePoint="TOPRIGHT" x="60" y="-1"/>
-		</Anchors>
-		<Scripts>
-			<OnClick>
-				DoReadyCheck();
-				PlaySound("UChatScrollButton");
-			</OnClick>
-		</Scripts>
-		<NormalFont style="GameFontNormalSmall"/>
-		<HighlightFont style="GameFontHighlightSmall"/>
-		<DisabledFont style="GameFontDisableSmall"/>
 	</Button>
 	<Button name="RaidClassButton13"  parent="RaidFrame" inherits="RaidClassButtonTemplate" id="13">
 		<Anchors>
-			<Anchor point="BOTTOMLEFT" relativeTo="RaidFrame" relativePoint="BOTTOMRIGHT" x="-2" y="20"/>
+			<Anchor point="BOTTOM" relativeTo="RaidClassButton14" relativePoint="TOP" x="0" y="12"/>
 		</Anchors>
 	</Button>
 	<Button name="RaidClassButton12"  parent="RaidFrame" inherits="RaidClassButtonTemplate" id="12">

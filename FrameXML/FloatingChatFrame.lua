@@ -65,6 +65,11 @@ function FloatingChatFrame_OnLoad(self)
 	local chatTab = _G[self:GetName().."Tab"];
 	chatTab.mouseOverAlpha = CHAT_FRAME_TAB_SELECTED_MOUSEOVER_ALPHA;
 	chatTab.noMouseAlpha = CHAT_FRAME_TAB_SELECTED_NOMOUSE_ALPHA;
+
+	FRAMELOCK_STATES.PETBATTLEOPENING[self:GetName()] = "hidden";
+	FRAMELOCK_STATES.PETBATTLEOPENING[chatTab:GetName()] = "hidden";
+	UpdateFrameLock(self);
+	UpdateFrameLock(chatTab);
 end
 
 function FloatingChatFrame_OnEvent(self, event, ...)
@@ -292,6 +297,13 @@ function FCFOptionsDropDown_Initialize(dropDown)
 				info.notCheckable = 1;
 				UIDropDownMenu_AddButton(info);
 			end
+		elseif ( chatFrame.isTemporary ) then
+			info = UIDropDownMenu_CreateInfo();
+			info.text = CLOSE_CHAT_WINDOW;
+			info.func = FCF_Close;
+			info.arg1 = FCF_GetCurrentChatFrame(dropDown);
+			info.notCheckable = 1;
+			UIDropDownMenu_AddButton(info);
 		else
 			error(format("Unhandled temporary window type. chatType: %s, chatTarget %s", tostring(chatFrame.chatType), tostring(chatFrame.chatTarget)));
 		end
@@ -609,6 +621,8 @@ function FCF_SetTemporaryWindowType(chatFrame, chatType, chatTarget)
 		name = chatTarget;
 	elseif ( chatType == "BN_CONVERSATION" ) then
 		name = format(CONVERSATION_NAME, tonumber(chatTarget) + MAX_WOW_CHAT_CHANNELS);
+	elseif ( chatType == "PET_BATTLE_COMBAT_LOG" ) then
+		name = PET_BATTLE_COMBAT_LOG;
 	end
 	FCF_SetWindowName(chatFrame, name);
 	
@@ -630,6 +644,8 @@ function FCF_SetTemporaryWindowType(chatFrame, chatType, chatTarget)
 		ChatFrame_AddSingleMessageType(chatFrame, "CHAT_MSG_BN_WHISPER_PLAYER_OFFLINE");
 	elseif ( chatType == "WHISPER" ) then
 		ChatFrame_AddSingleMessageType(chatFrame, "CHAT_MSG_SYSTEM");
+	elseif ( chatType == "PET_BATTLE_COMBAT_LOG" ) then
+		ChatFrame_AddMessageGroup(chatFrame, "PET_BATTLE_INFO");
 	end
 	
 	chatFrame.editBox:SetAttribute("chatType", chatType);
@@ -641,6 +657,9 @@ function FCF_SetTemporaryWindowType(chatFrame, chatType, chatTarget)
 	elseif ( chatType == "BN_CONVERSATION" ) then
 		chatFrame.editBox:SetAttribute("channelTarget", chatTarget);
 		ChatFrame_AddBNConversationTarget(chatFrame, chatTarget);
+	elseif ( chatType == "PET_BATTLE_COMBAT_LOG" ) then
+		chatFrame.editBox:SetAttribute("chatType", "SAY");
+		chatFrame.editBox:SetAttribute("stickyType", "SAY");
 	end
 	
 	-- Set up the colors
@@ -678,6 +697,8 @@ function FCF_SetTemporaryWindowType(chatFrame, chatType, chatTarget)
 	local conversationIcon;
 	if ( chatType == "WHISPER" or chatType == "BN_WHISPER" ) then
 		conversationIcon = "Interface\\ChatFrame\\UI-ChatWhisperIcon";
+	elseif ( chatType == "PET_BATTLE_COMBAT_LOG" ) then
+		conversationIcon = "Interface\\Icons\\Tracking_WildPet";
 	else
 		conversationIcon = "Interface\\ChatFrame\\UI-ChatConversationIcon";
 	end
@@ -1574,7 +1595,7 @@ function FCF_Tab_OnClick(self, button)
 			elseif ( chatFrame.isTemporary and (chatFrame.chatType == "WHISPER" or chatFrame.chatType == "BN_WHISPER") ) then
 				FCF_PopInWindow(self, chatFrame);
 				return;
-			elseif ( chatFrame.isTemporary and (chatFrame.chatType == "BN_CONVERSATION" ) ) then
+			elseif ( chatFrame.isTemporary and ( chatFrame.chatType == "BN_CONVERSATION" ) ) then
 				if ( GetCVar("conversationMode") == "popout" or GetCVar("conversationMode") == "popout_and_inline" ) then
 					FCF_LeaveConversation(self, chatFrame);
 					return;
@@ -1582,10 +1603,13 @@ function FCF_Tab_OnClick(self, button)
 					FCF_PopInWindow(self, chatFrame);
 					return;
 				end
+			elseif ( chatFrame.isTemporary and ( chatFrame.chatType == "PET_BATTLE_COMBAT_LOG" ) ) then
+				FCF_Close(chatFrame);
 			else
-				error(format("Unhandled temporary window type. chatType: %s, chatTarget %s", tostring(chatFrame.chatType), tostring(chatFrame.chatTarget)));
+				GMError(format("Unhandled temporary window type. chatType: %s, chatTarget %s", tostring(chatFrame.chatType), tostring(chatFrame.chatTarget)));
 			end
 		end
+		return;
 	end
 
 	-- Close all dropdowns
@@ -1914,6 +1938,8 @@ function FCF_CreateMinimizedFrame(chatFrame)
 		local conversationIcon;
 		if ( chatFrame.chatType == "WHISPER" or chatFrame.chatType == "BN_WHISPER" ) then
 			conversationIcon = "Interface\\ChatFrame\\UI-ChatWhisperIcon";
+		elseif ( chatFrame.chatType == "PET_BATTLE_COMBAT_LOG" ) then
+			conversationIcon = "Interface\\Icons\\Tracking_WildPet";
 		else
 			conversationIcon = "Interface\\ChatFrame\\UI-ChatConversationIcon";
 		end

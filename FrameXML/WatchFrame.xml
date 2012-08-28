@@ -149,11 +149,11 @@
 		<Size x="150" y="16"/>
 		<Layers>
 			<Layer level="BACKGROUND">
-				<Texture name="$parentIcon" hidden="true">
+				<Texture name="$parentIcon" hidden="true" parentKey="icon">
 					<Size x="16" y="16"/>
 					<Anchors>
-						<Anchor point="RIGHT" relativePoint="LEFT">
-							<Offset x="-3" y="-1"/>
+						<Anchor point="TOPLEFT">
+							<Offset x="0" y="-1"/>
 						</Anchor>
 					</Anchors>
 				</Texture>
@@ -172,17 +172,7 @@
 					</Anchors>
 				</FontString>
 			</Layer>
-			<Layer level="BORDER">
-				<Texture name="$parentBorder" file="Interface\AchievementFrame\UI-Achievement-Progressive-IconBorder" hidden="true">
-					<Size x="26" y="26"/>
-					<Anchors>
-						<Anchor point="CENTER" relativeTo="$parentIcon" relativePoint="CENTER">
-							<Offset x="0" y="0"/>
-						</Anchor>
-					</Anchors>
-					<TexCoords left="0" right="0.65625" top="0" bottom="0.65625"/>
-				</Texture>
-			</Layer>
+
 		</Layers>
 		<Scripts>
 			<OnLoad>
@@ -254,12 +244,12 @@
 				</Anchors>
 				<Layers>
 					<Layer level="BACKGROUND">
-						<Texture name="WatchFrameLinesAutoQuestShadow" inherits="QuestTracker-Shadow" parentKey="AutoQuestShadow" hidden="true">
+						<Texture name="WatchFrameLinesShadow" inherits="QuestTracker-Shadow" parentKey="Shadow" hidden="true">
 							<Anchors>
 								<Anchor point="TOPLEFT" x="-40" y="8"/>
 							</Anchors>
 							<Animations>
-								<AnimationGroup name="WatchFrameLinesAutoQuestShadowFadeIn" parentKey="FadeIn">
+								<AnimationGroup name="WatchFrameLinesShadowFadeIn" parentKey="FadeIn">
 									<Alpha change="-1" duration="0" order="1"/>
 									<Alpha change="1" duration="0.5" order="2"/>
 								</AnimationGroup>
@@ -280,6 +270,9 @@
 			<OnLoad function="WatchFrame_OnLoad"/>
 			<OnEvent function="WatchFrame_OnEvent"/>
 			<OnUpdate function="WatchFrame_OnUpdate"/>
+			<OnHide>
+				WatchFrameScenario_StopCriteriaAnimation();
+			</OnHide>
 		</Scripts>
 	</Frame>
 	
@@ -502,6 +495,138 @@
 		</Size>
 		<Scripts>
 			<OnLoad function="WatchFrameDropDown_OnLoad"/>
+		</Scripts>
+	</Frame>
+
+	<ScrollFrame name="WatchFrameScenarioPopUpFrame" hidden="true">
+		<Size x="204" y="83"/>
+		<ScrollChild>
+			<Frame name="WatchFrameScenarioFrame" enableMouse="true">
+				<Size x="201" y="83"/>
+				<Anchors>
+					<Anchor point="TOP"/>
+				</Anchors>
+				<Layers>
+					<Layer level="BACKGROUND">
+						<Texture file="Interface\Scenarios\ScenariosParts" parentKey="bg">
+							<Size x="201" y="77"/>
+							<Anchors>
+								<Anchor point="TOP" x="0" y="0"/>
+							</Anchors>
+							<TexCoords left="0.12304688" right="0.51562500" top="0.35156250" bottom="0.50195313"/>
+						</Texture>
+					</Layer>
+					<Layer level="BORDER">
+						<Texture file="Interface\Scenarios\ScenariosParts" parentKey="finalBg">
+							<Size x="193" y="69"/>
+							<Anchors>
+								<Anchor point="TOP" x="0" y="-4"/>
+							</Anchors>
+							<TexCoords left="0.12304688" right="0.50000000" top="0.14062500" bottom="0.27539063"/>
+						</Texture>
+					</Layer>
+					<Layer level="ARTWORK">
+						<FontString inherits="QuestTitleFont" parentKey="stageLevel">
+							<Anchors>
+								<Anchor point="TOPLEFT" x="15" y="-10"/>
+							</Anchors>
+							<Color r="1" g="0.914" b="0.682"/>
+							<Shadow>
+								<Offset>
+									<AbsDimension x="1" y="-1"/>
+								</Offset>
+								<Color r="0" g="0" b="0"/>
+							</Shadow>
+						</FontString>
+						<FontString inherits="GameFontNormal" justifyH="LEFT" justifyV="TOP" parentKey="stageName" spacing="2">
+							<Size x="172" y="28"/>
+							<Anchors>
+								<Anchor point="TOPLEFT" relativeKey="$parent.stageLevel" relativePoint="BOTTOMLEFT" x="0" y="-4"/>
+							</Anchors>
+							<Color r="1" g="0.831" b="0.380"/>
+						</FontString>
+					</Layer>
+				</Layers>
+				<Scripts>
+					<OnLoad>
+						self.numTexStages = 1;
+					</OnLoad>
+					<OnEnter>
+						GameTooltip:SetOwner(self, "ANCHOR_NONE");
+						GameTooltip:ClearAllPoints();
+						GameTooltip:SetPoint("RIGHT", self, "LEFT", 0, 0);
+						local _, currentStage, numStages = C_Scenario.GetInfo();
+						local name, description = C_Scenario.GetStepInfo();
+						GameTooltip:SetText(string.format(SCENARIO_STAGE_STATUS, currentStage, numStages), 1, 0.914, 0.682, 1);
+						GameTooltip:AddLine(name, 1, 0.831, 0.380, 1);
+						GameTooltip:AddLine(" ");
+						GameTooltip:AddLine(description, 1, 1, 1, 1);
+						GameTooltip:Show();
+					</OnEnter>
+					<OnLeave>
+						GameTooltip:Hide();
+					</OnLeave>
+				</Scripts>
+			</Frame>
+		</ScrollChild>
+	</ScrollFrame>
+	<Frame name="ScenarioCriteriaAnimationLine" inherits="WatchFrameLineTemplate">
+		<Layers>
+			<Layer level="ARTWORK">
+				<Texture parentKey="Glow" file="Interface\Scenarios\Objective-Lineglow" alpha="0" alphaMode="ADD">
+					<Size x="80" y="0"/>
+					<Anchors>
+						<Anchor point="LEFT" relativeKey="$parent.text" x="-2" y="0"/>
+						<Anchor point="TOP" x="0" y="-3"/>
+						<Anchor point="BOTTOM" x="0" y="-3"/>
+					</Anchors>
+					<Animations>
+						<AnimationGroup parentKey="ScaleAnim">
+							<Scale parentKey="ScaleGlow" startDelay="0.067" scaleX="2" scaleY="1" duration="0.533" order="1"/>
+						</AnimationGroup>
+						<AnimationGroup parentKey="AlphaAnim">
+							<Alpha startDelay="0.067" change="1.0" duration="0.1" order="1"/>
+							<Alpha startDelay="0.3" change="-1.0" duration="0.267" order="2"/>
+						</AnimationGroup>
+					</Animations>
+				</Texture>
+				<Texture parentKey="Check" file="Interface\Scenarios\ScenarioIcon-Check" alphaMode="ADD" alpha="0">
+					<Size x="16" y="16"/>
+					<Anchors>
+						<Anchor point="CENTER" relativeKey="$parent.icon"/>
+					</Anchors>
+					<Animations>
+						<AnimationGroup parentKey="Anim">
+							<Alpha change="1.0" duration="0.067" order="1"/>
+							<Scale scaleX="1.25" scaleY="1.25" duration="0.2" order="2"/>
+							<Alpha change="-1.0" startDelay="0.167" duration="0.23" order="2"/>
+						</AnimationGroup>
+					</Animations>
+				</Texture>
+			</Layer>
+			<Layer level="OVERLAY">
+				<Texture parentKey="Sheen" file="Interface\Scenarios\Objective-Sheen" alpha="0">
+					<Size x="32" y="0"/>
+					<Anchors>
+						<Anchor point="LEFT" relativeKey="$parent.Glow"/>
+						<Anchor point="TOP" x="0" y="2"/>
+						<Anchor point="BOTTOM" x="0" y="-14"/>
+					</Anchors>
+					<Animations>
+						<AnimationGroup parentKey="Anim">
+							<Translation startDelay="0.067" offsetX="155" offsetY="0" duration="0.467" order="1"/>
+							<Alpha startDelay="0.067" change="1.0" duration="0.133" order="1"/>
+							<Alpha startDelay="0.2" change="-1.0" duration="0.133" order="1" smoothing="IN"/>
+						</AnimationGroup>
+					</Animations>
+				</Texture>
+			</Layer>
+		</Layers>
+		<Scripts>
+			<OnLoad>
+				self.dash:SetWidth(DASH_ICON_WIDTH);
+				self.Glow.ScaleAnim.ScaleGlow:SetOrigin("LEFT", 0, 0);
+			</OnLoad>
 		</Scripts>
 	</Frame>
 </Ui>

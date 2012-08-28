@@ -587,6 +587,21 @@
 					</Layer>
 				</Layers>
 			</Frame>
+
+			<Frame name="$parentSSAODropDown" inherits="VideoOptionsDropDownMenuTemplate" id="15">
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="$parentParticleDensityDropDown" relativePoint="BOTTOMLEFT"/>
+				</Anchors>
+				<Layers>
+					<Layer level="BACKGROUND">
+						<FontString name="$parentLabel" inherits="OptionsFontSmall" text="SSAO_LABEL">
+							<Anchors>
+								<Anchor point="RIGHT" relativePoint="LEFT"/>
+							</Anchors>
+						</FontString>
+					</Layer>
+				</Layers>
+			</Frame>
 		</Frames>
 	</Frame>	
 
@@ -778,7 +793,7 @@
 			</CheckButton>
 			<!-- column B -->
 
-			<Slider name="$parentMaxFPSSlider" inherits="VideoOptionsSliderTemplate" minValue="0" maxValue="100" valueStep="5" >
+			<Slider name="$parentMaxFPSSlider" inherits="VideoOptionsSliderTemplate" minValue="8" maxValue="100" valueStep="5" >
 				<Size x="10" y="17"/>
 				<Anchors>
 					<Anchor point="LEFT" relativeTo="$parentBufferingDropDown" relativePoint="RIGHT">
@@ -808,7 +823,7 @@
 						_G[name.."Text"]:SetFontObject("OptionsFontSmall");
 						_G[name.."Text"]:SetText(MAXFPS);
 
-						local minValue = "0";
+						local minValue = "8";
 						local maxValue = "100";
 						_G[name.."Low"]:SetText(minValue);
 						_G[name.."High"]:SetText(maxValue);
@@ -835,6 +850,8 @@
 						if ( self:GetChecked() ) then
 							PlaySound("igMainMenuOptionCheckBoxOn");
 							VideoOptions_Enable(slider);
+							slider.newValue = 8;
+							slider:SetDisplayValue(8);
 						else
 							PlaySound("igMainMenuOptionCheckBoxOff");
 							VideoOptions_Disable(slider);
@@ -846,7 +863,7 @@
 					</OnClick>
 				</Scripts>
 			</CheckButton>
-			<Slider name="$parentMaxFPSBKSlider" inherits="VideoOptionsSliderTemplate" minValue="0" maxValue="100" valueStep="5">
+			<Slider name="$parentMaxFPSBKSlider" inherits="VideoOptionsSliderTemplate" minValue="8" maxValue="100" valueStep="5">
 				<Size x="10" y="17"/>
 				<Anchors>
 					<Anchor point="TOPLEFT" relativeTo="$parentMaxFPSSlider" relativePoint="BOTTOMLEFT">
@@ -873,7 +890,7 @@
 							end;
 						_G[name.."Text"]:SetFontObject("OptionsFontSmall");
 						_G[name.."Text"]:SetText(MAXFPSBK);
-						local minValue = "0";
+						local minValue = "8";
 						local maxValue = "100";
 						_G[name.."Low"]:SetText(minValue);
 						_G[name.."High"]:SetText(maxValue);
@@ -900,6 +917,8 @@
 						if ( self:GetChecked() ) then
 							PlaySound("igMainMenuOptionCheckBoxOn");
 							VideoOptions_Enable(slider);
+							slider.newValue = 8;
+							slider:SetDisplayValue(8);
 						else
 							PlaySound("igMainMenuOptionCheckBoxOff");
 							VideoOptions_Disable(slider);
@@ -1229,4 +1248,3 @@
 		</Scripts>		
 	</Frame>
 </Ui>
-

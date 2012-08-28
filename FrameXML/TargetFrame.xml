@@ -198,14 +198,14 @@
 					</Anchors>
 					<TexCoords left="0" right="0.9453125" top="0" bottom="0.181640625"/>
 				</Texture>
-				<Texture name="$parentBackground">
+				<Texture name="$parentBackground" parentKey="Background">
 					<Size>
 						<AbsDimension x="119" y="41"/>
 					</Size>
 					<Anchors>
-						<Anchor point="TOPRIGHT">
+						<Anchor point="BOTTOMLEFT">
 							<Offset>
-								<AbsDimension x="-106" y="-22"/>
+								<AbsDimension x="7" y="35"/>
 							</Offset>
 						</Anchor>
 					</Anchors>
@@ -240,10 +240,10 @@
 			</Layer>
 		</Layers>
 		<Frames>
-			<Frame name="$parentTextureFrame" setAllPoints="true">
+			<Frame name="$parentTextureFrame" parentKey="textureFrame" setAllPoints="true">
 				<Layers>
 					<Layer level="BACKGROUND">
-						<Texture name="$parentTexture" file="Interface\TargetingFrame\UI-TargetingFrame">
+						<Texture name="$parentTexture" parentKey="texture"  file="Interface\TargetingFrame\UI-TargetingFrame">
 							<TexCoords left="0.09375" right="1.0" top="0" bottom="0.78125"/>
 						</Texture>
 						<FontString name="$parentName" inherits="GameFontNormalSmall">
@@ -348,6 +348,12 @@
 							<Size x="32" y="32"/>
 							<Anchors>
 								<Anchor point="TOPLEFT" relativePoint="TOPRIGHT" x="-120" y="-12"/>
+							</Anchors>
+						</Texture>
+						<Texture name="$parentPetBattleIcon" file="Interface\TargetingFrame\PetBadge-Beast" hidden="true">
+							<Size x="32" y="32"/>
+							<Anchors>
+								<Anchor point="CENTER" relativePoint="RIGHT" x="-44" y="10"/>
 							</Anchors>
 						</Texture>
 					</Layer>
@@ -497,6 +503,7 @@
 				else
 					BossTargetFrame_OnLoad(self, "boss"..id);
 				end
+				TargetFrame_CreateSpellbar(self, "INSTANCE_ENCOUNTER_ENGAGE_UNIT", true);
 			</OnLoad>
 		</Scripts>
 	</Button>
@@ -664,6 +671,14 @@
 			<OnEvent function="Target_Spellbar_OnEvent"/>
 		</Scripts>
 	</StatusBar>
+	<StatusBar name="BossSpellBarTemplate" inherits="SmallCastingBarFrameTemplate" hidden="true" virtual="true">
+		<Size>
+			<AbsDimension x="120" y="10"/>
+		</Size>
+		<Scripts>
+			<OnEvent function="Target_Spellbar_OnEvent"/>
+		</Scripts>
+	</StatusBar>
 			
 	<Button name="TargetFrame" inherits="TargetFrameTemplate" movable="true">
 		<Anchors>
@@ -741,7 +756,6 @@
 				TargetFrame_CreateSpellbar(self, "PLAYER_FOCUS_CHANGED");
 				TargetFrame_CreateTargetofTarget(self, "focus-target");
 				self:RegisterEvent("PLAYER_FOCUS_CHANGED");
-				self:RegisterEvent("VARIABLES_LOADED");
 				self:RegisterForDrag("LeftButton");
 			</OnLoad>
 			<OnDragStart function="FocusFrame_OnDragStart"/>
@@ -761,7 +775,7 @@
 		<Anchors>
 			<Anchor point="TOPLEFT" relativeTo="Boss1TargetFrame" relativePoint="BOTTOMLEFT">
 				<Offset>
-					<AbsDimension x="0" y="10"/>
+					<AbsDimension x="0" y="-30"/>
 				</Offset>
 			</Anchor>
 		</Anchors>
@@ -770,7 +784,7 @@
 		<Anchors>
 			<Anchor point="TOPLEFT" relativeTo="Boss2TargetFrame" relativePoint="BOTTOMLEFT">
 				<Offset>
-					<AbsDimension x="0" y="10"/>
+					<AbsDimension x="0" y="-30"/>
 				</Offset>
 			</Anchor>
 		</Anchors>
@@ -779,7 +793,16 @@
 		<Anchors>
 			<Anchor point="TOPLEFT" relativeTo="Boss3TargetFrame" relativePoint="BOTTOMLEFT">
 				<Offset>
-					<AbsDimension x="0" y="10"/>
+					<AbsDimension x="0" y="-30"/>
+				</Offset>
+			</Anchor>
+		</Anchors>
+	</Button>	
+	<Button name="Boss5TargetFrame" inherits="BossTargetFrameTemplate" id="5">
+		<Anchors>
+			<Anchor point="TOPLEFT" relativeTo="Boss4TargetFrame" relativePoint="BOTTOMLEFT">
+				<Offset>
+					<AbsDimension x="0" y="-30"/>
 				</Offset>
 			</Anchor>
 		</Anchors>

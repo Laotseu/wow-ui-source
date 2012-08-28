@@ -299,7 +299,7 @@
                             </Anchors>
                         </Texture>	
                     </Layer>
-                    <Layer level="ARTWORK">
+                    <Layer level="OVERLAY">
                         <Texture name="WorldMapHighlight" alphaMode="ADD" hidden="true">
                             <Size x="128" y="128"/>
                             <Anchors>
@@ -307,7 +307,7 @@
                             </Anchors>
                         </Texture>
                     </Layer>
-                    <Layer level="OVERLAY">
+                    <Layer level="ARTWORK">
                         <FontString name="WorldMapZoneInfo" inherits="SubZoneTextFont" justifyH="CENTER" hidden="true">
                             <Anchors>
                                 <Anchor point="BOTTOM" relativePoint="BOTTOM" x="0" y="20"/>
@@ -460,6 +460,27 @@
 					<OnUpdate function="ArchaeologyDigSiteFrame_OnUpdate"/>
 				</Scripts>
 			</ArchaeologyDigSiteFrame>
+			<ScenarioPOIFrame name="ScenarioPOIFrame">
+				<Size x="1002" y="668"/>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="WorldMapDetailFrame" x="0" y="0"/>
+				</Anchors>				
+				<Layers>
+					<Layer level="ARTWORK">
+						<Texture name="WorldMapBlobFrameTexture" setAllPoints="true" />
+					</Layer>
+				</Layers>
+				<Scripts>
+					<OnLoad>
+						self:SetFillTexture("Interface\\WorldMap\\UI-QuestBlob-Inside");
+						self:SetBorderTexture("Interface\\WorldMap\\UI-QuestBlob-Outside");
+						self:SetFillAlpha(128);
+						self:SetBorderAlpha(192);
+						self:SetBorderScalar(1.0);
+					</OnLoad>
+					<OnUpdate function="ScenarioPOIFrame_OnUpdate"/>
+				</Scripts>
+			</ScenarioPOIFrame>
 			<Button name="WorldMapButton">
 				<Size x="1002" y="668"/>
 				<Anchors>
@@ -536,6 +557,8 @@
 					<Frame name="WorldMapRaid40" inherits="WorldMapRaidUnitTemplate" id="40"/>
 					<Frame name="WorldMapFlag1" inherits="WorldMapFlagTemplate" id="1"/>
 					<Frame name="WorldMapFlag2" inherits="WorldMapFlagTemplate" id="2"/>
+					<Frame name="WorldMapFlag3" inherits="WorldMapFlagTemplate" id="3"/>
+					<Frame name="WorldMapFlag4" inherits="WorldMapFlagTemplate" id="4"/>
 					<Frame name="WorldMapCorpse" inherits="WorldMapCorpseTemplate"/>
 					<Frame name="WorldMapDeathRelease" inherits="WorldMapCorpseTemplate">
 						<Scripts>
