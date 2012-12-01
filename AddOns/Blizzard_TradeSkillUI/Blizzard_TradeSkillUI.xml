@@ -91,6 +91,14 @@
 				</Layers>
 				<BarTexture file="Interface\PaperDollInfoFrame\UI-Character-Skills-Bar"/>
 				<BarColor r=".25" g=".25" b=".75"/>
+				<Scripts>
+					<OnValueChanged>
+						local _, max = self:GetMinMaxValues();
+						if (max) then 
+							self.Rank:SetText(self:GetValue().."/"..max);
+						end
+					</OnValueChanged>
+				</Scripts>
 			</StatusBar>
 		</Frames>
 		<Scripts>
@@ -354,6 +362,8 @@
 						if ( self:GetText() == "0" ) then
 							self:SetText("1");
 						end
+						local number = max(self:GetNumber(), 1);
+						SetTradeSkillRepeatCount(TradeSkillFrame.selectedSkill, number);
 					</OnTextChanged> 
 					<OnEditFocusLost function="EditBox_ClearHighlight"/>
 					<OnEditFocusGained function="EditBox_HighlightText"/>

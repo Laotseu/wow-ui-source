@@ -54,7 +54,7 @@ UIPanelWindows["RaidBrowserFrame"] =			{ area = "left",			pushable = 1,	};
 
 -- Frames NOT using the new Templates
 UIPanelWindows["WorldMapFrame"] =				{ area = "full",			pushable = 0, 		xoffset = -16, 		yoffset = 12,	whileDead = 1 };
-UIPanelWindows["CinematicFrame"] =				{ area = "full",			pushable = 0, 		xoffset = -16, 		yoffset = 12 };
+UIPanelWindows["CinematicFrame"] =				{ area = "full",			pushable = 0, 		xoffset = -16, 		yoffset = 12,	whileDead = 1 };
 UIPanelWindows["ChatConfigFrame"] =				{ area = "center",			pushable = 0, 		xoffset = -16, 		yoffset = 12,	whileDead = 1 };
 UIPanelWindows["WorldStateScoreFrame"] =		{ area = "center",			pushable = 0, 		xoffset = -16, 		yoffset = 12,	whileDead = 1 };
 
@@ -797,9 +797,17 @@ function UIParent_OnEvent(self, event, ...)
 	elseif ( event == "DELETE_ITEM_CONFIRM" ) then
 		-- Check quality
 		if ( arg2 >= 3 ) then
-			StaticPopup_Show("DELETE_GOOD_ITEM", arg1);
+			if (arg3 == 4) then -- quest item?
+				StaticPopup_Show("DELETE_GOOD_QUEST_ITEM", arg1);
+			else
+				StaticPopup_Show("DELETE_GOOD_ITEM", arg1);
+			end
 		else
-			StaticPopup_Show("DELETE_ITEM", arg1);
+			if (arg3 == 4) then -- quest item?
+				StaticPopup_Show("DELETE_QUEST_ITEM", arg1);
+			else
+				StaticPopup_Show("DELETE_ITEM", arg1);
+			end
 		end
 	elseif ( event == "QUEST_ACCEPT_CONFIRM" ) then
 		local numEntries, numQuests = GetNumQuestLogEntries();
@@ -844,6 +852,7 @@ function UIParent_OnEvent(self, event, ...)
 
 		-- Fix for Bug 124392
 		StaticPopup_Hide("LEVEL_GRANT_PROPOSED");
+		StaticPopup_Hide("CONFIRM_LEAVE_BATTLEFIELD");
 		
 		local _, instanceType = IsInInstance();
 		if ( instanceType == "arena" or instanceType == "pvp") then
@@ -857,6 +866,9 @@ function UIParent_OnEvent(self, event, ...)
 	elseif ( event == "GROUP_ROSTER_UPDATE" ) then
 		-- Hide/Show party member frames
 		RaidOptionsFrame_UpdatePartyFrames();
+		if ( not IsInGroup(LE_PARTY_CATEGORY_INSTANCE) ) then
+			StaticPopup_Hide("CONFIRM_LEAVE_INSTANCE_PARTY");
+		end
 	elseif ( event == "MIRROR_TIMER_START" ) then
 		MirrorTimer_Show(arg1, arg2, arg3, arg4, arg5, arg6);
 	elseif ( event == "DUEL_REQUESTED" ) then
@@ -873,9 +885,9 @@ function UIParent_OnEvent(self, event, ...)
 	elseif ( event == "PET_BATTLE_PVP_DUEL_REQUEST_CANCEL" ) then
 		StaticPopup_Hide("PET_BATTLE_PVP_DUEL_REQUESTED");
 	elseif ( event == "PET_BATTLE_QUEUE_PROPOSE_MATCH" ) then
-		StaticPopup_Show("PET_BATTLE_QUEUE_PROPOSE_MATCH");
+		StaticPopupSpecial_Show(PetBattleQueueReadyFrame);
 	elseif ( event == "PET_BATTLE_QUEUE_PROPOSAL_DECLINED" or event == "PET_BATTLE_QUEUE_PROPOSAL_ACCEPTED" ) then
-		StaticPopup_Hide("PET_BATTLE_QUEUE_PROPOSE_MATCH");
+		StaticPopupSpecial_Hide(PetBattleQueueReadyFrame);
 	elseif ( event == "TRADE_REQUEST_CANCEL" ) then
 		StaticPopup_Hide("TRADE");
 	elseif ( event == "CONFIRM_XP_LOSS" ) then
@@ -2130,20 +2142,22 @@ function FramePositionDelegate:UIParentManageFramePositions()
 		anchorY = min(anchorY, buffsAnchorY);
 	end
 	local numArenaOpponents = GetNumArenaOpponents();
-	if ( not WatchFrame:IsUserPlaced() and ArenaEnemyFrames and ArenaEnemyFrames:IsShown() and (numArenaOpponents > 0) ) then
-		WatchFrame:ClearAllPoints();
-		WatchFrame:SetPoint("TOPRIGHT", "ArenaEnemyFrame"..numArenaOpponents, "BOTTOMRIGHT", 2, -35);
-	elseif (  not WatchFrame:IsUserPlaced() and ArenaPrepFrames and ArenaPrepFrames:IsShown() and (numArenaOpponents > 0) ) then
-		WatchFrame:ClearAllPoints();
-		WatchFrame:SetPoint("TOPRIGHT", "ArenaPrepFrame"..numArenaOpponents, "BOTTOMRIGHT", 2, -35);
-	elseif ( not WatchFrame:IsUserPlaced() ) then -- We're using Simple Quest Tracking, automagically size and position!
-		WatchFrame:ClearAllPoints();
-		-- move up if only the minimap cluster is above, move down a little otherwise
-		WatchFrame:SetPoint("TOPRIGHT", "MinimapCluster", "BOTTOMRIGHT", -CONTAINER_OFFSET_X, anchorY);
-		-- OnSizeChanged for WatchFrame handles its redraw
+	if ( not WatchFrame:IsUserPlaced() ) then
+		if ( ArenaEnemyFrames and ArenaEnemyFrames:IsShown() and (numArenaOpponents > 0) ) then
+			WatchFrame:ClearAllPoints();
+			WatchFrame:SetPoint("TOPRIGHT", "ArenaEnemyFrame"..numArenaOpponents, "BOTTOMRIGHT", 2, -35);
+		elseif ( ArenaPrepFrames and ArenaPrepFrames:IsShown() and (numArenaOpponents > 0) ) then
+			WatchFrame:ClearAllPoints();
+			WatchFrame:SetPoint("TOPRIGHT", "ArenaPrepFrame"..numArenaOpponents, "BOTTOMRIGHT", 2, -35);
+		else
+			-- We're using Simple Quest Tracking, automagically size and position!
+			WatchFrame:ClearAllPoints();
+			-- move up if only the minimap cluster is above, move down a little otherwise
+			WatchFrame:SetPoint("TOPRIGHT", "MinimapCluster", "BOTTOMRIGHT", -CONTAINER_OFFSET_X, anchorY);
+			-- OnSizeChanged for WatchFrame handles its redraw
+		end
+		WatchFrame:SetPoint("BOTTOMRIGHT", "UIParent", "BOTTOMRIGHT", -CONTAINER_OFFSET_X, CONTAINER_OFFSET_Y);
 	end
-	
-	WatchFrame:SetPoint("BOTTOMRIGHT", "UIParent", "BOTTOMRIGHT", -CONTAINER_OFFSET_X, CONTAINER_OFFSET_Y);
 	
 	-- Update chat dock since the dock could have moved
 	FCF_DockUpdate();
@@ -3097,6 +3111,9 @@ function ToggleGameMenu()
 	elseif ( SpellStopCasting() ) then
 	elseif ( SpellStopTargeting() ) then
 	elseif ( securecall("CloseAllWindows") ) then
+	elseif ( LootFrame:IsShown() ) then
+		-- if we're here, LootFrame was opened under the mouse (cvar "lootUnderMouse") so it didn't get closed by CloseAllWindows
+		LootFrame:Hide();
 	elseif ( ClearTarget() and (not UnitIsCharmed("player")) ) then
 	elseif ( OpacityFrame:IsShown() ) then
 		OpacityFrame:Hide();
@@ -3433,7 +3450,7 @@ function InviteToGroup(name)
 	if ( not IsInRaid() and GetNumGroupMembers() > MAX_PARTY_MEMBERS) then
 		local dialog = StaticPopup_Show("CONVERT_TO_RAID");
 		if ( dialog ) then
-			dialog.data = UnitName(name);
+			dialog.data = name;
 		end
 	else
 		InviteUnit(name);
@@ -3581,7 +3598,12 @@ function RefreshDebuffs(frame, unit, numDebuffs, suffix, checkCVar)
 end
 
 function GetQuestDifficultyColor(level)
-	local levelDiff = level - UnitLevel("player");
+	return GetRelativeDifficultyColor(UnitLevel("player"), level);
+end
+
+--How difficult is this challenge for this unit?
+function GetRelativeDifficultyColor(unitLevel, challengeLevel)
+	local levelDiff = challengeLevel - unitLevel;
 	local color;
 	if ( levelDiff >= 5 ) then
 		return QuestDifficultyColors["impossible"];
@@ -3850,6 +3872,19 @@ function GetLFGMode(category)
 	end
 end
 
+function IsLFGModeActive(category)
+	local partySlot = GetPartyLFGID();
+	local partyCategory = nil;
+	if ( partySlot ) then
+		partyCategory = GetLFGCategoryForID(partySlot);
+	end
+
+	if ( partyCategory == category ) then
+		return true;
+	end
+	return false;
+end
+
 --Like date(), but localizes AM/PM. In the future, could also localize other stuff.
 function BetterDate(formatString, timeVal)
 	local dateTable = date("*t", timeVal);
@@ -4061,4 +4096,24 @@ function GetTimeStringFromSeconds(timeAmount, hasMS)
 --	else
 		return format(HOURS_MINUTES_SECONDS, hours, minutes, seconds);
 --	end
+end
+
+function ConfirmOrLeaveLFGParty()
+	if ( not IsInGroup(LE_PARTY_CATEGORY_INSTANCE) ) then
+		return;
+	end
+
+	if ( IsPartyLFG() and not IsLFGComplete() ) then
+		StaticPopup_Show("CONFIRM_LEAVE_INSTANCE_PARTY");
+	else
+		LeaveParty();
+	end
+end
+
+function ConfirmOrLeaveBattlefield()
+	if ( GetBattlefieldWinner() ) then
+		LeaveBattlefield();
+	else
+		StaticPopup_Show("CONFIRM_LEAVE_BATTLEFIELD");
+	end
 end

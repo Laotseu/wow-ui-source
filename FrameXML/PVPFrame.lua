@@ -63,6 +63,9 @@ local WARGAMES_TEXTURELIST = {
 	 [30] = "Interface\\LFGFrame\\LFGIcon-IsleOfConquest",
 	[108] = "Interface\\LFGFrame\\LFGIcon-TwinPeaksBG",
 	[120] = "Interface\\LFGFrame\\LFGIcon-TheBattleforGilneas",
+	[699] = "Interface\\LFGFrame\\LFGIcon-TempleofKotmogu",
+	[708] = "Interface\\LFGFrame\\LFGIcon-SilvershardMines",
+	[719] = "Interface\\LFGFrame\\LFGIcon-TolvirArena",
 }
 
 local PVPWORLD_TEXTURELIST = {};
@@ -78,7 +81,6 @@ ARENABANNER_SMALLFONT = "GameFontNormalSmall"
 RANDOM_BG_ID = 32;
 MAX_BLACKLIST_BATTLEGROUNDS = 2;
 
-local BlacklistBGCount = 0;
 local BlacklistIDs = {};
 
 ---- NEW PVP FRAME FUNCTIONS
@@ -120,16 +122,6 @@ end
 
 
 function PVPFrame_OnShow(self)
-	
-	-- reload the blacklist BGS
-	BlacklistBGCount = 0;
-	for i=1,MAX_BLACKLIST_BATTLEGROUNDS do
-		BlacklistIDs[i] = GetBlacklistMap(i);
-		if (BlacklistIDs[i] > 0) then
-			BlacklistBGCount = BlacklistBGCount + 1;
-		end		
-	end
-	
 	PVPMicroButton_SetPushed();
 	UpdateMicroButtons();
 	PlaySound("igCharacterInfoOpen");
@@ -178,7 +170,8 @@ function PVPFrame_OnLoad(self)
 	self:RegisterEvent("BATTLEFIELDS_SHOW");
 	self:RegisterEvent("BATTLEFIELDS_CLOSED");
 	self:RegisterEvent("PVP_TYPES_ENABLED");
-	
+	self:RegisterEvent("VARIABLES_LOADED");
+
 	PVPFrame.timerDelay = 0;
 	
 	PVPFrameTab2.info = ARENA_CONQUEST_INFO;
@@ -332,6 +325,13 @@ function PVPFrame_OnEvent(self, event, ...)
 				PVPFrame_TabClicked(PVPFrameTab3);
 			end
 		end
+	elseif ( event == "VARIABLES_LOADED" ) then	
+		for i = 1, MAX_BLACKLIST_BATTLEGROUNDS do
+			local mapID = GetBlacklistMap(i);
+			if ( mapID > 0 ) then
+				BlacklistIDs[mapID] = true;
+			end
+		end
 	end
 end
 
@@ -480,7 +480,7 @@ function PVPFrame_TabClicked(self)
 		PVPFrame.panel1:Show();
 		PVPFrameRightButton:Show();
 		PVPFrameLeftButton:SetText(BATTLEFIELD_JOIN);
-		if (PVPHonorFrame.BGMapID and not CheckForMapInBlacklist(PVPHonorFrame.BGMapID)) then
+		if (PVPHonorFrame.BGMapID and not BlacklistIDs[PVPHonorFrame.BGMapID]) then
 			PVPFrameLeftButton:Enable();
 		else
 			PVPFrameLeftButton:Disable();
@@ -568,23 +568,25 @@ function PVPHonor_UpdateBattlegrounds()
 	local numBgs = GetNumBattlegroundTypes();
 	local numTypes = numWorldPvP + numBgs ;
 	
+	local pvpFrameShown = PVPFrame:IsShown();
+
 	for i=1,numTypes do
 		frame = _G["PVPHonorFrameBgButton"..currentFrameNum];
 		
-		if  i <=  numBgs then
+		if  i <=  numWorldPvP then
 			pvpID = i;
-			localizedName, canEnter, isHoliday, isRandom ,_,_, BGMapID = GetBattlegroundInfo(i);
-			isActive = false;
-			canQueue = true;
-			startTime = -1;
-			isWorldPVP = false
-		else
-			pvpID = i-numBgs;
-			_, localizedName, isActive, canQueue, startTime, canEnter = GetWorldPVPAreaInfo(i-numBgs);
+			_, localizedName, isActive, canQueue, startTime, canEnter = GetWorldPVPAreaInfo(pvpID);
 			isWorldPVP = true;
 			isRandom = false;
 			BGMapID = -1;
 			isHoliday = false;
+		else
+			pvpID = i - numWorldPvP;
+			localizedName, canEnter, isHoliday, isRandom ,_,_, BGMapID = GetBattlegroundInfo(pvpID);
+			isActive = false;
+			canQueue = true;
+			startTime = -1;
+			isWorldPVP = false
 		end
 		
 		if ( localizedName and canEnter ) then
@@ -600,7 +602,7 @@ function PVPHonor_UpdateBattlegrounds()
 
 				if canQueue then
 					frame:Enable();
-					if ( not PVPHonorFrame.selectedButtonIndex ) then
+					if ( pvpFrameShown and not PVPHonorFrame.selectedButtonIndex ) then
 						frame:Click();
 					end
 				else
@@ -612,7 +614,7 @@ function PVPHonor_UpdateBattlegrounds()
 				if isWorldPVP then
 					frame:SetScript("OnUpdate", PVPHonor_UpdateWorldPVPTimer);
 					frame.timeStep = 0;
-					frame.worldIndex = i-numBgs;
+					frame.worldIndex = pvpID;
 				else
 					frame:SetScript("OnUpdate", nil);
 				end
@@ -620,16 +622,11 @@ function PVPHonor_UpdateBattlegrounds()
 				if ( isHoliday ) then
 					frame.ThumbsDown.holiday:SetText(" ("..BATTLEGROUND_HOLIDAY..")");
 					-- check if the holiday was changed after we blacklisted the BG. The Holiday BG must be allowed
-					if (BGMapID > 0 and CheckForMapInBlacklist(BGMapID)) then
-						for j=1,MAX_BLACKLIST_BATTLEGROUNDS do
-							if (BGMapID == BlacklistIDs[j]) then
-								ClearBlacklistMap(BGMapID);
-								BlacklistIDs[j] = -1;		
-								BlacklistBGCount = BlacklistBGCount - 1;
-								if IsPvPFrameSelected(frame) then
-									PVPFrameLeftButton:SetEnabled(1);
-								end
-							end
+					if ( BlacklistIDs[BGMapID] ) then
+						ClearBlacklistMap(BGMapID);
+						BlacklistIDs[BGMapID] = nil;
+						if IsPvPFrameSelected(frame) then
+							PVPFrameLeftButton:SetEnabled(1);
 						end
 					end
 				else
@@ -690,17 +687,6 @@ function PVPHonor_UpdateBattlegrounds()
 end
 
 -- helper functions since this logic was being run a bit
-function CheckForMapInBlacklist(mapID)
-	if (BlacklistBGCount > 0) then
-		for i=1,MAX_BLACKLIST_BATTLEGROUNDS do
-			if (mapID == BlacklistIDs[i]) then
-				return true;
-			end
-		end
-	end
-	return false;
-end
-
 function IsPvPFrameSelected(self)
 	if (self:GetParent().selectedPvpID == self.pvpID and self:GetParent().selectedIsWorldPvp == self.isWorldPVP) then 
 		return true;
@@ -729,7 +715,7 @@ function PVPHonor_ButtonClicked(self)
 	PVPHonorFrame_UpdateGroupAvailable();
 
 	-- did we blacklist this map
-	if CheckForMapInBlacklist(self.BGMapID) then
+	if BlacklistIDs[self.BGMapID] then
 		PVPFrameLeftButton:SetEnabled(0);
 	else
 		PlaySound("igMainMenuOptionCheckBoxOn");
@@ -745,7 +731,7 @@ function PVPHonor_ButtonEnter(self)
 		return;
 	end
 
-	if CheckForMapInBlacklist(self.BGMapID) then
+	if BlacklistIDs[self.BGMapID] then
 		return;
 	end
 
@@ -765,7 +751,7 @@ function PVPHonor_ButtonLeave(self)
 		return;
 	end
 
-	if CheckForMapInBlacklist(self.BGMapID) then
+	if BlacklistIDs[self.BGMapID] then
 		return;
 	end
 
@@ -797,16 +783,12 @@ function PVPHonor_ThumbsDownUpdate(self)
 		return;
 	end
 
-	if (BlacklistBGCount > 0) then
-		for i=1,MAX_BLACKLIST_BATTLEGROUNDS do
-			if (self:GetParent().BGMapID == BlacklistIDs[i]) then
-				self.texture:SetTexture("Interface\\PVPFrame\\bg-down-on");
-				self.texture:SetTexCoord(0.0, 1.0, 0.0, 1.0);
-				self.texture:Show();
-				self:Show();
-				return true;
-			end
-		end
+	if ( BlacklistIDs[self:GetParent().BGMapID] ) then
+		self.texture:SetTexture("Interface\\PVPFrame\\bg-down-on");
+		self.texture:SetTexCoord(0.0, 1.0, 0.0, 1.0);
+		self.texture:Show();
+		self:Show();
+		return true;
 	end
 
 	self.texture:Hide();
@@ -818,44 +800,39 @@ function PVPHonor_ThumbsDownClicked(self)
 		return;
 	end
 	PlaySound("igMainMenuOptionCheckBoxOn");
-	if (BlacklistBGCount > 0) then
-		for i=1,MAX_BLACKLIST_BATTLEGROUNDS do
-			if (self:GetParent().BGMapID == BlacklistIDs[i]) then
-				ClearBlacklistMap(BlacklistIDs[i]);
-				BlacklistIDs[i] = -1;		
-				BlacklistBGCount = BlacklistBGCount - 1;
-				if IsPvPFrameSelected(self:GetParent()) then
-					PVPFrameLeftButton:SetEnabled(1);
-				end
-				self:GetParent():SetNormalFontObject(GameFontNormalLeft);
-				self:GetParent():SetHighlightFontObject(GameFontHighlightLeft);
-				PVPHonor_ButtonEnter(self:GetParent()); 
-				return;
-			end
+	local mapID = self:GetParent().BGMapID;
+	if ( BlacklistIDs[mapID] ) then
+		-- unlist if already blacklisted
+		ClearBlacklistMap(mapID);
+		BlacklistIDs[mapID] = nil;
+		if IsPvPFrameSelected(self:GetParent()) then
+			PVPFrameLeftButton:SetEnabled(1);
 		end
-	end
-
-	if ( BlacklistBGCount < MAX_BLACKLIST_BATTLEGROUNDS ) then
-		self.texture:SetTexture("Interface\\PVPFrame\\bg-down-on");
-		self.texture:SetTexCoord(0.0, 1.0, 0.0, 1.0);
-		self.texture:Show();
-		self:Show();
-		BlacklistBGCount = BlacklistBGCount + 1;		
-		for i=1,MAX_BLACKLIST_BATTLEGROUNDS do
-			if (-1 == BlacklistIDs[i] or nil == BlacklistIDs[i]) then
-				BlacklistIDs[i] = self:GetParent().BGMapID;
-				SetBlacklistMap(BlacklistIDs[i]);
-				self:GetParent():SetNormalFontObject(GameFontNormalLeftRed);
-				self:GetParent():SetHighlightFontObject(GameFontNormalLeftRed);
-				if IsPvPFrameSelected(self:GetParent()) then
-					PVPFrameLeftButton:SetEnabled(0);
-				end
-				return;
-			end
-		end
+		self:GetParent():SetNormalFontObject(GameFontNormalLeft);
+		self:GetParent():SetHighlightFontObject(GameFontHighlightLeft);
+		PVPHonor_ButtonEnter(self:GetParent()); 
 	else
-		-- error report, trying to add more than 2
-		UIErrorsFrame:AddMessage(ERR_PVP_BLACKLIST_CAP , 1.0, 0.1, 0.1, 1.0);
+		local blacklistBGCount = 0;
+		for _ in pairs(BlacklistIDs) do
+			blacklistBGCount = blacklistBGCount + 1;
+		end
+		if ( blacklistBGCount < MAX_BLACKLIST_BATTLEGROUNDS ) then
+			-- add to blacklist
+			self.texture:SetTexture("Interface\\PVPFrame\\bg-down-on");
+			self.texture:SetTexCoord(0.0, 1.0, 0.0, 1.0);
+			self.texture:Show();
+			self:Show();
+			BlacklistIDs[mapID] = true;
+			SetBlacklistMap(mapID);
+			self:GetParent():SetNormalFontObject(GameFontNormalLeftRed);
+			self:GetParent():SetHighlightFontObject(GameFontNormalLeftRed);
+			if IsPvPFrameSelected(self:GetParent()) then
+				PVPFrameLeftButton:SetEnabled(0);
+			end
+		else
+			-- error report, trying to add more than 2
+			UIErrorsFrame:AddMessage(ERR_PVP_BLACKLIST_CAP , 1.0, 0.1, 0.1, 1.0);
+		end
 	end
 end
 
@@ -916,7 +893,7 @@ function PVPHonor_UpdateRandomInfo()
 end
 
 function PVPHonor_UpdateQueueStatus()
-	local queueStatus, queueMapName, queueInstanceID, frame;
+	local queueStatus, queueMapName, frame;
 	for i=1, NUM_DISPLAYED_BATTLEGROUNDS do
 		frame = _G["PVPHonorFrameBgButton"..i];
 		frame.status:Hide();
@@ -928,7 +905,7 @@ function PVPHonor_UpdateQueueStatus()
 	end
 	local factionTexture = "Interface\\PVPFrame\\PVP-Currency-"..factionGroup;
 	for i=1, GetMaxBattlefieldID() do
-		queueStatus, queueMapName, queueInstanceID = GetBattlefieldStatus(i);
+		queueStatus, queueMapName = GetBattlefieldStatus(i);
 		if ( queueStatus ~= "none" ) then
 			for j=1, NUM_DISPLAYED_BATTLEGROUNDS do
 				local frame = _G["PVPHonorFrameBgButton"..j];
@@ -1007,7 +984,8 @@ function PVPConquestFrame_OnLoad(self)
 	self.ratedbgButton.title:SetText(PVP_RATED_BATTLEGROUND);		
 	self.arenaButton:SetWidth(321);
 	self.ratedbgButton:SetWidth(321);
-	
+	self.arenaButton.ThumbsDown:Hide();
+	self.ratedbgButton.ThumbsDown:Hide();
 	
 	self:RegisterEvent("GROUP_ROSTER_UPDATE");
 	self:RegisterEvent("ARENA_TEAM_UPDATE");
@@ -1815,11 +1793,8 @@ function PVP_UpdateStatus(tooltipOnly, mapIndex)
 	BATTLEFIELD_SHUTDOWN_TIMER = 0;
 
 	for i=1, GetMaxBattlefieldID() do
-		local status, mapName, instanceID, levelRangeMin, levelRangeMax, teamSize, registeredMatch, eligibleInQueue, waitingOnOtherActivity = GetBattlefieldStatus(i);
+		local status, mapName, teamSize, registeredMatch = GetBattlefieldStatus(i);
 		if ( mapName ) then
-			if (  instanceID ~= 0 ) then
-				mapName = mapName.." "..instanceID;
-			end
 			if ( teamSize ~= 0 ) then
 				if ( registeredMatch ) then
 					mapName = ARENA_RATED_MATCH.." "..format(PVP_TEAMSIZE, teamSize, teamSize);

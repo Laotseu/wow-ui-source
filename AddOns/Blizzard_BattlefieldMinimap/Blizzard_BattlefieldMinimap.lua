@@ -120,6 +120,10 @@ end
 function BattlefieldMinimap_Update()
 	-- Fill in map tiles
 	local mapFileName, textureHeight, _, isMicroDungeon, microDungeonMapName = GetMapInfo();
+	if (isMicroDungeon and (not microDungeonMapName or microDungeonMapName == "")) then
+		return;
+	end
+
 	if ( not mapFileName ) then
 		if ( GetCurrentMapContinent() == WORLDMAP_COSMIC_ID ) then
 			mapFileName = "Cosmic";
@@ -267,20 +271,28 @@ function BattlefieldMinimap_CreatePOI(index)
 end
 
 function BattlefieldMinimap_OnUpdate(self, elapsed)
+	-- tick mouse hover time for tab
+	if ( BattlefieldMinimap.hover ) then
+		local xPos, yPos = GetCursorPosition();
+		if ( (BattlefieldMinimap.oldX == xPos and BattlefieldMinimap.oldy == yPos) ) then
+			BattlefieldMinimap.hoverTime = BattlefieldMinimap.hoverTime + elapsed;
+		else
+			BattlefieldMinimap.hoverTime = 0;
+			BattlefieldMinimap.oldX = xPos;
+			BattlefieldMinimap.oldy = yPos;
+		end
+	end
 	-- Throttle updates
 	if ( BattlefieldMinimap.updateTimer < 0 ) then
 		BattlefieldMinimap.updateTimer = BATTLEFIELD_MINIMAP_UPDATE_RATE;
 	else
 		BattlefieldMinimap.updateTimer = BattlefieldMinimap.updateTimer - elapsed;
+		return;
 	end
 	
 	--Position player
 	UpdateWorldMapArrowFrames();
 	local playerX, playerY = GetPlayerMapPosition("player");
-	if ( playerX == 0 and playerY == 0 and not WorldMapFrame:IsShown() ) then
-		SetMapToCurrentZone();
-		playerX, playerY = GetPlayerMapPosition("player");
-	end
 	if ( playerX == 0 and playerY == 0 ) then
 		ShowMiniWorldMapArrowFrame(nil);
 	else
@@ -430,16 +442,8 @@ function BattlefieldMinimap_OnUpdate(self, elapsed)
 
 	-- Fadein tab if mouse is over
 	if ( BattlefieldMinimap:IsMouseOver(45, -10, -5, 5) ) then
-		local xPos, yPos = GetCursorPosition();
 		-- If mouse is hovering don't show the tab until the elapsed time reaches the tab show delay
 		if ( BattlefieldMinimap.hover ) then
-			if ( (BattlefieldMinimap.oldX == xPos and BattlefieldMinimap.oldy == yPos) ) then
-				BattlefieldMinimap.hoverTime = BattlefieldMinimap.hoverTime + elapsed;
-			else
-				BattlefieldMinimap.hoverTime = 0;
-				BattlefieldMinimap.oldX = xPos;
-				BattlefieldMinimap.oldy = yPos;
-			end
 			if ( BattlefieldMinimap.hoverTime > BATTLEFIELD_TAB_SHOW_DELAY ) then
 				-- If the battlefieldtab's alpha is less than the current default, then fade it in 
 				if ( not BattlefieldMinimap.hasBeenFaded and (BattlefieldMinimap.oldAlpha and BattlefieldMinimap.oldAlpha < DEFAULT_BATTLEFIELD_TAB_ALPHA) ) then

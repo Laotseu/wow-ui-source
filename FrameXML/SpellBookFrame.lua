@@ -299,6 +299,9 @@ function SpellBookFrame_UpdateSpells ()
 	if ( SpellBookFrame.bookType == BOOKTYPE_SPELL ) then
 		SpellBookPage1:SetDesaturated(_G["SpellBookSkillLineTab"..SpellBookFrame.selectedSkillLine].isOffSpec);
 		SpellBookPage2:SetDesaturated(_G["SpellBookSkillLineTab"..SpellBookFrame.selectedSkillLine].isOffSpec);
+	else
+		SpellBookPage1:SetDesaturated(0);
+		SpellBookPage2:SetDesaturated(0);
 	end
 end
 
@@ -519,7 +522,9 @@ function SpellButton_UpdateCooldown(self)
 	local slot, slotType = SpellBook_GetSpellBookSlot(self);
 	if (slot) then
 		local start, duration, enable = GetSpellCooldown(slot, SpellBookFrame.bookType);
-		CooldownFrame_SetTimer(cooldown, start, duration, enable);
+		if (cooldown and start and duration) then
+			CooldownFrame_SetTimer(cooldown, start, duration, enable);
+		end
 	end
 end
 
@@ -535,7 +540,7 @@ function SpellButton_UpdateButton(self)
 	local temp, texture, offset, numSlots, isGuild, offSpecID = GetSpellTabInfo(SpellBookFrame.selectedSkillLine);
 	SpellBookFrame.selectedSkillLineNumSlots = numSlots;
 	SpellBookFrame.selectedSkillLineOffset = offset;
-	local isOffSpec = (offSpecID ~= 0);
+	local isOffSpec = (offSpecID ~= 0) and (SpellBookFrame.bookType == BOOKTYPE_SPELL);
 	self.offSpecID = offSpecID;
 	
 	if (not self.SpellName.shadowX) then

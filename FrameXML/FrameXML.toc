@@ -1,5 +1,5 @@
 # Do not delete the following line!
-## Interface: 50001
+## Interface: 50100
 GlobalStrings.lua
 Constants.lua
 Fonts.xml
@@ -170,6 +170,8 @@ LootHistory.xml
 FloatingPetBattleTooltip.xml
 QueueStatusFrame.xml
 BattlePetTooltip.xml
+StaticPopupSpecial.xml
+LossOfControlFrame.xml
 
 ## add new modules above here
 LocalizationPost.xml

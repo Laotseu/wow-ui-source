@@ -80,8 +80,8 @@ ChatTypeInfo["RAID_BOSS_WHISPER"]						= { sticky = 0, flashTab = false, flashTa
 ChatTypeInfo["RAID_BOSS_EMOTE"]							= { sticky = 0, flashTab = false, flashTabOnGeneral = false };
 ChatTypeInfo["QUEST_BOSS_EMOTE"]						= { sticky = 0, flashTab = false, flashTabOnGeneral = false };
 ChatTypeInfo["FILTERED"]								= { sticky = 0, flashTab = false, flashTabOnGeneral = false };
-ChatTypeInfo["BATTLEGROUND"]                            = { sticky = 1, flashTab = false, flashTabOnGeneral = false };
-ChatTypeInfo["BATTLEGROUND_LEADER"]                     = { sticky = 0, flashTab = false, flashTabOnGeneral = false };
+ChatTypeInfo["INSTANCE_CHAT"]                            = { sticky = 1, flashTab = false, flashTabOnGeneral = false };
+ChatTypeInfo["INSTANCE_CHAT_LEADER"]                     = { sticky = 0, flashTab = false, flashTabOnGeneral = false };
 ChatTypeInfo["RESTRICTED"] 			                    = { sticky = 0, flashTab = false, flashTabOnGeneral = false };
 ChatTypeInfo["CHANNEL1"]								= { sticky = 1, flashTab = false, flashTabOnGeneral = false };
 ChatTypeInfo["CHANNEL2"]								= { sticky = 1, flashTab = false, flashTabOnGeneral = false };
@@ -156,11 +156,11 @@ ChatTypeGroup["RAID_LEADER"] = {
 ChatTypeGroup["RAID_WARNING"] = {
 	"CHAT_MSG_RAID_WARNING",
 };
-ChatTypeGroup["BATTLEGROUND"] = {
-	"CHAT_MSG_BATTLEGROUND",
+ChatTypeGroup["INSTANCE_CHAT"] = {
+	"CHAT_MSG_INSTANCE_CHAT",
 };
-ChatTypeGroup["BATTLEGROUND_LEADER"] = {
-	"CHAT_MSG_BATTLEGROUND_LEADER",
+ChatTypeGroup["INSTANCE_CHAT_LEADER"] = {
+	"CHAT_MSG_INSTANCE_CHAT_LEADER",
 };
 ChatTypeGroup["GUILD"] = {
 	"CHAT_MSG_GUILD",
@@ -299,7 +299,7 @@ CHAT_CATEGORY_LIST = {
 	GUILD = { "GUILD_ACHIEVEMENT" },
 	WHISPER = { "WHISPER_INFORM", "AFK", "DND" },
 	CHANNEL = { "CHANNEL_JOIN", "CHANNEL_LEAVE", "CHANNEL_NOTICE", "CHANNEL_USER" },
-	BATTLEGROUND = { "BATTLEGROUND_LEADER" },
+	INSTANCE_CHAT = { "INSTANCE_CHAT_LEADER" },
 	BN_WHISPER = { "BN_WHISPER_INFORM" },
 	BN_CONVERSATION = { "BN_CONVERSATION_NOTICE", "BN_CONVERSATION_LIST" },
 };
@@ -1126,6 +1126,12 @@ SecureCmdList["STOPCASTING"] = function(msg)
 	end
 end
 
+SecureCmdList["STOPSPELLTARGET"] = function(msg)
+	if ( SecureCmdOptionParse(msg) ) then
+		SpellStopTargeting();
+	end
+end
+
 SecureCmdList["CANCELAURA"] = function(msg)
 	local spell = SecureCmdOptionParse(msg);
 	if ( spell ) then
@@ -1351,12 +1357,6 @@ SecureCmdList["CLEARFOCUS"] = function(msg)
 	end
 end
 
-SecureCmdList["CLEARMAINTANK"] = function(msg)
-	if ( SecureCmdOptionParse(msg) ) then
-		ClearPartyAssignment("MAINTANK");
-	end
-end
-
 SecureCmdList["MAINTANKON"] = function(msg)
 	local action, target = SecureCmdOptionParse(msg);
 	if ( action ) then
@@ -1380,12 +1380,6 @@ SecureCmdList["MAINTANKOFF"] = function(msg)
 			target = "target";
 		end
 		ClearPartyAssignment("MAINTANK", target);
-	end
-end
-
-SecureCmdList["CLEARMAINASSIST"] = function(msg)
-	if ( SecureCmdOptionParse(msg) ) then
-		ClearPartyAssignment("MAINASSIST");
 	end
 end
 
@@ -1543,6 +1537,39 @@ SecureCmdList["CLEAR_WORLD_MARKER"] = function(msg)
 		ClearRaidMarker(tonumber(marker));
 	elseif ( type(marker) == "string" and strtrim(strlower(marker)) == strlower(ALL) ) then
 		ClearRaidMarker(nil);	--Clear all world markers.
+	end
+end
+
+SecureCmdList["SUMMON_BATTLE_PET"] = function(msg)
+	local pet = SecureCmdOptionParse(msg);
+	if ( type(pet) == "string" ) then
+		local _, petID = C_PetJournal.FindPetIDByName(string.trim(pet));
+		if ( petID ) then
+			C_PetJournal.SummonPetByGUID(petID);
+		else
+			C_PetJournal.SummonPetByGUID(pet);
+		end
+	end
+end
+
+SecureCmdList["RANDOMPET"] = function(msg)
+	if ( SecureCmdOptionParse(msg) ) then
+		C_PetJournal.SummonRandomPet(true);
+	end
+end
+
+SecureCmdList["RANDOMFAVORITEPET"] = function(msg)
+	if ( SecureCmdOptionParse(msg) ) then
+		C_PetJournal.SummonRandomPet(false);
+	end
+end
+
+SecureCmdList["DISMISSBATTLEPET"] = function(msg)
+	if ( SecureCmdOptionParse(msg) ) then
+		local petID = C_PetJournal.GetSummonedPetGUID();
+		if ( petID ) then
+			C_PetJournal.SummonPetByGUID(petID);
+		end
 	end
 end
 
@@ -2394,13 +2421,6 @@ SlashCmdList["RELOAD"] = function(msg)
 	ConsoleExec("reloadui");
 end
 
-SlashCmdList["RANDOMPET"] = function(msg)
-	local numCompanions = GetNumCompanions("CRITTER");
-	if ( numCompanions > 0  ) then
-		local index = random(1, numCompanions);
-		CallCompanion("CRITTER", index);
-	end
-end
 
 
 SlashCmdList["WARGAME"] = function(msg)
@@ -3113,14 +3133,7 @@ function ChatFrame_MessageEventHandler(self, event, ...)
 			elseif ( arg1 == "FRIEND_ONLINE" or arg1 == "FRIEND_OFFLINE") then
 				local hasFocus, toonName, client, realmName, realmID, faction, race, class, guild, zoneName, level, gameText = BNGetToonInfo(arg13);
 				if (toonName and toonName ~= "" and client and client ~= "") then
-					local toonNameText = toonName;
-					if ( client == BNET_CLIENT_WOW ) then
-						toonNameText = "|TInterface\\ChatFrame\\UI-ChatIcon-WOW:14|t"..toonNameText;
-					elseif ( client == BNET_CLIENT_SC2 ) then
-						toonNameText = "|TInterface\\ChatFrame\\UI-ChatIcon-SC2:14|t"..toonNameText;
-					elseif ( client == BNET_CLIENT_D3 ) then
-						toonNameText = "|TInterface\\ChatFrame\\UI-ChatIcon-D3:14|t"..toonNameText;
-					end
+					local toonNameText = BNet_GetClientEmbeddedTexture(client, 14)..toonName;
 					local playerLink = format("|HBNplayer:%s:%s:%s:%s:%s|h[%s] (%s)|h", arg2, arg13, arg11, Chat_GetChatCategory(type), 0, arg2, toonNameText);
 					message = format(globalstring, playerLink);
 				else
@@ -3185,10 +3198,6 @@ function ChatFrame_MessageEventHandler(self, event, ...)
 				arg1 = gsub(arg1, "%%", "%%%%");
 			end
 			
-			if ((type == "PARTY_LEADER") and (HasLFGRestrictions())) then
-				type = "PARTY_GUIDE";
-			end
-			
 			-- Search for icon links and replace them with texture links.
 			for tag in string.gmatch(arg1, "%b{}") do
 				local term = strlower(string.gsub(tag, "[{}]", ""));
@@ -3199,7 +3208,7 @@ function ChatFrame_MessageEventHandler(self, event, ...)
 					local groupList = "[";
 					for i=1, GetNumGroupMembers() do
 						local name, rank, subgroup, level, class, classFileName = GetRaidRosterInfo(i);
-						if ( subgroup == groupIndex ) then
+						if ( name and subgroup == groupIndex ) then
 							local classColorTable = RAID_CLASS_COLORS[classFileName];
 							if ( classColorTable ) then
 								name = string.format("\124cff%.2x%.2x%.2x%s\124r", classColorTable.r*255, classColorTable.g*255, classColorTable.b*255, name);
@@ -3388,9 +3397,9 @@ function ChatFrame_OpenChat(text, chatFrame)
 	editBox.text = text;
 
 	if ( editBox:GetAttribute("chatType") == editBox:GetAttribute("stickyType") ) then
-		if ( (editBox:GetAttribute("stickyType") == "PARTY") and (not IsInGroup()) or
-		(editBox:GetAttribute("stickyType") == "RAID") and (not IsInRaid()) or
-		(editBox:GetAttribute("stickyType") == "BATTLEGROUND") and (not IsInRaid())) then
+		if ( (editBox:GetAttribute("stickyType") == "PARTY") and (not IsInGroup(LE_PARTY_CATEGORY_HOME)) or
+		(editBox:GetAttribute("stickyType") == "RAID") and (not IsInRaid(LE_PARTY_CATEGORY_HOME)) or
+		(editBox:GetAttribute("stickyType") == "INSTANCE_CHAT") and (not IsInGroup(LE_PARTY_CATEGORY_INSTANCE))) then
 			editBox:SetAttribute("chatType", "SAY");
 		end
 	end
@@ -3690,16 +3699,16 @@ function ChatEdit_OnShow(self)
 end
 
 function ChatEdit_ResetChatType(self)
-	if ( self:GetAttribute("chatType") == "PARTY" and UnitName("party1") == "" ) then
+	if ( self:GetAttribute("chatType") == "PARTY" and (not IsInGroup(LE_PARTY_CATEGORY_HOME)) ) then
 		self:SetAttribute("chatType", "SAY");
 	end
-	if ( self:GetAttribute("chatType") == "RAID" and (not IsInRaid()) ) then
+	if ( self:GetAttribute("chatType") == "RAID" and (not IsInRaid(LE_PARTY_CATEGORY_HOME)) ) then
 		self:SetAttribute("chatType", "SAY");
 	end
 	if ( (self:GetAttribute("chatType") == "GUILD" or self:GetAttribute("chatType") == "OFFICER") and not IsInGuild() ) then
 		self:SetAttribute("chatType", "SAY");
 	end
-	if ( self:GetAttribute("chatType") == "BATTLEGROUND" and (not IsInRaid()) ) then
+	if ( self:GetAttribute("chatType") == "INSTANCE_CHAT" and (not IsInGroup(LE_PARTY_CATEGORY_INSTANCE)) ) then
 		self:SetAttribute("chatType", "SAY");
 	end
 	self.lastTabComplete = nil;
@@ -3999,11 +4008,32 @@ function ChatEdit_UpdateHeader(editBox)
 	elseif ( type == "BN_CONVERSATION" ) then
 		local conversationID = editBox:GetAttribute("channelTarget");
 		header:SetFormattedText(CHAT_BN_CONVERSATION_SEND, conversationID + MAX_WOW_CHAT_CHANNELS);
+	elseif ( (type == "PARTY") and
+		 (not IsInGroup(LE_PARTY_CATEGORY_HOME) and IsInGroup(LE_PARTY_CATEGORY_INSTANCE)) ) then
+		 --Smartly switch to instance chat
+		editBox:SetAttribute("chatType", "INSTANCE_CHAT");
+		ChatEdit_UpdateHeader(editBox);
+		return;
+	elseif ( (type == "RAID") and
+		 (not IsInRaid(LE_PARTY_CATEGORY_HOME) and IsInRaid(LE_PARTY_CATEGORY_INSTANCE)) ) then
+		 --Smartly switch to instance chat
+		editBox:SetAttribute("chatType", "INSTANCE_CHAT");
+		ChatEdit_UpdateHeader(editBox);
+		return;
+	elseif ( (type == "INSTANCE_CHAT") and
+		(IsInGroup(LE_PARTY_CATEGORY_HOME) and not IsInGroup(LE_PARTY_CATEGORY_INSTANCE)) )then
+		if ( IsInRaid(LE_PARTY_CATEGORY_HOME) ) then
+			editBox:SetAttribute("chatType", "RAID");
+		else
+			editBox:SetAttribute("chatType", "PARTY");
+		end
+		ChatEdit_UpdateHeader(editBox);
+		return;
 	else
 		header:SetText(_G["CHAT_"..type.."_SEND"]);
 	end
 	
-	local headerWidth = header:GetRight() - header:GetLeft();
+	local headerWidth = (header:GetRight() or 0) - (header:GetLeft() or 0);
 	local editBoxWidth = editBox:GetRight() - editBox:GetLeft();
 	
 	if ( headerWidth > editBoxWidth / 2 ) then
@@ -4497,8 +4527,8 @@ function ChatMenu_Raid(self)
 	ChatMenu_SetChatType(self:GetParent().chatFrame, "RAID");
 end
 
-function ChatMenu_Battleground(self)
-	ChatMenu_SetChatType(self:GetParent().chatFrame, "BATTLEGROUND");
+function ChatMenu_InstanceChat(self)
+	ChatMenu_SetChatType(self:GetParent().chatFrame, "INSTANCE_CHAT");
 end
 
 function ChatMenu_Guild(self)
@@ -4533,7 +4563,7 @@ function ChatMenu_OnLoad(self)
 	UIMenu_AddButton(self, SAY_MESSAGE, SLASH_SAY1, ChatMenu_Say);
 	UIMenu_AddButton(self, PARTY_MESSAGE, SLASH_PARTY1, ChatMenu_Party);
 	UIMenu_AddButton(self, RAID_MESSAGE, SLASH_RAID1, ChatMenu_Raid);
-	UIMenu_AddButton(self, BATTLEGROUND_MESSAGE, SLASH_BATTLEGROUND1, ChatMenu_Battleground);
+	UIMenu_AddButton(self, INSTANCE_CHAT_MESSAGE, SLASH_INSTANCE_CHAT1, ChatMenu_InstanceChat);
 	UIMenu_AddButton(self, GUILD_MESSAGE, SLASH_GUILD1, ChatMenu_Guild);
 	UIMenu_AddButton(self, YELL_MESSAGE, SLASH_YELL1, ChatMenu_Yell);
 	UIMenu_AddButton(self, WHISPER_MESSAGE, SLASH_SMART_WHISPER1, ChatMenu_Whisper);

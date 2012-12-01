@@ -443,7 +443,7 @@ function CompactUnitFrame_UpdateStatusText(frame)
 		else
 			frame.statusText:Hide();
 		end
-	elseif ( frame.optionTable.healthText == "perc" ) then
+	elseif ( (frame.optionTable.healthText == "perc") and (UnitHealthMax(frame.displayedUnit) > 0) ) then
 		local perc = math.ceil(100 * (UnitHealth(frame.displayedUnit)/UnitHealthMax(frame.displayedUnit)));
 		frame.statusText:SetFormattedText("%d%%", perc);
 		frame.statusText:Show();
@@ -561,15 +561,17 @@ function CompactUnitFrame_CheckReadyCheckDecay(frame, elapsed)
 end
 
 function CompactUnitFrame_UpdateCenterStatusIcon(frame)
-	local inOtherGroup, canInteract = UnitInOtherParty(frame.unit);
-	if ( frame.optionTable.displayInOtherGroup and not canInteract ) then
-		frame.centerStatusIcon.texture:SetTexture("Interface\\PlayerFrame\\whisper-only");
-		frame.centerStatusIcon.texture:SetTexCoord(0.15625, 0.84375, 0.15625, 0.84375);
+	if ( frame.optionTable.displayInOtherGroup and UnitInOtherParty(frame.unit) ) then
+		frame.centerStatusIcon.texture:SetTexture("Interface\\LFGFrame\\LFG-Eye");
+		frame.centerStatusIcon.texture:SetTexCoord(0.125, 0.25, 0.25, 0.5);
+		frame.centerStatusIcon.border:SetTexture("Interface\\Common\\RingBorder");
+		frame.centerStatusIcon.border:Show();
 		frame.centerStatusIcon.tooltip = PARTY_IN_PUBLIC_GROUP_MESSAGE;
 		frame.centerStatusIcon:Show();
 	elseif ( frame.optionTable.displayIncomingResurrect and UnitHasIncomingResurrection(frame.unit) ) then
 		frame.centerStatusIcon.texture:SetTexture("Interface\\RaidFrame\\Raid-Icon-Rez");
 		frame.centerStatusIcon.texture:SetTexCoord(0, 1, 0, 1);
+		frame.centerStatusIcon.border:Hide();
 		frame.centerStatusIcon.tooltip = nil;
 		frame.centerStatusIcon:Show();
 	else
@@ -898,7 +900,6 @@ function CompactUnitFrameDropDown_Initialize(self)
 		id = UnitInRaid(unit);
 		if ( id ) then
 			menu = "RAID_PLAYER";
-			name = GetRaidRosterInfo(id);
 		elseif ( UnitInParty(unit) ) then
 			menu = "PARTY";
 		else
@@ -981,15 +982,13 @@ function DefaultCompactUnitFrameSetup(frame)
 	frame.myHealPredictionBar:SetPoint("TOPLEFT", frame.healthBar:GetStatusBarTexture(), "TOPRIGHT", 0, 0);
 	frame.myHealPredictionBar:SetPoint("BOTTOMLEFT", frame.healthBar:GetStatusBarTexture(), "BOTTOMRIGHT", 0, 0);
 	frame.myHealPredictionBar:SetWidth(options.width);
-	frame.myHealPredictionBar:SetStatusBarTexture("", "BORDER", -1);
-	frame.myHealPredictionBar:GetStatusBarTexture():SetTexture(1, 1, 1);
+	frame.myHealPredictionBar:SetStatusBarTexture(1, 1, 1, "BORDER", -1);
 	frame.myHealPredictionBar:GetStatusBarTexture():SetGradient("VERTICAL", 8/255, 93/255, 72/255, 11/255, 136/255, 105/255);
 	
 	frame.otherHealPredictionBar:SetPoint("TOPLEFT", frame.myHealPredictionBar:GetStatusBarTexture(), "TOPRIGHT", 0, 0);
 	frame.otherHealPredictionBar:SetPoint("BOTTOMLEFT", frame.myHealPredictionBar:GetStatusBarTexture(), "BOTTOMRIGHT", 0, 0);
 	frame.otherHealPredictionBar:SetWidth(options.width);
-	frame.otherHealPredictionBar:SetStatusBarTexture("", "BORDER", -1);
-	frame.otherHealPredictionBar:GetStatusBarTexture():SetTexture(1, 1, 1);
+	frame.otherHealPredictionBar:SetStatusBarTexture(1, 1, 1, "BORDER", -1);
 	frame.otherHealPredictionBar:GetStatusBarTexture():SetGradient("VERTICAL", 11/255, 53/255, 43/255, 21/255, 89/255, 72/255);
 	
 	frame.roleIcon:ClearAllPoints();
@@ -1149,15 +1148,13 @@ function DefaultCompactMiniFrameSetup(frame)
 	frame.myHealPredictionBar:SetPoint("TOPLEFT", frame.healthBar:GetStatusBarTexture(), "TOPRIGHT", 0, 0);
 	frame.myHealPredictionBar:SetPoint("BOTTOMLEFT", frame.healthBar:GetStatusBarTexture(), "BOTTOMRIGHT", 0, 0);
 	frame.myHealPredictionBar:SetWidth(70);
-	frame.myHealPredictionBar:SetStatusBarTexture("", "BORDER", -1);
-	frame.myHealPredictionBar:GetStatusBarTexture():SetTexture(1, 1, 1);
+	frame.myHealPredictionBar:SetStatusBarTexture(1, 1, 1, "BORDER", -1);
 	frame.myHealPredictionBar:GetStatusBarTexture():SetGradient("VERTICAL", 0, 139/255, 20/255, 10/255, 202/255, 29/255);
 	
 	frame.otherHealPredictionBar:SetPoint("TOPLEFT", frame.myHealPredictionBar:GetStatusBarTexture(), "TOPRIGHT", 0, 0);
 	frame.otherHealPredictionBar:SetPoint("BOTTOMLEFT", frame.myHealPredictionBar:GetStatusBarTexture(), "BOTTOMRIGHT", 0, 0);
 	frame.otherHealPredictionBar:SetWidth(70);
-	frame.otherHealPredictionBar:SetStatusBarTexture("", "BORDER", -1);
-	frame.otherHealPredictionBar:GetStatusBarTexture():SetTexture(1, 1, 1);
+	frame.otherHealPredictionBar:SetStatusBarTexture(1, 1, 1, "BORDER", -1);
 	frame.otherHealPredictionBar:GetStatusBarTexture():SetGradient("VERTICAL", 3/255, 72/255, 5/255, 2/255, 101/255, 18/255);
 	
 	frame.name:SetPoint("LEFT", 5, 1);

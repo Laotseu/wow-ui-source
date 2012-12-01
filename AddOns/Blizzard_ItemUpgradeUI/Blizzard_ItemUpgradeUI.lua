@@ -1,7 +1,7 @@
 
 UIPanelWindows["ItemUpgradeFrame"] = { area = "left", pushable = 0};
 
-ITEM_UPGRADE_MAX_STATS_SHOWN = 8;
+ITEM_UPGRADE_MAX_STATS_SHOWN = 10;
 
 
 function ItemUpgradeFrame_Show()
@@ -19,18 +19,12 @@ function ItemUpgradeFrame_OnLoad(self)
 	self:RegisterEvent("ITEM_UPGRADE_MASTER_SET_ITEM");
 	self:RegisterEvent("ITEM_UPGRADE_MASTER_UPDATE");
 
-	SetPortraitToTexture(ItemUpgradeFramePortrait, "Interface\\Icons\\PVECurrency-Valor");
+	SetPortraitToTexture(ItemUpgradeFramePortrait, "Interface\\Icons\\Spell_Shaman_SpectralTransformation");
 	self.LeftStat[1].BG:Show();
 	self.RightStat[1].BG:Show();
 	ItemUpgradeFrameTitleText:SetText(ITEM_UPGRADE);
-	ItemUpgradeFrameShadowsTopLeft:SetSize(32,32);
-	ItemUpgradeFrameShadowsTopRight:SetSize(32,32);
-	ItemUpgradeFrameShadowsBottomLeft:SetSize(32,32);
-	ItemUpgradeFrameShadowsBottomRight:SetSize(32,32);
-	ItemUpgradeFrameShadowsTop:SetHeight(32);
-	ItemUpgradeFrameShadowsBottom:SetHeight(32);
-	ItemUpgradeFrameShadowsLeft:SetWidth(32);
-	ItemUpgradeFrameShadowsRight:SetWidth(32);
+	ItemUpgradeFrameTopTileStreaks:Hide();
+	ItemUpgradeFrameBg:Hide();
 end
 
 function ItemUpgradeFrame_OnShow(self)
@@ -74,17 +68,20 @@ function ItemUpgradeFrame_Update(self)
 		ItemUpgradeFrame.ItemButton.BoundStatus:SetText(bound);
 		ItemUpgradeFrame.ItemButton.MissingText:Hide();	
 		ItemUpgradeFrame.ItemButton.CurrencyAmount:SetText(cost);
+		local _, _, currencyTexture = GetCurrencyInfo(currencyType);
+		ItemUpgradeFrame.ItemButton.CurrencyIcon:SetTexture("Interface\\Icons\\"..currencyTexture);
 		ItemUpgradeFrame.MissingDescription:Hide();
+		ItemUpgradeFrame.MissingFadeOut:Hide();
 		ItemUpgradeFrame.TitleTextLeft:Show();
 		ItemUpgradeFrame.TitleTextRight:Show();
 		ItemUpgradeFrame.HorzBar:Show();
 
 		local canUpgradeItem = false;
 		if(numCurrUpgrades and numMaxUpgrades) then
-			ItemUpgradeFrame.UpgradeStatus:SetText(numCurrUpgrades.."/"..numMaxUpgrades.."*");
+			ItemUpgradeFrame.UpgradeStatus:SetText(numCurrUpgrades.."/"..numMaxUpgrades);
 			ItemUpgradeFrame.UpgradeStatus:Show();
 			if ( numCurrUpgrades < numMaxUpgrades ) then
-				ItemUpgradeFrame.UpgradeStatus:SetTextColor(HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
+				ItemUpgradeFrame.UpgradeStatus:SetTextColor(NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
 				canUpgradeItem = true;
 			else
 				ItemUpgradeFrame.UpgradeStatus:SetTextColor(RED_FONT_COLOR.r, RED_FONT_COLOR.g, RED_FONT_COLOR.b);			
@@ -111,6 +108,7 @@ function ItemUpgradeFrame_Update(self)
 		ItemUpgradeFrame.ItemButton.CurrencyIcon:Hide();
 		ItemUpgradeFrame.ItemButton.CurrencyAmount:Hide();
 		ItemUpgradeFrame.MissingDescription:Show();
+		ItemUpgradeFrame.MissingFadeOut:Show();
 		ItemUpgradeFrame.TitleTextLeft:Hide();
 		ItemUpgradeFrame.TitleTextRight:Hide();
 		ItemUpgradeFrame.UpgradeStatus:Hide();

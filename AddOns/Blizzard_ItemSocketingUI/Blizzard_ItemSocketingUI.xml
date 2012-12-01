@@ -104,18 +104,24 @@
 					HandleModifiedItemClick(link);
 				else
 					StaticPopup_Hide("DELETE_ITEM");
+					StaticPopup_Hide("DELETE_QUEST_ITEM");
 					StaticPopup_Hide("DELETE_GOOD_ITEM");
+					StaticPopup_Hide("DELETE_GOOD_QUEST_ITEM");
 					ClickSocketButton(self:GetID());
 				end
 			</OnClick>
 			<OnReceiveDrag>
 				StaticPopup_Hide("DELETE_ITEM");
+				StaticPopup_Hide("DELETE_QUEST_ITEM");
 				StaticPopup_Hide("DELETE_GOOD_ITEM");
+				StaticPopup_Hide("DELETE_GOOD_QUEST_ITEM");
 				ClickSocketButton(self:GetID());
 			</OnReceiveDrag>
 			<OnDragStart>
 				StaticPopup_Hide("DELETE_ITEM");
+				StaticPopup_Hide("DELETE_QUEST_ITEM");
 				StaticPopup_Hide("DELETE_GOOD_ITEM");
+				StaticPopup_Hide("DELETE_GOOD_QUEST_ITEM");
 				ClickSocketButton(self:GetID());
 			</OnDragStart>
 			<OnEnter>
@@ -126,7 +132,6 @@
 				ShoppingTooltip1:Hide();
 			</OnLeave>
 		</Scripts>
-		<NormalTexture file=""/>
 		<PushedTexture file="Interface\Buttons\UI-Quickslot-Depress"/>
 		<HighlightTexture file="Interface\Buttons\ButtonHilight-Square" alphaMode="ADD"/>
 	</Button>
