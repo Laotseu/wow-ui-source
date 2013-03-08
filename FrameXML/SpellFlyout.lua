@@ -7,14 +7,19 @@ local SPELLFLYOUT_FINAL_SPACING = 4;
 function SpellFlyoutButton_OnClick(self)
 	
 	if ( IsModifiedClick("CHATLINK") ) then
-		local spellLink, tradeSkillLink = GetSpellLink(self.spellID);
-		if ( tradeSkillLink ) then
-			ChatEdit_InsertLink(tradeSkillLink);
-		elseif ( spellLink ) then
-			ChatEdit_InsertLink(spellLink);
+		if ( MacroFrameText and MacroFrameText:HasFocus() ) then
+			if ( self.spellName ) then
+				ChatEdit_InsertLink(self.spellName);
+			end
+		else
+			local spellLink, tradeSkillLink = GetSpellLink(self.spellID);
+			if ( tradeSkillLink ) then
+				ChatEdit_InsertLink(tradeSkillLink);
+			elseif ( spellLink ) then
+				ChatEdit_InsertLink(spellLink);
+			end
 		end
 		SpellFlyoutButton_UpdateState(self);
-		return;
 	else
 		if ( self.offSpec ) then
 			return;
@@ -62,6 +67,9 @@ function SpellFlyoutButton_UpdateCooldown(self)
 	local cooldown = _G[self:GetName().."Cooldown"];
 	local start, duration, enable = GetSpellCooldown(self.spellID);
 	CooldownFrame_SetTimer(cooldown, start, duration, enable);
+	-- loss of control cooldown
+	start, duration = GetSpellLossOfControlCooldown(self.spellID);
+	self.cooldown:SetLossOfControlCooldown(start, duration);
 end
 
 function SpellFlyoutButton_UpdateState(self)

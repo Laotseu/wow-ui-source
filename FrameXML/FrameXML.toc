@@ -1,5 +1,5 @@
 # Do not delete the following line!
-## Interface: 50100
+## Interface: 50200
 GlobalStrings.lua
 Constants.lua
 Fonts.xml
@@ -90,7 +90,6 @@ CharacterFrame.xml
 PaperDollFrame.xml
 PetPaperDollFrame.xml
 ReputationFrame.xml
-HonorFrame.xml
 QuestFrame.xml
 QuestPOI.xml
 WatchFrame.xml
@@ -126,8 +125,6 @@ PetStable.xml
 VehicleSeatIndicator.xml
 DurabilityFrame.xml
 WorldStateFrame.xml
-PVPFrameTemplates.xml
-PVPFrame.xml
 ArenaRegistrarFrame.xml
 PVEFrame.xml
 LFGFrame.xml
@@ -147,6 +144,7 @@ EasyMenu.lua
 ChatConfigFrame.xml
 MovieFrame.xml
 AlternatePowerBar.xml
+MonkStaggerBar.xml
 LevelUpDisplay.xml
 AnimationSystem.lua
 EquipmentManager.lua
@@ -172,6 +170,8 @@ QueueStatusFrame.xml
 BattlePetTooltip.xml
 StaticPopupSpecial.xml
 LossOfControlFrame.xml
+PVPHelper.xml
+MapBar.xml
 
 ## add new modules above here
 LocalizationPost.xml

@@ -13,8 +13,6 @@ function WarlockPowerFrame_OnLoad(self)
 		self:RegisterUnitEvent("UNIT_POWER_FREQUENT", "player", "vehicle");	
 		self:RegisterEvent("PLAYER_TALENT_UPDATE");
 		--self:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED");
-		ShardBarFrame.shardCount = 3;
-		BurningEmbersBarFrame.emberCount = 3;
 		BurningEmbersBarFrame.displayedPower = 0;
 		DemonicFuryBarFrame.displayedPower = 0;
 		WarlockPowerFrame_SetUpCurrentPower(self);
@@ -36,14 +34,18 @@ function WarlockPowerFrame_OnEvent(self, event, arg1, arg2)
 	if ( event == "UNIT_AURA" and (arg1 == WarlockPowerFrame:GetParent().unit) ) then
 		DemonicFuryBar_CheckAndSetState();
 	elseif ( event == "SPELLS_CHANGED" ) then
-		if ( IsPlayerSpell(self.reqSpellID) ) then
-			self:UnregisterEvent("SPELLS_CHANGED");
-			self.reqSpellID = nil;
-			-- clear spec to force reevaluation
-			self.spec = nil;
-			WarlockPowerFrame_SetUpCurrentPower(self, true);
+		if ( self.reqSpellID ) then
+			if ( IsPlayerSpell(self.reqSpellID) ) then
+				self:UnregisterEvent("SPELLS_CHANGED");
+				self.reqSpellID = nil;
+				-- clear spec to force reevaluation
+				self.spec = nil;
+				WarlockPowerFrame_SetUpCurrentPower(self, true);
+			end
+		elseif ( self.spec == SPEC_WARLOCK_DESTRUCTION ) then
+			BurningEmbersBar_SetColorTextures();
 		end
-	elseif ( self.activeBar and event == "CVAR_UPDATE" and ( arg1 == "STATUS_TEXT_PLAYER" or arg1 == "STATUS_TEXT_PERCENT" ) ) then
+	elseif ( self.activeBar and event == "CVAR_UPDATE" and ( arg1 == "STATUS_TEXT_PLAYER" or arg1 == "STATUS_TEXT_DISPLAY" ) ) then
 		DemonicFuryBar_CheckStatusCVars(self.activeBar);
 		self.activeBar:OnEvent(nil, true);
 	-- power may have changed
@@ -92,7 +94,6 @@ function WarlockPowerFrame_SetUpCurrentPower(self, shouldAnim)
 			self:UnregisterEvent("UNIT_AURA");
 			self:UnregisterEvent("CVAR_UPDATE");
 			ShardBarFrame:Hide();
-			self:UnregisterEvent("SPELLS_CHANGED");
 			-- set up Destruction
 			-- only show if burning embers is known
 			if ( IsPlayerSpell(WARLOCK_BURNING_EMBERS) ) then
@@ -104,12 +105,15 @@ function WarlockPowerFrame_SetUpCurrentPower(self, shouldAnim)
 				if ( shouldAnim ) then
 					doAnim = true;
 				end
+				BurningEmbersBar_SetColorTextures();
+				self.reqSpellID = nil;
 			else
 				self.activeBar = nil;
 				self:SetScript("OnUpdate", nil);
-				self:RegisterEvent("SPELLS_CHANGED");
 				self.reqSpellID = WARLOCK_BURNING_EMBERS;
 			end
+			-- always register for this, need to check for green fire
+			self:RegisterEvent("SPELLS_CHANGED");
 		end
 		doShow = true;
 	elseif ( spec == SPEC_WARLOCK_DEMONOLOGY ) then
@@ -219,21 +223,6 @@ function ShardBar_Update(self, powerType)
 
 	local numShards = UnitPower( WarlockPowerFrame:GetParent().unit, SPELL_POWER_SOUL_SHARDS );
 	local maxShards = UnitPowerMax( WarlockPowerFrame:GetParent().unit, SPELL_POWER_SOUL_SHARDS );
-	-- if max shards changed, show/hide the 4th and update anchors 
-	if ( self.shardCount ~= maxShards ) then
-		if ( maxShards == 3 ) then
-			self.shard1:SetPoint("TOPLEFT", 0, 0);
-			self.shard2:SetPoint("TOPLEFT", self.shard1, "TOPLEFT", 35, 0);
-			self.shard3:SetPoint("TOPLEFT", self.shard2, "TOPLEFT", 35, 0);
-			self.shard4:Hide();
-		else
-			self.shard1:SetPoint("TOPLEFT", -10, 0);
-			self.shard2:SetPoint("TOPLEFT", self.shard1, "TOPLEFT", 30, 0);
-			self.shard3:SetPoint("TOPLEFT", self.shard2, "TOPLEFT", 30, 0);
-			self.shard4:Show();
-		end
-		self.shardCount = maxShards;
-	end
 	-- update individual shard display
 	for i = 1, maxShards do
 		local shard = _G["ShardBarFrameShard"..i];
@@ -264,11 +253,7 @@ function DemonicFuryBar_SetPower(self, power)
 		texData = WARLOCK_POWER_FILLBAR["Demonology"];
 	end
 	WarlockPowerFrame_UpdateFill(self.fill, texData, power, self.maxPower);
-	if ( self.showPercent and self.maxPower > 0 ) then
-		self.powerText:SetText(floor(abs(power/self.maxPower*100)).."%");
-	else
-		self.powerText:SetText(floor(abs(power)));
-	end
+	TextStatusBar_UpdateTextStringWithValues(self, self.powerText, power, 1, self.maxPower);
 end
 
 function DemonicFuryBar_CheckAndSetState()
@@ -298,13 +283,13 @@ function DemonicFuryBar_CheckAndSetState()
 end
 
 function DemonicFuryBar_CheckStatusCVars(self)
-	self.showPercent = GetCVarBool("statusTextPercentage");
+	self.textDisplay = GetCVar("statusTextDisplay");
 	if ( GetCVarBool("playerStatusText") ) then
-		self.powerText:Show();
-		self.lockShow = true;
+		self.showText = true;
+		self.lockShow = 1;
 	else
-		self.powerText:Hide();
-		self.lockShow = false;
+		self.showText = false;
+		self.lockShow = 0;
 	end
 end
 
@@ -318,23 +303,7 @@ function BurningEmbersBar_Update(self, powerType, forceUpdate)
 	local maxPower = UnitPowerMax("player", SPELL_POWER_BURNING_EMBERS, true);
 	local power = UnitPower("player", SPELL_POWER_BURNING_EMBERS, true);
 	local numEmbers = floor(maxPower / MAX_POWER_PER_EMBER);
-
-	if ( self.emberCount ~= numEmbers ) then
-		if ( numEmbers == 3 ) then
-			self.ember1:SetPoint("TOPLEFT", 17, 7);
-			self.ember2:SetPoint("LEFT", self.ember1, 40, 0);
-			self.ember3:SetPoint("LEFT", self.ember2, 40, 0);
-			self.ember4.fire:Hide();
-			self.ember4.active = false;
-			self.ember4:Hide();
-		else
-			self.ember1:SetPoint("TOPLEFT", 16, 7);
-			self.ember2:SetPoint("LEFT", self.ember1, 26, 0);
-			self.ember3:SetPoint("LEFT", self.ember2, 26, 0);
-			self.ember4:Show();
-		end
-		self.emberCount = numEmbers;
-	end
+	self.emberCount = numEmbers;
 	self.power = power;
 	self.maxPower = maxPower;
 	if ( forceUpdate ) then
@@ -373,5 +342,32 @@ function BurningEmbersBar_SetPower(self, power)
 		
 		-- leftover for the other embers
 		power = power - MAX_POWER_PER_EMBER;
+	end
+end
+
+function BurningEmbersBar_SetColorTextures()
+	local frame = BurningEmbersBarFrame;
+	local textureFile;
+	if ( IsSpellKnown(WARLOCK_GREEN_FIRE) ) then
+		if ( not frame.hasGreenFire ) then
+			frame.hasGreenFire = true;
+			textureFile = "Interface\\PlayerFrame\\Warlock-DestructionUI-Green";
+		end
+	else
+		if ( frame.hasGreenFire ) then
+			frame.hasGreenFire = nil;
+			textureFile = "Interface\\PlayerFrame\\Warlock-DestructionUI";
+		end
+	end
+	if ( textureFile ) then
+		frame.background:SetTexture(textureFile);
+		for i = 1, 4 do
+			local ember = frame["ember"..i];
+			ember.border:SetTexture(textureFile); 
+			ember.fill:SetTexture(textureFile);
+			ember.fire:SetTexture(textureFile);
+			ember.glow:SetTexture(textureFile);
+			ember.glow2:SetTexture(textureFile);
+		end
 	end
 end

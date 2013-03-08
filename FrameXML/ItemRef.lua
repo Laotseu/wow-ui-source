@@ -179,7 +179,7 @@ function SetItemRef(link, text, button, chatFrame)
 		LevelUpDisplay_ShowSideDisplay(tonumber(level), _G[levelUpType], arg1);
 		return;
 	elseif ( strsub(link, 1, 6) == "pvpbgs" ) then
-		TogglePVPFrame();
+		TogglePVPUI();
 		return;
 	elseif ( strsub(link, 1, 3) == "lfd" ) then
 		ToggleLFDParentFrame();
@@ -221,7 +221,7 @@ function SetItemRef(link, text, button, chatFrame)
 			local fixedLink = GetFixedLink(text);
 			HandleModifiedItemClick(fixedLink);
 		else
-			FloatingBattlePet_Toggle(tonumber(speciesID), tonumber(level), tonumber(breedQuality), tonumber(maxHealth), tonumber(power), tonumber(speed), string.gsub(string.gsub(text, "^(.*)%[", ""), "%](.*)$", ""), tonumber(battlePetID));
+			FloatingBattlePet_Toggle(tonumber(speciesID), tonumber(level), tonumber(breedQuality), tonumber(maxHealth), tonumber(power), tonumber(speed), string.gsub(string.gsub(text, "^(.*)%[", ""), "%](.*)$", ""), battlePetID);
 		end
 		return;
 	end

@@ -48,7 +48,7 @@
 			</OnMouseUp>
 		</Scripts>
 	</Button>
-	<Frame name="MinimapCluster" frameStrata="BACKGROUND" toplevel="true" enableMouse="true" parent="UIParent">
+	<Frame name="MinimapCluster" frameStrata="LOW" toplevel="true" enableMouse="true" parent="UIParent">
 		<Size>
 			<AbsDimension x="192" y="192"/>
 		</Size>
@@ -109,7 +109,7 @@
 					<OnLeave function="GameTooltip_Hide"/>
 				</Scripts>
 			</Button>
-			<Minimap name="Minimap" enableMouse="true" minimapPlayerModel="Interface\Minimap\MinimapArrow.mdx" minimapArrowModel="Interface\Minimap\Rotating-MinimapArrow.mdl">
+			<Minimap name="Minimap" enableMouse="true">
 				<Size>
 					<AbsDimension x="140" y="140"/>
 				</Size>

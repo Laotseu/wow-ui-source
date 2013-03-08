@@ -952,9 +952,10 @@ end
 local function _CalendarFrame_InviteToRaid(maxInviteCount)
 	local inviteCount = 0;
 	local i = 1;
+	local playerName = UnitName("player");
 	while ( inviteCount < maxInviteCount and i <= CalendarEventGetNumInvites() ) do
 		local name, level, className, classFilename, inviteStatus = CalendarEventGetInvite(i);
-		if ( not UnitInParty(name) and not UnitInRaid(name) and
+		if ( name ~= playerName and not UnitInParty(name) and not UnitInRaid(name) and
 			 (inviteStatus == CALENDAR_INVITESTATUS_ACCEPTED or
 			 inviteStatus == CALENDAR_INVITESTATUS_CONFIRMED or
 			 inviteStatus == CALENDAR_INVITESTATUS_SIGNEDUP) ) then
@@ -1634,10 +1635,10 @@ function CalendarFrame_UpdateDayTextures(dayButton, numEvents, firstEventButton,
 		eventBackground:Show();
 
 		-- set day texture
-		local title, hour, minute, calendarType, sequenceType, eventType, texture =
-			CalendarGetDayEvent(monthOffset, day, firstEventButton.eventIndex);
+		local title, hour, minute, calendarType, sequenceType, eventType, texture,
+			_, _, _, _, _, _, numSequenceDays = CalendarGetDayEvent(monthOffset, day, firstEventButton.eventIndex);
 		eventTex:SetTexture();
-		if ( CALENDAR_USE_SEQUENCE_FOR_EVENT_TEXTURE ) then
+		if ( CALENDAR_USE_SEQUENCE_FOR_EVENT_TEXTURE and numSequenceDays ~= 2) then
 			texturePath, tcoords = _CalendarFrame_GetTextureFile(texture, calendarType, sequenceType, eventType);
 		else
 			texturePath, tcoords = _CalendarFrame_GetTextureFile(texture, calendarType, "", eventType);
@@ -2154,7 +2155,7 @@ function CalendarDayContextMenu_Initialize(self, flags, dayButton, eventButton)
 							end
 							UIMenu_AddButton(self, CALENDAR_REMOVE_SIGNUP, nil, CalendarDayContextMenu_RemoveInvite);
 						end
-					else
+					elseif ( modStatus ~= "CREATOR" ) then
 						if ( needSpacer ) then
 							UIMenu_AddButton(self, "");
 						end

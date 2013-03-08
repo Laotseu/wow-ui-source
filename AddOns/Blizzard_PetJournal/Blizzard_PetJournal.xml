@@ -277,6 +277,9 @@ size=64,128
 						</Texture>
 					</Layer>
 				</Layers>
+				<Frames>
+					<Cooldown parentKey="Cooldown" inherits="CooldownFrameTemplate"/>
+				</Frames>
 				<HighlightTexture name="$parentHighlight" file="Interface\Buttons\ButtonHilight-Square" alphaMode="ADD"/>
 				<Scripts>
 					<OnClick function="PetJournalDragButton_OnClick"/>	
@@ -284,6 +287,13 @@ size=64,128
 						self:RegisterForDrag("LeftButton");
 						self:RegisterForClicks("LeftButtonUp", "RightButtonUp");
 					</OnLoad>
+					<OnShow>
+						self:RegisterEvent("SPELL_UPDATE_COOLDOWN");
+					</OnShow>
+					<OnHide>
+						self:UnregisterEvent("SPELL_UPDATE_COOLDOWN");
+					</OnHide>
+					<OnEvent function="PetJournalDragButton_OnEvent"/>
 					<OnDragStart function="PetJournalDragButton_OnDragStart"/>
 				</Scripts>
 			</Button>
@@ -1201,13 +1211,13 @@ size=64,128
 					<PlayerModel parentKey="ModelFrame" useParentLevel="true" inherits="ModelWithZoomTemplate">
 						<Anchors>
 							<Anchor point="TOPLEFT" relativeKey="$parent" relativePoint="TOPLEFT" x="0" y="0"/>
-							<Anchor point="BOTTOMRIGHT" relativeKey="$parent" x="0" y="150"/>
+							<Anchor point="BOTTOMRIGHT" relativeKey="$parent" x="0" y="100"/>
 						</Anchors>
 						<Frames>
 							<Button parentKey="RotateLeftButton">
 								<Size x="35" y="35"/>
 								<Anchors>
-									<Anchor point="TOPRIGHT" relativeKey="$parent" relativePoint="BOTTOM" x="-5" y="-100"/>
+									<Anchor point="TOPRIGHT" relativeKey="$parent" relativePoint="BOTTOM" x="-5" y="-50"/>
 								</Anchors>
 								<Scripts>
 									<OnLoad>
@@ -1226,7 +1236,7 @@ size=64,128
 									<AbsDimension x="35" y="35"/>
 								</Size>
 								<Anchors>
-									<Anchor point="TOPLEFT" relativeKey="$parent" relativePoint="BOTTOM" x="5" y="-100"/>
+									<Anchor point="TOPLEFT" relativeKey="$parent" relativePoint="BOTTOM" x="5" y="-50"/>
 								</Anchors>
 								<Scripts>
 									<OnLoad>
@@ -1254,7 +1264,7 @@ size=64,128
 				<Frames>
 					<Slider name="$parentScrollBar" inherits="HybridScrollBarTrimTemplate" parentKey="scrollBar">
 						<Anchors>
-							<Anchor point="TOPLEFT" relativePoint="TOPRIGHT" x="4" y="-11"/>
+							<Anchor point="TOPLEFT" relativePoint="TOPRIGHT" x="4" y="20"/>
 							<Anchor point="BOTTOMLEFT" relativePoint="BOTTOMRIGHT" x="4" y="11"/>
 						</Anchors>
 						<Scripts>

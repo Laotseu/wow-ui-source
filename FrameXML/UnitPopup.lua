@@ -68,16 +68,16 @@ UnitPopupButtons["REPORT_BATTLE_PET"] = { text = REPORT_PET_NAME, dist = 0 };
 UnitPopupButtons["REPORT_PET"] = { text = REPORT_PET_NAME, dist = 0 };
 
 
-UnitPopupButtons["DUNGEON_DIFFICULTY"] = { text = DUNGEON_DIFFICULTY, dist = 0,  nested = 1 };
+UnitPopupButtons["DUNGEON_DIFFICULTY"] = { text = DUNGEON_DIFFICULTY, dist = 0,  nested = 1, defaultDifficultyID = 1 };
 UnitPopupButtons["DUNGEON_DIFFICULTY1"] = { text = DUNGEON_DIFFICULTY1, dist = 0, checkable = 1, difficultyID = 1 };
 UnitPopupButtons["DUNGEON_DIFFICULTY2"] = { text = DUNGEON_DIFFICULTY2, dist = 0, checkable = 1, difficultyID = 2 };
 UnitPopupButtons["DUNGEON_DIFFICULTY3"] = { text = CHALLENGE_MODE, dist = 0, checkable = 1, difficultyID = 8 };
 
-UnitPopupButtons["RAID_DIFFICULTY"] = { text = RAID_DIFFICULTY, dist = 0,  nested = 1};
-UnitPopupButtons["RAID_DIFFICULTY1"] = { text = RAID_DIFFICULTY1, dist = 0, checkable = 1 };
-UnitPopupButtons["RAID_DIFFICULTY2"] = { text = RAID_DIFFICULTY2, dist = 0, checkable = 1 };
-UnitPopupButtons["RAID_DIFFICULTY3"] = { text = RAID_DIFFICULTY3, dist = 0, checkable = 1 };
-UnitPopupButtons["RAID_DIFFICULTY4"] = { text = RAID_DIFFICULTY4, dist = 0, checkable = 1 };
+UnitPopupButtons["RAID_DIFFICULTY"] = { text = RAID_DIFFICULTY, dist = 0,  nested = 1, defaultDifficultyID = 3 };
+UnitPopupButtons["RAID_DIFFICULTY1"] = { text = RAID_DIFFICULTY1, dist = 0, checkable = 1, difficultyID = 3 };
+UnitPopupButtons["RAID_DIFFICULTY2"] = { text = RAID_DIFFICULTY2, dist = 0, checkable = 1, difficultyID = 4 };
+UnitPopupButtons["RAID_DIFFICULTY3"] = { text = RAID_DIFFICULTY3, dist = 0, checkable = 1, difficultyID = 5 };
+UnitPopupButtons["RAID_DIFFICULTY4"] = { text = RAID_DIFFICULTY4, dist = 0, checkable = 1, difficultyID = 6 };
 
 
 UnitPopupButtons["PVP_FLAG"] = { text = PVP_FLAG, dist = 0, nested = 1};
@@ -299,17 +299,17 @@ function UnitPopup_ShowMenu (dropdownMenu, which, unit, name, userData)
 		UnitPopupButtons["OPT_OUT_LOOT_TITLE"].text = format(OPT_OUT_LOOT_TITLE, UnitPopupButtons["OPT_OUT_LOOT_DISABLE"].text);
 	end
 	-- Disable dungeon and raid difficulty in instances except for for leaders in dynamic instances
-	local selectedRaidDifficulty, allowedRaidDifficultyChange;
-	local _, instanceType, _, _, _, _, isDynamicInstance = GetInstanceInfo();
+	local toggleDifficultyID;
+	local _, instanceType, instanceDifficultyID, _, _, _, isDynamicInstance = GetInstanceInfo();
 	if ( isDynamicInstance and CanChangePlayerDifficulty() ) then
-		selectedRaidDifficulty, allowedRaidDifficultyChange = _GetPlayerDifficultyMenuOptions();
+		_, _, _, _, toggleDifficultyID = GetDifficultyInfo(instanceDifficultyID);
 	end	
 	if ( instanceType == "none" ) then
 		UnitPopupButtons["DUNGEON_DIFFICULTY"].nested = 1;
 		UnitPopupButtons["RAID_DIFFICULTY"].nested = 1;		
 	else
 		UnitPopupButtons["DUNGEON_DIFFICULTY"].nested = nil;
-		if ( allowedRaidDifficultyChange ) then
+		if ( toggleDifficultyID ) then
 			UnitPopupButtons["RAID_DIFFICULTY"].nested = 1;
 		else
 			UnitPopupButtons["RAID_DIFFICULTY"].nested = nil;
@@ -383,12 +383,12 @@ function UnitPopup_ShowMenu (dropdownMenu, which, unit, name, userData)
 					end
 				elseif ( strsub(value, 1, 15) == "RAID_DIFFICULTY" and (strlen(value) > 15)) then
 					if ( isDynamicInstance ) then
-						if ( selectedRaidDifficulty == index ) then
+						if ( instanceDifficultyID == UnitPopupButtons[value].difficultyID ) then
 							info.checked = 1;
 						end
 					else
-						local dungeonDifficulty = GetRaidDifficulty();
-						if ( dungeonDifficulty == index ) then
+						local raidDifficultyID = GetRaidDifficultyID();
+						if ( raidDifficultyID == UnitPopupButtons[value].difficultyID ) then
 							info.checked = 1;
 						end
 					end
@@ -404,7 +404,7 @@ function UnitPopup_ShowMenu (dropdownMenu, which, unit, name, userData)
 					if ( ( inParty == 1 and isLeader == 0 ) or inInstance ) then
 						info.disabled = 1;
 					end
-					if ( allowedRaidDifficultyChange and allowedRaidDifficultyChange == value ) then
+					if ( toggleDifficultyID and toggleDifficultyID == UnitPopupButtons[value].difficultyID ) then
 						info.disabled = nil;
 					end
 				elseif ( value == "PVP_ENABLE" ) then
@@ -611,7 +611,7 @@ function UnitPopup_HideButtons ()
 				if ( canCoop == 0  or UnitIsUnit("player", dropdownMenu.unit) ) then
 					UnitPopupShown[UIDROPDOWNMENU_MENU_LEVEL][index] = 0;
 				end
-			elseif ( (dropdownMenu == PVPTeamManagementFrameTeamDropDown) and not PVPTeamManagementFrameTeamDropDown.online ) then
+			elseif ( (dropdownMenu == ArenaTeamMemberDropDown) and not ArenaTeamMemberDropDown.online ) then
 				UnitPopupShown[UIDROPDOWNMENU_MENU_LEVEL][index] = 0;
 			elseif ( (dropdownMenu == ChannelRosterDropDown) ) then
 				if ( UnitInRaid(dropdownMenu.name) ~= nil ) then
@@ -645,7 +645,7 @@ function UnitPopup_HideButtons ()
 				if ( canCoop == 0  or (dropdownMenu.name == playerName and dropdownMenu.server == playerServer) ) then
 					UnitPopupShown[UIDROPDOWNMENU_MENU_LEVEL][index] = 0;
 				end
-			elseif ( (dropdownMenu == PVPTeamManagementFrameTeamDropDown) and not PVPTeamManagementFrameTeamDropDown.online ) then
+			elseif ( (dropdownMenu == ArenaTeamMemberDropDown) and not ArenaTeamMemberDropDown.online ) then
 				UnitPopupShown[UIDROPDOWNMENU_MENU_LEVEL][index] = 0;
 			end
 		elseif ( value == "CREATE_CONVERSATION_WITH" ) then
@@ -729,7 +729,7 @@ function UnitPopup_HideButtons ()
 			-- We don't want to show a menu option that will end up being blocked
 			if ( InCombatLockdown() or not issecure() ) then
 				UnitPopupShown[UIDROPDOWNMENU_MENU_LEVEL][index] = 0;
-			elseif ( (dropdownMenu == PVPTeamManagementFrameTeamDropDown) and not PVPTeamManagementFrameTeamDropDown.online ) then
+			elseif ( (dropdownMenu == ArenaTeamMemberDropDown) and not ArenaTeamMemberDropDown.online ) then
 				UnitPopupShown[UIDROPDOWNMENU_MENU_LEVEL][index] = 0;
 			elseif ( dropdownMenu.isMobile ) then
 				UnitPopupShown[UIDROPDOWNMENU_MENU_LEVEL][index] = 0;
@@ -756,23 +756,23 @@ function UnitPopup_HideButtons ()
 				UnitPopupShown[UIDROPDOWNMENU_MENU_LEVEL][index] = 0;
 			end
 		elseif ( value == "TEAM_PROMOTE" ) then
-			if ( dropdownMenu.name == UnitName("player") or not PVP_ArenaTeamFrame():IsShown() ) then
+			if ( dropdownMenu.name == UnitName("player") or not ArenaTeamFrame:IsShown() ) then
 				UnitPopupShown[UIDROPDOWNMENU_MENU_LEVEL][index] = 0;
-			elseif ( PVP_ArenaTeamFrame():IsShown() and not IsArenaTeamCaptain(PVP_GetSelectedArenaTeam()) ) then
+			elseif ( ArenaTeamFrame:IsShown() and not IsArenaTeamCaptain(PVPUI_GetSelectedArenaTeam()) ) then
 				UnitPopupShown[UIDROPDOWNMENU_MENU_LEVEL][index] = 0;
 			end
 		elseif ( value == "TEAM_KICK" ) then
-			if ( dropdownMenu.name == UnitName("player") or not PVP_ArenaTeamFrame():IsShown() ) then
+			if ( dropdownMenu.name == UnitName("player") or not ArenaTeamFrame:IsShown() ) then
 				UnitPopupShown[UIDROPDOWNMENU_MENU_LEVEL][index] = 0;
-			elseif ( PVP_ArenaTeamFrame():IsShown() and not IsArenaTeamCaptain(PVP_GetSelectedArenaTeam()) ) then
+			elseif ( ArenaTeamFrame:IsShown() and not IsArenaTeamCaptain(PVPUI_GetSelectedArenaTeam()) ) then
 				UnitPopupShown[UIDROPDOWNMENU_MENU_LEVEL][index] = 0;
 			end
 		elseif ( value == "TEAM_LEAVE" ) then
-			if ( dropdownMenu.name ~= UnitName("player") or not PVP_ArenaTeamFrame():IsShown() or IsArenaTeamCaptain(PVP_GetSelectedArenaTeam()) ) then
+			if ( dropdownMenu.name ~= UnitName("player") or not ArenaTeamFrame:IsShown() or IsArenaTeamCaptain(PVPUI_GetSelectedArenaTeam()) ) then
 				UnitPopupShown[UIDROPDOWNMENU_MENU_LEVEL][index] = 0;
 			end
 		elseif ( value == "TEAM_DISBAND" ) then
-			if ( dropdownMenu.name ~= UnitName("player") or not PVP_ArenaTeamFrame():IsShown() or not IsArenaTeamCaptain(PVP_GetSelectedArenaTeam()) ) then
+			if ( dropdownMenu.name ~= UnitName("player") or not ArenaTeamFrame:IsShown() or not IsArenaTeamCaptain(PVPUI_GetSelectedArenaTeam()) ) then
 				UnitPopupShown[UIDROPDOWNMENU_MENU_LEVEL][index] = 0;
 			end
 		elseif ( value == "UNINVITE" ) then
@@ -885,11 +885,11 @@ function UnitPopup_HideButtons ()
 				UnitPopupShown[UIDROPDOWNMENU_MENU_LEVEL][index] = 0;
 			end
 		elseif ( value == "DUNGEON_DIFFICULTY" ) then
-			if ( UnitLevel("player") < 65 and GetDungeonDifficultyID() == 1 ) then
+			if ( UnitLevel("player") < 65 and GetDungeonDifficultyID() == UnitPopupButtons[value].defaultDifficultyID ) then
 				UnitPopupShown[UIDROPDOWNMENU_MENU_LEVEL][index] = 0;
 			end
 		elseif ( value == "RAID_DIFFICULTY" ) then
-			if ( UnitLevel("player") < 65 and GetRaidDifficulty() == 1 ) then
+			if ( UnitLevel("player") < 65 and GetRaidDifficultyID() == UnitPopupButtons[value].defaultDifficultyID ) then
 				UnitPopupShown[UIDROPDOWNMENU_MENU_LEVEL][index] = 0;
 			end
 		elseif ( value == "MUTE" ) then
@@ -1203,7 +1203,7 @@ function UnitPopup_OnUpdate (elapsed)
 	end
 
 	local isCaptain
-	if (PVP_GetSelectedArenaTeam() and IsArenaTeamCaptain(PVP_GetSelectedArenaTeam()) ) then
+	if ( PVPUIFrame and PVPUI_GetSelectedArenaTeam() and IsArenaTeamCaptain(PVPUI_GetSelectedArenaTeam()) ) then
 		isCaptain = 1;
 	end
 
@@ -1217,10 +1217,10 @@ function UnitPopup_OnUpdate (elapsed)
 	end
 	
 	-- dynamic difficulty
-	local allowedRaidDifficultyChange;
-	local _, instanceType, _, _, _, _, isDynamicInstance = GetInstanceInfo();
+	local toggleDifficultyID;
+	local _, instanceType, instanceDifficultyID, _, _, _, isDynamicInstance = GetInstanceInfo();
 	if ( isDynamicInstance and CanChangePlayerDifficulty() ) then
-		_, allowedRaidDifficultyChange = _GetPlayerDifficultyMenuOptions();
+		_, _, _, _, toggleDifficultyID = GetDifficultyInfo(instanceDifficultyID);
 	end
 	
 	-- Loop through all menus and enable/disable their buttons appropriately
@@ -1262,6 +1262,15 @@ function UnitPopup_OnUpdate (elapsed)
 					elseif ( value == "BN_INVITE" ) then
 						if ( not currentDropDown.presenceID or not CanGroupWithAccount(currentDropDown.presenceID) ) then
 							enable = 0;
+						end
+					elseif ( value == "BN_TARGET" ) then
+						if ( not currentDropDown.presenceID) then
+							enable = 0;
+						else
+							local _, _, _, _, _, _, client = BNGetFriendInfoByID(currentDropDown.presenceID);
+							if (client ~= BNET_CLIENT_WOW) then
+								enable = 0;
+							end
 						end
 					elseif ( value == "VOTE_TO_KICK" ) then
 						if ( inParty == 0 or not HasLFGRestrictions() ) then
@@ -1324,13 +1333,13 @@ function UnitPopup_OnUpdate (elapsed)
 						if ( ( inParty == 1 and isLeader == 0 ) or inInstance or HasLFGRestrictions() ) then
 							enable = 0;	
 						end
-					elseif ( value == "RAID_DIFFICULTY" and inInstance and not allowedRaidDifficultyChange ) then
+					elseif ( value == "RAID_DIFFICULTY" and inInstance and not toggleDifficultyID ) then
 						enable = 0;
 					elseif ( ( strsub(value, 1, 15) == "RAID_DIFFICULTY" ) and ( strlen(value) > 15 ) ) then
 						if ( ( inParty == 1 and isLeader == 0 ) or inInstance ) then
 							enable = 0;	
 						end
-						if ( allowedRaidDifficultyChange and allowedRaidDifficultyChange == value ) then
+						if ( toggleDifficultyID and toggleDifficultyID == UnitPopupButtons[value].difficultyID ) then
 							enable = 1;
 						end
 					elseif ( value == "CONVERT_TO_PARTY" ) then
@@ -1535,26 +1544,26 @@ function UnitPopup_OnClick (self)
 	elseif ( button == "GUILD_LEAVE" ) then
 		StaticPopup_Show("CONFIRM_GUILD_LEAVE", GetGuildInfo("player"));
 	elseif ( button == "TEAM_PROMOTE" ) then
-		local dialog = StaticPopup_Show("CONFIRM_TEAM_PROMOTE", name, GetArenaTeam(PVP_GetSelectedArenaTeam()));
+		local dialog = StaticPopup_Show("CONFIRM_TEAM_PROMOTE", name, GetArenaTeam(PVPUI_GetSelectedArenaTeam()));
 		if ( dialog ) then
-			dialog.data = PVP_GetSelectedArenaTeam();
+			dialog.data = PVPUI_GetSelectedArenaTeam();
 			dialog.data2 = name;
 		end
 	elseif ( button == "TEAM_KICK" ) then
-		local dialog = StaticPopup_Show("CONFIRM_TEAM_KICK", name, GetArenaTeam(PVP_GetSelectedArenaTeam()) );
+		local dialog = StaticPopup_Show("CONFIRM_TEAM_KICK", name, GetArenaTeam(PVPUI_GetSelectedArenaTeam()) );
 		if ( dialog ) then
-			dialog.data = PVP_GetSelectedArenaTeam();
+			dialog.data = PVPUI_GetSelectedArenaTeam();
 			dialog.data2 = name;
 		end
 	elseif ( button == "TEAM_LEAVE" ) then
-		local dialog = StaticPopup_Show("CONFIRM_TEAM_LEAVE", GetArenaTeam(PVP_GetSelectedArenaTeam()) );
+		local dialog = StaticPopup_Show("CONFIRM_TEAM_LEAVE", GetArenaTeam(PVPUI_GetSelectedArenaTeam()) );
 		if ( dialog ) then
-			dialog.data = PVP_GetSelectedArenaTeam();
+			dialog.data = PVPUI_GetSelectedArenaTeam();
 		end
 	elseif ( button == "TEAM_DISBAND" ) then
-		local dialog = StaticPopup_Show("CONFIRM_TEAM_DISBAND", GetArenaTeam(PVP_GetSelectedArenaTeam()) );
+		local dialog = StaticPopup_Show("CONFIRM_TEAM_DISBAND", GetArenaTeam(PVPUI_GetSelectedArenaTeam()) );
 		if ( dialog ) then
-			dialog.data = PVP_GetSelectedArenaTeam();
+			dialog.data = PVPUI_GetSelectedArenaTeam();
 		end
 	elseif ( button == "LEAVE" ) then
 		LeaveParty();
@@ -1613,8 +1622,8 @@ function UnitPopup_OnClick (self)
 		local dungeonDifficultyID = UnitPopupButtons[button].difficultyID;
 		SetDungeonDifficultyID(dungeonDifficultyID);
 	elseif ( strsub(button, 1, 15) == "RAID_DIFFICULTY" and (strlen(button) > 15) ) then
-		local raidDifficulty = tonumber( strsub(button,16,16) );
-		SetRaidDifficulty(raidDifficulty);
+		local raidDifficultyID = UnitPopupButtons[button].difficultyID;
+		SetRaidDifficultyID(raidDifficultyID);
 	elseif ( button == "LOOT_PROMOTE" ) then
 		SetLootMethod("master", fullname, 1);
 	elseif ( button == "PVP_ENABLE" ) then

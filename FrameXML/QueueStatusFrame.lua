@@ -121,7 +121,7 @@ function QueueStatusFrame_Update(self)
 
 	--Try all PvP queues
 	for i=1, GetMaxBattlefieldID() do
-		local status, mapName, teamSize, registeredMatch = GetBattlefieldStatus(i);
+		local status, mapName, teamSize, registeredMatch, suspend = GetBattlefieldStatus(i);
 		if ( status and status ~= "none" ) then
 			local entry = QueueStatusFrame_GetEntry(self, nextEntry);
 			QueueStatusEntry_SetUpBattlefield(entry, i);
@@ -130,7 +130,7 @@ function QueueStatusFrame_Update(self)
 			nextEntry = nextEntry + 1;
 
 			showMinimapButton = true;
-			if ( status == "queued" ) then
+			if ( status == "queued" and not suspend ) then
 				animateEye = true;
 			end
 		end
@@ -616,18 +616,20 @@ function QueueStatusDropDown_AddLFGButtons(info, category)
 	end
 
 	if ( IsLFGModeActive(category) and IsPartyLFG() ) then
-		if ( IsInLFGDungeon() ) then
-			info.text = TELEPORT_OUT_OF_DUNGEON;
-			info.func = wrapFunc(LFGTeleport);
-			info.arg1 = true;
-			info.disabled = false;
-			UIDropDownMenu_AddButton(info);
-		else
-			info.text = TELEPORT_TO_DUNGEON;
-			info.func = wrapFunc(LFGTeleport);
-			info.arg1 = false;
-			info.disabled = false;
-			UIDropDownMenu_AddButton(info);
+		if ( IsAllowedToUserTeleport() ) then
+			if ( IsInLFGDungeon() ) then
+				info.text = TELEPORT_OUT_OF_DUNGEON;
+				info.func = wrapFunc(LFGTeleport);
+				info.arg1 = true;
+				info.disabled = false;
+				UIDropDownMenu_AddButton(info);
+			else
+				info.text = TELEPORT_TO_DUNGEON;
+				info.func = wrapFunc(LFGTeleport);
+				info.arg1 = false;
+				info.disabled = false;
+				UIDropDownMenu_AddButton(info);
+			end
 		end
 		info.text = INSTANCE_PARTY_LEAVE;
 		info.func = wrapFunc(ConfirmOrLeaveLFGParty);

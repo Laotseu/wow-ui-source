@@ -469,7 +469,7 @@
 					</Frame>
 					<Frame name="AccountLoginLauncherLoginFrame" setAllPoints="true" useParentLevel="true">
 						<Frames>
-							<Button name="AccountLoginLauncherChangeAccountButton" inherits="GlueButtonTemplateBlue" text="LOGOUT">
+							<Button name="AccountLoginLauncherLogoutButton" inherits="GlueButtonTemplateBlue" text="LOGOUT">
 								<Size x="220" y="45"/>
 								<Anchors>
 									<Anchor point="BOTTOM" x="0" y="170"/>
@@ -480,10 +480,23 @@
 									</OnClick>
 								</Scripts>
 							</Button>
+							<Button name="AccountLoginLauncherChangeAccountButton" inherits="GlueButtonTemplateBlue" text="CHANGE_ACCOUNT">
+								<Size x="220" y="45"/>
+								<Anchors>
+									<Anchor point="BOTTOM" relativeTo="AccountLoginLauncherLogoutButton" relativePoint="TOP" x="0" y="10"/>
+								</Anchors>
+								<Scripts>
+									<OnClick>
+										SetSavedAccountListSSO("");
+										WoWAccountSelectDialogBackgroundSaveAccountButton:SetChecked(false)
+										AttemptFastLogin();
+									</OnClick>
+								</Scripts>
+							</Button>
 							<Button name="AccountLoginLauncherPlayButton" inherits="GlueButtonTemplateBlue" text="PLAY">
 								<Size x="220" y="45"/>
 								<Anchors>
-									<Anchor point="BOTTOM" relativeTo="AccountLoginLauncherChangeAccountButton" relativePoint="TOP" x="0" y="10"/>
+									<Anchor point="BOTTOM" relativeTo="AccountLoginLauncherLogoutButton" relativePoint="TOP" x="0" y="10"/>
 								</Anchors>
 								<Scripts>
 									<OnClick>
@@ -1311,6 +1324,11 @@
 												</Anchor>
 											</Anchors>
 										</FontString>
+										<FontString name="$parentSaveAccountText" inherits="GlueFontNormalSmall" text="SAVE_ACCOUNT_NAME">
+											<Anchors>
+												<Anchor point="BOTTOM" x="10" y="16"/>
+											</Anchors>
+										</FontString>
 									</Layer>
 								</Layers>
 								<Frames>
@@ -1452,6 +1470,33 @@
 											</OnClick>
 										</Scripts>
 									</Button>
+									<CheckButton name="$parentSaveAccountButton">
+										<Size x="20" y="20"/>
+										<Anchors>
+											<Anchor point="RIGHT" relativeTo="$parentSaveAccountText" relativePoint="LEFT"/>
+										</Anchors>
+										<Scripts>
+											<OnLoad>
+												if ( GetSavedAccountListSSO() ~= "" ) then
+													self:SetChecked(1);
+												else
+													self:SetChecked(0);
+												end
+											</OnLoad>
+											<OnClick>
+												if ( self:GetChecked() ) then
+													PlaySound("igMainMenuOptionCheckBoxOff");
+												else
+													PlaySound("igMainMenuOptionCheckBoxOn");
+												end
+											</OnClick>
+										</Scripts>
+										<NormalTexture file="Interface\Buttons\UI-CheckBox-Up"/>
+										<PushedTexture file="Interface\Buttons\UI-CheckBox-Down"/>
+										<HighlightTexture file="Interface\Buttons\UI-CheckBox-Highlight" alphaMode="ADD"/>
+										<CheckedTexture file="Interface\Buttons\UI-CheckBox-Check"/>
+										<DisabledCheckedTexture file="Interface\Buttons\UI-CheckBox-Check-Disabled"/>
+									</CheckButton>
 								</Frames>
 							</Frame>
 						</Frames>

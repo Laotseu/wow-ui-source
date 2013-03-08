@@ -304,7 +304,28 @@
 		</Scripts>
 	</Button>
 	<Button name="ArenaEnemyFrameTemplate" frameStrata="LOW" toplevel="true" movable="true" hidden="true" inherits="ArenaPrepFrameTemplate" virtual="true">
+		<Layers>
+			<Layer level="ARTWORK">
+				<Texture name="$parentMyHealPredictionBar" inherits="MyHealPredictionBarTemplate"/>
+				<Texture name="$parentOtherHealPredictionBar" inherits="OtherHealPredictionBarTemplate"/>
+				<Texture name="$parentTotalAbsorbBar" inherits="TotalAbsorbBarTemplate"/>
+			</Layer>
+			<Layer level="ARTWORK" textureSubLevel="1">
+				<Texture name="$parentTotalAbsorbBarOverlay" inherits="TotalAbsorbBarOverlayTemplate"/>
+			</Layer>
+		</Layers>
 		<Frames>
+			<Frame setAllPoints="true">
+				<Frames>
+					<Frame setAllPoints="true">
+						<Layers>
+							<Layer level="OVERLAY">
+								<Texture name="$parentOverAbsorbGlow" inherits="OverAbsorbGlowTemplate"/>
+							</Layer>
+						</Layers>
+					</Frame>
+				</Frames>
+			</Frame>
 			<Button name="$parentPetFrame" inherits="ArenaEnemyPetFrameTemplate" parentKey="petFrame"/>
 		</Frames>
 		<Scripts>
@@ -315,8 +336,10 @@
 				self.noTextPrefix = 1;
 				local prefix = "ArenaEnemyFrame"..id;
 				UnitFrame_Initialize(self, "arena"..id,  _G[prefix.."Name"], nil,
-					   _G[prefix.."HealthBar"], _G[prefix.."HealthBarText"], 
-					   _G[prefix.."ManaBar"], _G[prefix.."ManaBarText"]);
+						_G[prefix.."HealthBar"], _G[prefix.."HealthBarText"], 
+						_G[prefix.."ManaBar"], _G[prefix.."ManaBarText"], nil, nil, nil,
+						_G[prefix.."MyHealPredictionBar"], _G[prefix.."OtherHealPredictionBar"],
+						_G[prefix.."TotalAbsorbBar"], _G[prefix.."TotalAbsorbBarOverlay"], _G[prefix.."OverAbsorbGlow"]);
 				SetTextStatusBarTextZeroText(_G[prefix.."HealthBar"], DEAD);
 				ArenaEnemyFrame_OnLoad(self);
 			</OnLoad>

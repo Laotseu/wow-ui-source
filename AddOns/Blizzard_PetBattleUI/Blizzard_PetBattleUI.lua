@@ -11,7 +11,7 @@ local MAX_PET_LEVEL = 25;
 BATTLE_PET_DISPLAY_ROTATION = 3 * math.pi / 8;
 
 PET_BATTLE_WEATHER_TEXTURES = {
-	--[54] = "Interface\\PetBattles\\Weather-ArcaneStorm",
+	[590] = "Interface\\PetBattles\\Weather-ArcaneStorm",
 	[205] = "Interface\\PetBattles\\Weather-Blizzard",
 	[171] = "Interface\\PetBattles\\Weather-BurntEarth",
 	[257] = "Interface\\PetBattles\\Weather-Darkness",
@@ -39,6 +39,18 @@ StaticPopupDialogs["PET_BATTLE_FORFEIT"] = {
 	hideOnEscape = 1
 };
 
+StaticPopupDialogs["PET_BATTLE_FORFEIT_NO_PENALTY"] = {
+	text = PET_BATTLE_FORFEIT_CONFIRMATION_NO_PENALTY,
+	button1 = OKAY,
+	button2 = CANCEL,
+	maxLetters = 30,
+	OnAccept = function(self)
+		C_PetBattles.ForfeitGame();
+	end,
+	timeout = 0,
+	exclusive = 1,
+	hideOnEscape = 1
+};
 --------------------------------------------
 -------------Pet Battle Frame---------------
 --------------------------------------------
@@ -64,6 +76,7 @@ function PetBattleFrame_OnLoad(self)
 	self:RegisterEvent("PET_BATTLE_PET_ROUND_PLAYBACK_COMPLETE");
 	self:RegisterEvent("PET_BATTLE_PET_CHANGED");
 	self:RegisterEvent("PET_BATTLE_XP_CHANGED");
+	self:RegisterEvent("PET_BATTLE_ACTION_SELECTED");
 
 	-- Transitioning out of battle event
 	self:RegisterEvent("PET_BATTLE_OVER");
@@ -91,6 +104,11 @@ function PetBattleFrame_OnEvent(self, event, ...)
 		PetBattleFrame_UpdatePetSelectionFrame(self);
 		PetBattleFrame_UpdateSpeedIndicators(self);
 		PetBattleFrame_UpdateInstructions(self);
+		if (C_PetBattles.IsSkipAvailable()) then
+			self.BottomFrame.TurnTimer.SkipButton:Enable();
+		else
+			self.BottomFrame.TurnTimer.SkipButton:Disable();
+		end
 	elseif ( event == "PET_BATTLE_PET_CHANGED" ) then
 		PetBattleFrame_UpdateAssignedUnitFrames(self);
 		PetBattleFrame_UpdateAllActionButtons(self);
@@ -101,10 +119,13 @@ function PetBattleFrame_OnEvent(self, event, ...)
 	elseif ( event == "PET_BATTLE_CLOSE" ) then
 		PetBattleFrame_Remove(self);
 		StaticPopup_Hide("PET_BATTLE_FORFEIT");
+		StaticPopup_Hide("PET_BATTLE_FORFEIT_NO_PENALTY");
 	elseif ( event == "UPDATE_BINDINGS" ) then
 		PetBattleFrame_UpdateAbilityButtonHotKeys(self);
 	elseif ( event == "PET_BATTLE_XP_CHANGED" ) then
 		PetBattleFrame_UpdateXpBar(self);
+	elseif ( event == "PET_BATTLE_ACTION_SELECTED" ) then
+		self.BottomFrame.TurnTimer.SkipButton:Disable();
 	end
 end
 
@@ -134,6 +155,18 @@ function PetBattleFrame_Display(self)
 	PetBattleFrame_UpdatePassButtonAndTimer(self);
 	PetBattleFrame_UpdateInstructions(self);
 	PetBattleWeatherFrame_Update(self.WeatherFrame);
+end
+
+function PetBattleFrame_PetSelectionFrameUpdateVisible(showFrame) 
+	local selectionFrame = PetBattleFrame.BottomFrame.PetSelectionFrame;
+	local battleState = C_PetBattles.GetBattleState();
+	local selectedActionType = C_PetBattles.GetSelectedAction();
+	local mustSwap = ( ( not selectedActionType ) or ( selectedActionType == BATTLE_PET_ACTION_NONE ) ) and ( battleState == LE_PET_BATTLE_STATE_WAITING_PRE_BATTLE ) or ( battleState == LE_PET_BATTLE_STATE_WAITING_FOR_FRONT_PETS );
+	if ( selectionFrame:IsShown() and ( not mustSwap ) ) then
+		PetBattlePetSelectionFrame_Hide(selectionFrame);
+	elseif (showFrame) then
+		PetBattlePetSelectionFrame_Show(selectionFrame);
+	end
 end
 
 function PetBattleFrame_UpdatePetSelectionFrame(self)
@@ -340,7 +373,8 @@ function PetBattleFrame_ButtonDown(id)
 		return;
 	end
 
-	StaticPopup_Hide("PET_BATTLE_FORFEIT",nil);
+	StaticPopup_Hide("PET_BATTLE_FORFEIT", nil);
+	StaticPopup_Hide("PET_BATTLE_FORFEIT_NO_PENALTY", nil);
 	if ( button:GetButtonState() == "NORMAL" ) then
 		button:SetButtonState("PUSHED");
 	end
@@ -375,7 +409,9 @@ function PetBattleAbilityButton_OnClick(self)
 		HandleModifiedItemClick(GetBattlePetAbilityHyperlink(abilityID, maxHealth, power, speed));
 	else
 		StaticPopup_Hide("PET_BATTLE_FORFEIT",nil);
+		StaticPopup_Hide("PET_BATTLE_FORFEIT_NO_PENALTY", nil);
 		C_PetBattles.UseAbility(self:GetID());
+		PetBattleFrame_PetSelectionFrameUpdateVisible();
 	end
 end
 
@@ -473,11 +509,21 @@ function PetBattleFrameTurnTimer_UpdateValues(self)
 end
 
 function PetBattleForfeitButton_OnClick(self)
-	StaticPopup_Show("PET_BATTLE_FORFEIT", nil, nil, nil)
+	local forfeitPenalty = C_PetBattles.GetForfeitPenalty();
+	if(forfeitPenalty == 0) then
+		StaticPopup_Show("PET_BATTLE_FORFEIT_NO_PENALTY", nil, nil, nil)
+	else
+		StaticPopup_Show("PET_BATTLE_FORFEIT", forfeitPenalty, nil, nil)
+	end
 end
 
 function PetBattleCatchButton_OnClick(self)
-	StaticPopup_Hide("PET_BATTLE_FORFEIT",nil);
+	local forfeitPenalty = C_PetBattles.GetForfeitPenalty();
+	if(forfeitPenalty == 0) then
+		StaticPopup_Hide("PET_BATTLE_FORFEIT_NO_PENALTY",nil);
+	else
+		StaticPopup_Hide("PET_BATTLE_FORFEIT",nil);
+	end
 	C_PetBattles.UseTrap();
 end
 
@@ -592,8 +638,9 @@ function PetBattleActionButton_UpdateState(self)
 
 		--If we exist, check whether we're usable and what the cooldown is.
 		if ( name ) then
-			local isUsable, currentCooldown = C_PetBattles.GetAbilityState(LE_BATTLE_PET_ALLY, C_PetBattles.GetActivePet(LE_BATTLE_PET_ALLY), actionIndex);
-			usable, cooldown = isUsable, currentCooldown;
+			local isUsable, currentCooldown, currentLockdown = C_PetBattles.GetAbilityState(LE_BATTLE_PET_ALLY, C_PetBattles.GetActivePet(LE_BATTLE_PET_ALLY), actionIndex);
+			usable = isUsable;
+			cooldown = max(currentCooldown, currentLockdown);
 		else
 			isLocked = true;
 		end
@@ -1167,6 +1214,7 @@ function PetBattleUnitTooltip_UpdateForUnit(self, petOwner, petIndex)
 	local height = 198;
 	local attack = C_PetBattles.GetPower(petOwner, petIndex);
 	local speed = C_PetBattles.GetSpeed(petOwner, petIndex);
+	local level = C_PetBattles.GetLevel(petOwner, petIndex);
 	local opponentSpeed = 0;
 	if ( petOwner == LE_BATTLE_PET_ALLY ) then
 		opponentSpeed = C_PetBattles.GetSpeed(LE_BATTLE_PET_ENEMY, C_PetBattles.GetActivePet(LE_BATTLE_PET_ENEMY));
@@ -1187,8 +1235,15 @@ function PetBattleUnitTooltip_UpdateForUnit(self, petOwner, petIndex)
 	self.AttackAmount:SetText(attack);
 	self.SpeedAmount:SetText(speed);
 	
-	if (petOwner == LE_BATTLE_PET_ENEMY and C_PetBattles.IsWildBattle()) then
-		local speciesID = C_PetBattles.GetPetSpeciesID(LE_BATTLE_PET_ENEMY, petIndex);
+	local displayCollected = false;
+	local speciesID = C_PetBattles.GetPetSpeciesID(LE_BATTLE_PET_ENEMY, petIndex);
+	if ( speciesID ) then
+		local _, _, _, _, _, _, _, _, _, _, obtainable = C_PetJournal.GetPetInfoBySpeciesID(speciesID);
+		if ( obtainable and petOwner == LE_BATTLE_PET_ENEMY and C_PetBattles.IsWildBattle() ) then
+			displayCollected = true;
+		end
+	end
+	if ( displayCollected ) then
 		local numOwned, maxAllowed = C_PetJournal.GetNumCollectedInfo(speciesID);
 		if (numOwned < maxAllowed) then
 			self.CollectedText:SetText(GREEN_FONT_COLOR_CODE..format(ITEM_PET_KNOWN, numOwned, maxAllowed)..FONT_COLOR_CODE_CLOSE);
@@ -1203,8 +1258,7 @@ function PetBattleUnitTooltip_UpdateForUnit(self, petOwner, petIndex)
 		self.HealthBorder:SetPoint("TOPLEFT", self.Icon, "BOTTOMLEFT", -1, -6);
 	end
 	
-
-	if ( petOwner == LE_BATTLE_PET_ALLY ) then
+	if ( petOwner == LE_BATTLE_PET_ALLY and level < MAX_PET_LEVEL ) then
 		--Add the XP bar
 		self.XPBar:Show();
 		self.XPBG:Show();
@@ -1737,6 +1791,9 @@ function PET_BATTLE_AURA_INFO:GetUnitFromToken(target)
 	elseif ( target == "auracaster" ) then
 		local _, _, _, _, casterOwner, casterIndex = C_PetBattles.GetAuraInfo(self.petOwner, self.petIndex, self.auraIndex);
 		return casterOwner, casterIndex;
+	elseif ( target == "auraenemy" ) then
+		local petOwner = PetBattleUtil_GetOtherPlayer(self.petOwner);
+		return petOwner, C_PetBattles.GetActivePet(petOwner);
 	else
 		error("Unsupported token: "..tostring(target));
 	end
@@ -1824,6 +1881,9 @@ function PET_BATTLE_AURA_ID_INFO:GetUnitFromToken(target)
 		return petOwner, petIndex;
 	elseif ( target == "auracaster" ) then
 		return self.petOwner, self.petIndex;	--Setting by ID should only occur for auras that aren't actually on the target (such as passives). These can be considered as cast by this pet.
+	elseif ( target == "auraenemy" ) then
+		local petOwner = PetBattleUtil_GetOtherPlayer(self.petOwner);
+		return petOwner, C_PetBattles.GetActivePet(petOwner);
 	else
 		error("Unsupported token: "..tostring(target));
 	end

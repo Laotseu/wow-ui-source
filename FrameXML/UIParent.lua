@@ -26,7 +26,7 @@ UIPanelWindows["HelpFrame"] =					{ area = "center",		pushable = 0,	whileDead = 
 UIPanelWindows["CharacterFrame"] =				{ area = "left",			pushable = 3,	whileDead = 1};
 UIPanelWindows["SpellBookFrame"] =				{ area = "left",			pushable = 1,	whileDead = 1, width = 575, height = 545 };
 UIPanelWindows["TaxiFrame"] =					{ area = "left",			pushable = 0, 	width = 605, height = 580 };
-UIPanelWindows["PVPFrame"] =					{ area = "left",			pushable = 1,	whileDead = 1};
+UIPanelWindows["PVPUIFrame"] =					{ area = "left",			pushable = 0,	whileDead = 1, width = 563};
 UIPanelWindows["PVPBannerFrame"] =				{ area = "left",			pushable = 1};
 UIPanelWindows["PetStableFrame"] =				{ area = "left",			pushable = 0};
 UIPanelWindows["PVEFrame"] =					{ area = "left",			pushable = 0, 	whileDead = 1, width = 563};
@@ -57,8 +57,7 @@ UIPanelWindows["WorldMapFrame"] =				{ area = "full",			pushable = 0, 		xoffset 
 UIPanelWindows["CinematicFrame"] =				{ area = "full",			pushable = 0, 		xoffset = -16, 		yoffset = 12,	whileDead = 1 };
 UIPanelWindows["ChatConfigFrame"] =				{ area = "center",			pushable = 0, 		xoffset = -16, 		yoffset = 12,	whileDead = 1 };
 UIPanelWindows["WorldStateScoreFrame"] =		{ area = "center",			pushable = 0, 		xoffset = -16, 		yoffset = 12,	whileDead = 1 };
-
-UIPanelWindows["MinigameFrame"] =				{ area = "left",			pushable = 0, 		xoffset = -16, 		yoffset = 12 };
+UIPanelWindows["QuestChoiceFrame"] =			{ area = "center",			pushable = 0, 		xoffset = -16, 		yoffset = 12,	whileDead = 0, allowOtherPanels = 1 };
 
 local function GetUIPanelWindowInfo(frame, name)
 	if ( not frame:GetAttribute("UIPanelLayout-defined") ) then
@@ -288,6 +287,9 @@ function UIParent_OnLoad(self)
 
 	-- Events for Pet Jornal
 	self:RegisterEvent("PET_JOURNAL_NEW_BATTLE_SLOT");
+	
+	-- Events for Quest Choice
+	self:RegisterEvent("QUEST_CHOICE_UPDATE");
 end
 
 
@@ -438,6 +440,14 @@ end
 
 function ItemUpgrade_LoadUI()
 	UIParentLoadAddOn("Blizzard_ItemUpgradeUI");
+end
+
+function PVP_LoadUI()
+	UIParentLoadAddOn("Blizzard_PVPUI");
+end
+
+function QuestChoice_LoadUI()
+	UIParentLoadAddOn("Blizzard_QuestChoice");
 end
 
 --[[
@@ -640,6 +650,17 @@ function TogglePetJournal(whichFrame)
 	end
 end
 
+function TogglePVPUI()
+	if (IsBlizzCon()) then
+		return;
+	end
+	if (not PVPUIFrame) then
+		PVP_LoadUI();
+	end
+	if ( UnitLevel("player") >= SHOW_PVP_LEVEL and not IsPlayerNeutral()) then
+		PVPUIFrame_ToggleFrame()
+	end
+end
 
 function InspectUnit(unit)
 	if (IsBlizzCon()) then
@@ -684,6 +705,8 @@ function UIParent_OnEvent(self, event, ...)
 			local info = ChatTypeInfo["WHISPER"];
 			GMChatFrame:AddMessage(format(GM_CHAT_LAST_SESSION, "|TInterface\\ChatFrame\\UI-ChatIcon-Blizz:12:20:0:0:32:16:4:28:0:16|t "..
 			"|HplayerGM:"..lastTalkedToGM.."|h".."["..lastTalkedToGM.."]".."|h"), info.r, info.g, info.b, info.id);
+			GMChatFrameEditBox:SetAttribute("tellTarget", lastTalkedToGM);
+			GMChatFrameEditBox:SetAttribute("chatType", "WHISPER");
 		end
 		TargetFrame_OnVariablesLoaded();
 	elseif ( event == "PLAYER_LOGIN" ) then
@@ -863,6 +886,9 @@ function UIParent_OnEvent(self, event, ...)
 		else
 			GhostFrame:Hide();
 		end
+		if ( GetReleaseTimeRemaining() > 0 or GetReleaseTimeRemaining() == -1 ) then
+			StaticPopup_Show("DEATH");
+		end
 	elseif ( event == "GROUP_ROSTER_UPDATE" ) then
 		-- Hide/Show party member frames
 		RaidOptionsFrame_UpdatePartyFrames();
@@ -885,6 +911,7 @@ function UIParent_OnEvent(self, event, ...)
 	elseif ( event == "PET_BATTLE_PVP_DUEL_REQUEST_CANCEL" ) then
 		StaticPopup_Hide("PET_BATTLE_PVP_DUEL_REQUESTED");
 	elseif ( event == "PET_BATTLE_QUEUE_PROPOSE_MATCH" ) then
+		PlaySound("UI_PetBattles_PVP_ThroughQueue");
 		StaticPopupSpecial_Show(PetBattleQueueReadyFrame);
 	elseif ( event == "PET_BATTLE_QUEUE_PROPOSAL_DECLINED" or event == "PET_BATTLE_QUEUE_PROPOSAL_ACCEPTED" ) then
 		StaticPopupSpecial_Hide(PetBattleQueueReadyFrame);
@@ -996,9 +1023,9 @@ function UIParent_OnEvent(self, event, ...)
 	elseif ( event == "MISSING_OUT_ON_LOOT" ) then
 		MissingLootFrame_Show();
 	elseif ( event == "SPELL_CONFIRMATION_PROMPT" ) then
-		local spellID, confirmType, text, duration = ...;
+		local spellID, confirmType, text, duration, currencyID = ...;
 		if ( confirmType == CONFIRMATION_PROMPT_BONUS_ROLL ) then
-			BonusRollFrame_StartBonusRoll(spellID, text, duration);
+			BonusRollFrame_StartBonusRoll(spellID, text, duration, currencyID);
 		else
 			StaticPopup_Show("SPELL_CONFIRMATION_PROMPT", text, duration, spellID);
 		end
@@ -1305,6 +1332,14 @@ function UIParent_OnEvent(self, event, ...)
 	elseif ( event == "PET_JOURNAL_NEW_BATTLE_SLOT" ) then
 		CompanionsMicroButtonAlert:Show();
 		MicroButtonPulse(CompanionsMicroButton);
+	
+	-- Quest Choice trigger event
+	
+	elseif (event == "QUEST_CHOICE_UPDATE") then
+		QuestChoice_LoadUI();
+		if ( QuestChoiceFrame_Show) then
+			QuestChoiceFrame_Show();
+		end
 	end
 end
 

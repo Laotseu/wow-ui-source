@@ -1549,13 +1549,13 @@ StaticPopupDialogs["CHAT_CHANNEL_INVITE"] = {
 	EditBoxOnEscapePressed = function(self, data)
 		self:GetParent():Hide();
 	end,
-	OnHide = function(self, data)
-		local name = data;
-		DeclineInvite(name);
+	OnCancel = function(self, data)
+		local chanName = data;
+		DeclineChannelInvite(chanName);
 	end,
-	timeout = STATICPOPUP_TIMEOUT,
+	timeout = CHANNEL_INVITE_TIMEOUT,
 	whileDead = 1,
-	hideOnEscape = 1
+	hideOnEscape = 1,
 };
 
 StaticPopupDialogs["LEVEL_GRANT_PROPOSED"] = {
@@ -3691,7 +3691,7 @@ end
 function StaticPopup_Hide(which, data)
 	for index = 1, STATICPOPUP_NUMDIALOGS, 1 do
 		local dialog = _G["StaticPopup"..index];
-		if ( (dialog.which == which) and (not data or (data == dialog.data)) ) then
+		if ( dialog:IsShown() and (dialog.which == which) and (not data or (data == dialog.data)) ) then
 			dialog:Hide();
 		end
 	end
