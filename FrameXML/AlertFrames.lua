@@ -15,6 +15,7 @@ function AlertFrame_OnLoad (self)
 	self:RegisterEvent("LOOT_ITEM_ROLL_WON");
 	self:RegisterEvent("SHOW_LOOT_TOAST");
 	self:RegisterEvent("PET_BATTLE_CLOSE");
+	self:RegisterEvent("STORE_PRODUCT_DELIVERED");
 end
 
 function AlertFrame_OnEvent (self, event, ...)
@@ -48,14 +49,20 @@ function AlertFrame_OnEvent (self, event, ...)
 		local itemLink, quantity, rollType, roll = ...;
 		LootWonAlertFrame_ShowAlert(itemLink, quantity, rollType, roll);
 	elseif ( event == "SHOW_LOOT_TOAST" ) then
-		local typeIdentifier, itemLink, quantity, specID = ...;
+		local typeIdentifier, itemLink, quantity, specID, isPersonal = ...;
 		if ( typeIdentifier == "item" ) then
 			LootWonAlertFrame_ShowAlert(itemLink, quantity, nil, nil, specID);
 		elseif ( typeIdentifier == "money" ) then
 			MoneyWonAlertFrame_ShowAlert(quantity);
+		elseif ( (isPersonal == true) and (typeIdentifier == "currency") ) then
+			-- only toast currency for personal loot
+			LootWonAlertFrame_ShowAlert(itemLink, quantity, nil, nil, specID, true);
 		end
 	elseif ( event == "PET_BATTLE_CLOSE" ) then
 		AchievementAlertFrame_FireDelayedAlerts();
+	elseif ( event == "STORE_PRODUCT_DELIVERED" ) then
+		local icon = ...;
+		StorePurchaseAlertFrame_ShowAlert(icon);
 	end
 end
 
@@ -91,7 +98,8 @@ end
 -- [[ Anchoring ]] --
 function AlertFrame_FixAnchors()
 	local alertAnchor = AlertFrame;
-	alertAnchor = AlertFrame_SetLootAnchors(alertAnchor);
+	alertAnchor = AlertFrame_SetLootAnchors(alertAnchor); --This needs to be first as it doesn't actually anchor anything.
+	alertAnchor = AlertFrame_SetStorePurchaseAnchors(alertAnchor);
 	alertAnchor = AlertFrame_SetLootWonAnchors(alertAnchor);
 	alertAnchor = AlertFrame_SetMoneyWonAnchors(alertAnchor);
 	alertAnchor = AlertFrame_SetAchievementAnchors(alertAnchor);
@@ -100,6 +108,7 @@ function AlertFrame_FixAnchors()
 	alertAnchor = AlertFrame_SetDungeonCompletionAnchors(alertAnchor);
 	alertAnchor = AlertFrame_SetScenarioAnchors(alertAnchor);
 	alertAnchor = AlertFrame_SetGuildChallengeAnchors(alertAnchor);
+	alertAnchor = AlertFrame_SetDigsiteCompleteToastFrameAnchors(alertAnchor);
 end
 
 function AlertFrame_SetLootAnchors(alertAnchor)
@@ -115,6 +124,15 @@ function AlertFrame_SetLootAnchors(alertAnchor)
 		return frame;
 	end
 
+	return alertAnchor;
+end
+
+function AlertFrame_SetStorePurchaseAnchors(alertAnchor)
+	local frame = StorePurchaseAlertFrame;
+	if ( frame:IsShown() ) then
+		frame:SetPoint("BOTTOM", alertAnchor, "TOP", 0, 10);
+		return frame;
+	end
 	return alertAnchor;
 end
 
@@ -200,6 +218,14 @@ function AlertFrame_SetGuildChallengeAnchors(alertAnchor)
 	if ( frame:IsShown() ) then
 		frame:SetPoint("BOTTOM", alertAnchor, "TOP", 0, 10);
 		alertAnchor = frame;
+	end
+	return alertAnchor;
+end
+
+function AlertFrame_SetDigsiteCompleteToastFrameAnchors(alertAnchor)
+	if ( DigsiteCompleteToastFrame and DigsiteCompleteToastFrame:IsShown() ) then
+		DigsiteCompleteToastFrame:SetPoint("BOTTOM", alertAnchor, "TOP", 0, 10);
+		alertAnchor = DigsiteCompleteToastFrame;
 	end
 	return alertAnchor;
 end
@@ -750,7 +776,7 @@ end
 
 -- [[ LootWonAlertFrameTemplate ]] --
 
-function LootWonAlertFrame_ShowAlert(itemLink, quantity, rollType, roll, specID)
+function LootWonAlertFrame_ShowAlert(itemLink, quantity, rollType, roll, specID, isCurrency)
 	local frame;
 	for i=1, #LOOT_WON_ALERT_FRAMES do
 		local lootWon = LOOT_WON_ALERT_FRAMES[i];
@@ -765,14 +791,22 @@ function LootWonAlertFrame_ShowAlert(itemLink, quantity, rollType, roll, specID)
 		table.insert(LOOT_WON_ALERT_FRAMES, frame);
 	end
 
-	LootWonAlertFrame_SetUp(frame, itemLink, quantity, rollType, roll, specID);
+	LootWonAlertFrame_SetUp(frame, itemLink, quantity, rollType, roll, specID, isCurrency);
 	AlertFrame_AnimateIn(frame);
 	AlertFrame_FixAnchors();
 end
 
 -- NOTE - This may also be called for an externally created frame. (E.g. bonus roll has its own frame)
-function LootWonAlertFrame_SetUp(self, itemLink, quantity, rollType, roll, specID)
-	local itemName, itemLink, itemRarity, itemLevel, itemMinLevel, itemType, itemSubType, itemStackCount, itemEquipLoc, itemTexture = GetItemInfo(itemLink);
+function LootWonAlertFrame_SetUp(self, itemLink, quantity, rollType, roll, specID, isCurrency)
+	local itemName, itemHyperLink, itemRarity, itemTexture;
+	if (isCurrency == true) then
+		itemName, _, itemTexture, _, _, _, _, itemRarity = GetCurrencyInfo(itemLink);
+		itemName = format(CURRENCY_QUANTITY_TEMPLATE, quantity, itemName);
+		itemHyperLink = itemLink;
+	else
+		itemName, itemHyperLink, itemRarity, _, _, _, _, _, _, itemTexture = GetItemInfo(itemLink);
+	end
+
 	self.Icon:SetTexture(itemTexture);
 	self.ItemName:SetText(itemName);
 	local color = ITEM_QUALITY_COLORS[itemRarity];
@@ -804,7 +838,7 @@ function LootWonAlertFrame_SetUp(self, itemLink, quantity, rollType, roll, specI
 		self.RollValue:Hide();
 	end
 
-	self.hyperlink = itemLink;
+	self.hyperlink = itemHyperLink;
 	PlaySoundKitID(31578);	--UI_EpicLoot_Toast
 end
 
@@ -835,3 +869,20 @@ function MoneyWonAlertFrame_SetUp(self, amount)
 	PlaySoundKitID(31578);	--UI_EpicLoot_Toast
 end
 
+-- [[ DigsiteCompleteToastFrame ]] --
+function DigsiteCompleteToastFrame_ShowAlert(researchBranchID)
+	local RaceName, RaceTexture	= GetArchaeologyRaceInfoByID(researchBranchID);
+	DigsiteCompleteToastFrame.DigsiteType:SetText(RaceName);
+	DigsiteCompleteToastFrame.DigsiteTypeTexture:SetTexture(RaceTexture);
+	PlaySound("UI_DigsiteCompletion_Toast");
+	AlertFrame_AnimateIn(DigsiteCompleteToastFrame);
+	AlertFrame_FixAnchors();
+end
+
+-- [[ StorePurchaseAlertFrame ]] --
+function StorePurchaseAlertFrame_ShowAlert(icon)
+	StorePurchaseAlertFrame.Icon:SetTexture(icon);
+	AlertFrame_AnimateIn(StorePurchaseAlertFrame);
+	AlertFrame_FixAnchors();
+	PlaySound("UI_igStore_PurchaseDelivered_Toast_01");
+end
