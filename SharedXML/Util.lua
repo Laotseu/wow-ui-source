@@ -121,6 +121,64 @@ function GetAchievementInfoFromHyperlink(link)
 	return tonumber(link:match("|Hachievement:(%d+)"));
 end
 
+function FormatLargeNumber(amount)
+	amount = tostring(amount);
+	local newDisplay = "";
+	local strlen = amount:len();
+	--Add each thing behind a comma
+	for i=4, strlen, 3 do
+		newDisplay = LARGE_NUMBER_SEPERATOR..amount:sub(-(i - 1), -(i - 3))..newDisplay;
+	end
+	--Add everything before the first comma
+	newDisplay = amount:sub(1, (strlen % 3 == 0) and 3 or (strlen % 3))..newDisplay;
+	return newDisplay;
+end
+
+COPPER_PER_SILVER = 100;
+SILVER_PER_GOLD = 100;
+COPPER_PER_GOLD = COPPER_PER_SILVER * SILVER_PER_GOLD;
+
+function GetMoneyString(money, separateThousands)
+	local goldString, silverString, copperString;
+	local gold = floor(money / (COPPER_PER_SILVER * SILVER_PER_GOLD));
+	local silver = floor((money - (gold * COPPER_PER_SILVER * SILVER_PER_GOLD)) / COPPER_PER_SILVER);
+	local copper = mod(money, COPPER_PER_SILVER);
+
+	if ( ENABLE_COLORBLIND_MODE == "1" ) then
+		if (separateThousands) then
+			goldString = FormatLargeNumber(gold)..GOLD_AMOUNT_SYMBOL;
+		else
+			goldString = gold..GOLD_AMOUNT_SYMBOL;
+		end
+		silverString = silver..SILVER_AMOUNT_SYMBOL;
+		copperString = copper..COPPER_AMOUNT_SYMBOL;
+	else
+		if (separateThousands) then
+			goldString = format(GOLD_AMOUNT_TEXTURE_STRING, FormatLargeNumber(gold), 0, 0);
+		else
+			goldString = format(GOLD_AMOUNT_TEXTURE, gold, 0, 0);
+		end
+		silverString = format(SILVER_AMOUNT_TEXTURE, silver, 0, 0);
+		copperString = format(COPPER_AMOUNT_TEXTURE, copper, 0, 0);
+	end
+	
+	local moneyString = "";
+	local separator = "";
+	if ( gold > 0 ) then
+		moneyString = goldString;
+		separator = " ";
+	end
+	if ( silver > 0 ) then
+		moneyString = moneyString..separator..silverString;
+		separator = " ";
+	end
+	if ( copper > 0 or moneyString == "" ) then
+		moneyString = moneyString..separator..copperString;
+	end
+	
+	return moneyString;
+end
+
 ----------------------------------
 -- TRIAL/VETERAN FUCNCTIONS
 ----------------------------------
@@ -128,11 +186,25 @@ function GameLimitedMode_IsActive()
 	return IsTrialAccount() or IsVeteranTrialAccount();
 end
 
-function GameLimitedMode_GetString( text )
-	if ( IsVeteranTrialAccount() ) then
-		text = text.."_VETERAN";
-	else
-		text = text.."_TRIAL";
+function TriStateCheckbox_SetState(checked, checkButton)
+	local checkedTexture = _G[checkButton:GetName().."CheckedTexture"];
+	if ( not checkedTexture ) then
+		message("Can't find checked texture");
 	end
-	return _G[text];
+	if ( not checked or checked == 0 ) then
+		-- nil or 0 means not checked
+		checkButton:SetChecked(false);
+		checkButton.state = 0;
+	elseif ( checked == 2 ) then
+		-- 2 is a normal
+		checkButton:SetChecked(true);
+		checkedTexture:SetVertexColor(1, 1, 1);
+		checkedTexture:SetDesaturated(false);
+		checkButton.state = 2;
+	else
+		-- 1 is a gray check
+		checkButton:SetChecked(true);
+		checkedTexture:SetDesaturated(true);
+		checkButton.state = 1;
+	end
 end

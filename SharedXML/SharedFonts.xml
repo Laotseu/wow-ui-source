@@ -72,6 +72,24 @@
 		</Member>
 	</FontFamily>
 
+		<FontFamily name="SystemFont_Small" virtual="true">
+		<Member alphabet="roman">
+			<Font font="Fonts\FRIZQT__.TTF" height="10"/>
+		</Member>
+		<Member alphabet="korean">
+			<Font font="Fonts\2002.TTF" height="13"/>
+		</Member>
+		<Member alphabet="simplifiedchinese">
+			<Font font="Fonts\ARKai_T.ttf" height="12"/>
+		</Member>
+		<Member alphabet="traditionalchinese">
+			<Font font="Fonts\blei00d.TTF" height="10"/>
+		</Member>
+		<Member alphabet="russian">
+			<Font font="Fonts\FRIZQT___CYR.TTF" height="10"/>
+		</Member>
+	</FontFamily>
+	
 	<FontFamily name="SystemFont_Small2" virtual="true">
 		<Member alphabet="roman">
 			<Font font ="Fonts\FRIZQT__.TTF" height="11"/>
@@ -547,6 +565,24 @@
 					<Color r="0" g="0" b="0"/>
 				</Shadow>
 			</Font>
+		</Member>
+	</FontFamily>
+
+	<FontFamily name="SystemFont_Huge2" virtual="true">
+		<Member alphabet="roman">
+			<Font font="Fonts\FRIZQT__.TTF" height="24"/>
+		</Member>
+		<Member alphabet="korean">
+			<Font name="SystemFont_Shadow_Huge2" font="Fonts\K_Pagetext.TTF" height="24"/>
+		</Member>
+		<Member alphabet="simplifiedchinese">
+			<Font name="SystemFont_Huge2" font="Fonts\ARKai_T.TTF" height="24"/>
+		</Member>
+		<Member alphabet="traditionalchinese">
+			<Font name="SystemFont_Huge2" font="Fonts\blei00d.TTF"  height="24"/>
+		</Member>
+		<Member alphabet="russian">
+			<Font name="SystemFont_Huge2" font="Fonts\FRIZQT___CYR.TTF" height="24"/>
 		</Member>
 	</FontFamily>
 
